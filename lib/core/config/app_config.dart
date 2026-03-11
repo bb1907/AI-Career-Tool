@@ -6,4 +6,5 @@ abstract final class AppConfig {
       'Sign in to manage resumes, cover letters and interview prep in one place.';
   static const registerHeadline =
       'Create your account and start building your next career move.';
+  static const onboardingStorageKey = 'has_completed_onboarding';
 }

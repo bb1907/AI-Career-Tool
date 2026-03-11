@@ -6,20 +6,34 @@ import '../features/auth/domain/entities/auth_state.dart';
 import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
+import '../features/cover_letter/presentation/pages/cover_letter_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
+import '../features/interview/presentation/pages/interview_page.dart';
 import '../features/onboarding/presentation/pages/splash_page.dart';
+import '../features/onboarding/presentation/controllers/onboarding_controller.dart';
+import '../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../features/paywall/presentation/pages/paywall_page.dart';
+import '../features/resume/presentation/pages/resume_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
   static const register = '/register';
+  static const onboarding = '/onboarding';
   static const home = '/';
+  static const resume = '/resume';
+  static const coverLetter = '/cover-letter';
+  static const interview = '/interview';
+  static const paywall = '/premium';
+  static const settings = '/settings';
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
+  final onboardingState = ref.watch(onboardingControllerProvider);
   const publicRoutes = <String>{
     AppRoutes.splash,
     AppRoutes.login,
@@ -45,13 +59,42 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             RegisterPage(redirectTo: state.uri.queryParameters['from']),
       ),
       GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) =>
+            OnboardingPage(redirectTo: state.uri.queryParameters['from']),
+      ),
+      GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.resume,
+        builder: (context, state) => const ResumePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.coverLetter,
+        builder: (context, state) => const CoverLetterPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.interview,
+        builder: (context, state) => const InterviewPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.paywall,
+        builder: (context, state) => const PaywallPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsPage(),
       ),
     ],
     redirect: (context, state) {
       final location = state.uri.path;
       final isPublicRoute = publicRoutes.contains(location);
+      final onboardingIsLoading =
+          authState.status == AuthStatus.authenticated &&
+          onboardingState.isLoading;
+      final hasCompletedOnboarding = onboardingState.asData?.value ?? false;
 
       switch (authState.status) {
         case AuthStatus.loading:
@@ -70,9 +113,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             queryParameters: {'from': state.uri.toString()},
           ).toString();
         case AuthStatus.authenticated:
+          if (onboardingIsLoading) {
+            return location == AppRoutes.splash ? null : AppRoutes.splash;
+          }
+
+          if (!hasCompletedOnboarding) {
+            if (location == AppRoutes.onboarding) {
+              return null;
+            }
+
+            final onboardingTarget =
+                location == AppRoutes.splash ||
+                    location == AppRoutes.login ||
+                    location == AppRoutes.register
+                ? AppRoutes.home
+                : state.uri.toString();
+
+            return Uri(
+              path: AppRoutes.onboarding,
+              queryParameters: {'from': onboardingTarget},
+            ).toString();
+          }
+
           if (location == AppRoutes.splash ||
               location == AppRoutes.login ||
-              location == AppRoutes.register) {
+              location == AppRoutes.register ||
+              location == AppRoutes.onboarding) {
             final redirectTo = state.uri.queryParameters['from'];
             return redirectTo?.isNotEmpty == true ? redirectTo : AppRoutes.home;
           }
