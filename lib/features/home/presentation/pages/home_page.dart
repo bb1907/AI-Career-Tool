@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -25,7 +26,26 @@ class HomePage extends ConsumerWidget {
           child: ElevatedButton(
             onPressed: authState.isSubmitting
                 ? null
-                : () => ref.read(authControllerProvider.notifier).signOut(),
+                : () async {
+                    final messenger = ScaffoldMessenger.of(context);
+
+                    try {
+                      await ref.read(authControllerProvider.notifier).signOut();
+                    } on AppException catch (error) {
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      messenger
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            content: Text(error.message),
+                            backgroundColor: colorScheme.error,
+                          ),
+                        );
+                    }
+                  },
             child: authState.isSubmitting
                 ? const SizedBox(
                     height: 20,
@@ -47,9 +67,32 @@ class HomePage extends ConsumerWidget {
               color: colorScheme.surfaceContainerHighest,
             ),
             child: Text(
-              'Signed in as ${session?.email ?? 'unknown user'}.',
+              session?.fullName?.isNotEmpty == true
+                  ? 'Welcome back, ${session?.fullName}.'
+                  : 'Signed in as ${session?.email ?? 'unknown user'}.',
               style: Theme.of(context).textTheme.titleMedium,
             ),
+          ),
+          const SizedBox(height: AppSpacing.section),
+          Wrap(
+            spacing: AppSpacing.compact,
+            runSpacing: AppSpacing.compact,
+            children: [
+              _InfoChip(
+                label: session?.email ?? 'No email',
+                icon: Icons.mail_outline,
+              ),
+              _InfoChip(
+                label: session?.targetRole ?? 'Role not set',
+                icon: Icons.work_outline,
+              ),
+              _InfoChip(
+                label: session?.yearsOfExperience == null
+                    ? 'Experience not set'
+                    : '${session?.yearsOfExperience} years experience',
+                icon: Icons.timeline_outlined,
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.section),
           Wrap(
@@ -64,6 +107,23 @@ class HomePage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label, required this.icon});
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(label),
+      avatar: Icon(icon, size: 18),
+      side: BorderSide.none,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
     );
   }
 }

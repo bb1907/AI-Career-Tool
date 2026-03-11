@@ -1,12 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/in_memory_auth_repository.dart';
+import '../../../../services/supabase_service.dart';
+import '../../data/repositories/supabase_auth_repository.dart';
+import '../../data/services/supabase_auth_service.dart';
+import '../../domain/entities/auth_session.dart';
 import '../../domain/entities/auth_state.dart';
+import '../../domain/entities/sign_up_request.dart';
+import '../../domain/entities/sign_up_result.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => InMemoryAuthRepository(),
+  (ref) => SupabaseAuthRepository(
+    SupabaseAuthService(ref.watch(supabaseClientProvider)),
+  ),
 );
+
+final authStateChangesProvider = StreamProvider<AuthSession?>((ref) {
+  return ref.watch(authRepositoryProvider).observeAuthStateChanges();
+});
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
   AuthController.new,
@@ -15,6 +26,17 @@ final authControllerProvider = NotifierProvider<AuthController, AuthState>(
 class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() {
+    ref.listen<AsyncValue<AuthSession?>>(authStateChangesProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((session) {
+        state = session == null
+            ? const AuthState.unauthenticated()
+            : AuthState.authenticated(session);
+      });
+    });
+
     Future<void>.microtask(_restoreSession);
     return const AuthState.loading();
   }
@@ -26,10 +48,33 @@ class AuthController extends Notifier<AuthState> {
         : AuthState.authenticated(session);
   }
 
-  Future<void> signIn() async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AuthState.unauthenticated(isSubmitting: true);
-    final session = await ref.read(authRepositoryProvider).signIn();
-    state = AuthState.authenticated(session);
+
+    try {
+      final session = await ref
+          .read(authRepositoryProvider)
+          .signIn(email: email, password: password);
+      state = AuthState.authenticated(session);
+    } catch (_) {
+      state = const AuthState.unauthenticated();
+      rethrow;
+    }
+  }
+
+  Future<SignUpResult> signUp(SignUpRequest request) async {
+    state = const AuthState.unauthenticated(isSubmitting: true);
+
+    try {
+      final result = await ref.read(authRepositoryProvider).signUp(request);
+      state = result.session == null
+          ? const AuthState.unauthenticated()
+          : AuthState.authenticated(result.session!);
+      return result;
+    } catch (_) {
+      state = const AuthState.unauthenticated();
+      rethrow;
+    }
   }
 
   Future<void> signOut() async {
@@ -39,7 +84,14 @@ class AuthController extends Notifier<AuthState> {
       state = AuthState.authenticated(currentSession, isSubmitting: true);
     }
 
-    await ref.read(authRepositoryProvider).signOut();
-    state = const AuthState.unauthenticated();
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+      state = const AuthState.unauthenticated();
+    } catch (_) {
+      state = currentSession == null
+          ? const AuthState.unauthenticated()
+          : AuthState.authenticated(currentSession);
+      rethrow;
+    }
   }
 }

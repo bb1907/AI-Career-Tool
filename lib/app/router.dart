@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/domain/entities/auth_state.dart';
 import '../features/auth/presentation/controllers/auth_controller.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/pages/register_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/onboarding/presentation/pages/splash_page.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
+  static const register = '/register';
   static const home = '/';
 }
 
@@ -18,7 +20,11 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
-  const publicRoutes = <String>{AppRoutes.splash, AppRoutes.login};
+  const publicRoutes = <String>{
+    AppRoutes.splash,
+    AppRoutes.login,
+    AppRoutes.register,
+  };
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -32,6 +38,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.login,
         builder: (context, state) =>
             LoginPage(redirectTo: state.uri.queryParameters['from']),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) =>
+            RegisterPage(redirectTo: state.uri.queryParameters['from']),
       ),
       GoRoute(
         path: AppRoutes.home,
@@ -59,7 +70,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             queryParameters: {'from': state.uri.toString()},
           ).toString();
         case AuthStatus.authenticated:
-          if (location == AppRoutes.splash || location == AppRoutes.login) {
+          if (location == AppRoutes.splash ||
+              location == AppRoutes.login ||
+              location == AppRoutes.register) {
             final redirectTo = state.uri.queryParameters['from'];
             return redirectTo?.isNotEmpty == true ? redirectTo : AppRoutes.home;
           }
