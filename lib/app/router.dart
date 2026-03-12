@@ -13,7 +13,8 @@ import '../features/onboarding/presentation/pages/splash_page.dart';
 import '../features/onboarding/presentation/controllers/onboarding_controller.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/paywall/presentation/pages/paywall_page.dart';
-import '../features/resume/presentation/pages/resume_page.dart';
+import '../features/resume/presentation/pages/resume_input_page.dart';
+import '../features/resume/presentation/pages/resume_result_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 
 abstract final class AppRoutes {
@@ -23,6 +24,7 @@ abstract final class AppRoutes {
   static const onboarding = '/onboarding';
   static const home = '/';
   static const resume = '/resume';
+  static const resumeResult = '/resume/result';
   static const coverLetter = '/cover-letter';
   static const interview = '/interview';
   static const paywall = '/premium';
@@ -69,7 +71,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.resume,
-        builder: (context, state) => const ResumePage(),
+        builder: (context, state) => const ResumeInputPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.resumeResult,
+        builder: (context, state) => const ResumeResultPage(),
       ),
       GoRoute(
         path: AppRoutes.coverLetter,
