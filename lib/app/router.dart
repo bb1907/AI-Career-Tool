@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/domain/entities/auth_state.dart';
-import '../features/auth/presentation/controllers/auth_controller.dart';
+import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/cover_letter/presentation/pages/cover_letter_page.dart';

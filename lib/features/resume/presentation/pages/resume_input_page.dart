@@ -7,8 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/utils/input_validators.dart';
-import '../controllers/resume_builder_controller.dart';
+import '../../application/resume_controller.dart';
 import '../utils/resume_form_parser.dart';
 import '../utils/resume_form_validators.dart';
 
@@ -285,17 +286,13 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
                               },
                             ),
                             const SizedBox(height: AppSpacing.page),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: state.isGenerating ? null : _submit,
-                                icon: const Icon(Icons.auto_awesome),
-                                label: Text(
-                                  state.isGenerating
-                                      ? 'Generating resume...'
-                                      : 'Generate resume',
-                                ),
-                              ),
+                            AppButton(
+                              label: state.isGenerating
+                                  ? 'Generating resume...'
+                                  : 'Generate resume',
+                              isLoading: state.isGenerating,
+                              onPressed: state.isGenerating ? null : _submit,
+                              icon: const Icon(Icons.auto_awesome),
                             ),
                           ],
                         ),

@@ -7,9 +7,12 @@ import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
+import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/loading_view.dart';
+import '../../application/resume_controller.dart';
 import '../../domain/entities/resume_result.dart';
-import '../controllers/resume_builder_controller.dart';
 import '../utils/resume_clipboard_formatter.dart';
+import '../widgets/resume_section_card.dart';
 
 class ResumeResultPage extends ConsumerWidget {
   const ResumeResultPage({super.key});
@@ -75,11 +78,9 @@ class ResumeResultPage extends ConsumerWidget {
         title: 'Generating resume...',
         description:
             'We are shaping your summary, bullet points and skills into an ATS-friendly draft.',
-        child: const Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.page),
-            child: CircularProgressIndicator(),
-          ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.page),
+          child: LoadingView(),
         ),
       );
     }
@@ -88,7 +89,7 @@ class ResumeResultPage extends ConsumerWidget {
       return AppPlaceholderScaffold(
         eyebrow: 'Resume',
         title: 'Generation failed',
-        description: state.errorMessage!,
+        description: 'The generated draft could not be created.',
         actions: [
           FilledButton.tonal(
             onPressed: state.request == null
@@ -103,6 +104,7 @@ class ResumeResultPage extends ConsumerWidget {
             child: const Text('Back to form'),
           ),
         ],
+        child: ErrorView(message: state.errorMessage!),
       );
     }
 
@@ -210,7 +212,7 @@ class ResumeResultPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.page),
-                    _ResultSectionCard(
+                    ResumeSectionCard(
                       title: 'Summary',
                       child: Text(
                         result.summary,
@@ -218,7 +220,7 @@ class ResumeResultPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.section),
-                    _ResultSectionCard(
+                    ResumeSectionCard(
                       title: 'Experience bullets',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +255,7 @@ class ResumeResultPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.section),
-                    _ResultSectionCard(
+                    ResumeSectionCard(
                       title: 'Skills',
                       child: Wrap(
                         spacing: 10,
@@ -265,7 +267,7 @@ class ResumeResultPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.section),
-                    _ResultSectionCard(
+                    ResumeSectionCard(
                       title: 'Education',
                       child: Text(
                         result.education,
@@ -277,39 +279,6 @@ class ResumeResultPage extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResultSectionCard extends StatelessWidget {
-  const _ResultSectionCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.compact),
-            child,
-          ],
         ),
       ),
     );

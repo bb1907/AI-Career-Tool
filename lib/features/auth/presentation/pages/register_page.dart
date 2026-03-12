@@ -4,13 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/config/constants.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
-import '../../../../core/utils/input_validators.dart';
+import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/sign_up_request.dart';
-import '../controllers/auth_controller.dart';
+import '../providers/auth_controller.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key, this.redirectTo});
@@ -106,107 +108,85 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return AppPlaceholderScaffold(
       eyebrow: 'Public route',
       title: 'Create account',
-      description: AppConfig.registerHeadline,
+      description: AppConstants.registerHeadline,
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
+            AppTextField(
               controller: _fullNameController,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Full name',
-                hintText: 'Jane Doe',
-              ),
+              labelText: 'Full name',
+              hintText: 'Jane Doe',
               validator: (value) =>
-                  InputValidators.requiredField(value, fieldName: 'Full name'),
+                  Validators.requiredField(value, fieldName: 'Full name'),
             ),
             const SizedBox(height: AppSpacing.compact),
-            TextFormField(
+            AppTextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'jane@company.com',
-              ),
-              validator: InputValidators.email,
+              labelText: 'Email',
+              hintText: 'jane@company.com',
+              validator: Validators.email,
             ),
             const SizedBox(height: AppSpacing.compact),
-            TextFormField(
+            AppTextField(
               controller: _passwordController,
               obscureText: _obscurePassword,
               autofillHints: const [AutofillHints.newPassword],
               textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: 'At least 8 characters',
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
+              labelText: 'Password',
+              hintText: 'At least 8 characters',
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                 ),
               ),
-              validator: InputValidators.password,
+              validator: Validators.password,
             ),
             const SizedBox(height: AppSpacing.compact),
-            TextFormField(
+            AppTextField(
               controller: _targetRoleController,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Target role',
-                hintText: 'Senior Product Designer',
-              ),
-              validator: (value) => InputValidators.requiredField(
-                value,
-                fieldName: 'Target role',
-              ),
+              labelText: 'Target role',
+              hintText: 'Senior Product Designer',
+              validator: (value) =>
+                  Validators.requiredField(value, fieldName: 'Target role'),
             ),
             const SizedBox(height: AppSpacing.compact),
-            TextFormField(
+            AppTextField(
               controller: _yearsController,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Years of experience',
-                hintText: '5',
-              ),
-              validator: InputValidators.yearsOfExperience,
+              labelText: 'Years of experience',
+              hintText: '5',
+              validator: Validators.yearsOfExperience,
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: AppSpacing.page),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: authState.isSubmitting ? null : _submit,
-                child: authState.isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Create account'),
-              ),
+            AppButton(
+              label: 'Create account',
+              isLoading: authState.isSubmitting,
+              onPressed: _submit,
             ),
             const SizedBox(height: AppSpacing.compact),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: authState.isSubmitting
-                    ? null
-                    : () => context.go(_loginLocation()),
-                child: const Text('I already have an account'),
-              ),
+            AppButton(
+              label: 'I already have an account',
+              variant: AppButtonVariant.secondary,
+              onPressed: authState.isSubmitting
+                  ? null
+                  : () => context.go(_loginLocation()),
             ),
           ],
         ),

@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/config/constants.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
-import '../../../../core/utils/input_validators.dart';
+import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
-import '../controllers/auth_controller.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../providers/auth_controller.dart';
+import '../widgets/auth_status_note.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key, this.redirectTo});
@@ -81,84 +84,64 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return AppPlaceholderScaffold(
       eyebrow: 'Public route',
       title: 'Login',
-      description: AppConfig.loginHeadline,
+      description: AppConstants.loginHeadline,
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
+            AppTextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'jane@company.com',
-              ),
-              validator: InputValidators.email,
+              labelText: 'Email',
+              hintText: 'jane@company.com',
+              validator: Validators.email,
             ),
             const SizedBox(height: AppSpacing.compact),
-            TextFormField(
+            AppTextField(
               controller: _passwordController,
               obscureText: _obscurePassword,
               autofillHints: const [AutofillHints.password],
               textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
+              labelText: 'Password',
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                 ),
               ),
-              validator: InputValidators.password,
+              validator: Validators.password,
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: AppSpacing.compact),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              ),
-              child: Text(
-                widget.redirectTo == null || widget.redirectTo == AppRoutes.home
-                    ? 'Sign in to continue into the protected workspace.'
-                    : 'After login you will continue to ${widget.redirectTo}.',
-              ),
+            AuthStatusNote(
+              message:
+                  widget.redirectTo == null ||
+                      widget.redirectTo == AppRoutes.home
+                  ? 'Sign in to continue into the protected workspace.'
+                  : 'After login you will continue to ${widget.redirectTo}.',
             ),
             const SizedBox(height: AppSpacing.page),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: authState.isSubmitting ? null : _submit,
-                child: authState.isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Sign in'),
-              ),
+            AppButton(
+              label: 'Sign in',
+              isLoading: authState.isSubmitting,
+              onPressed: _submit,
             ),
             const SizedBox(height: AppSpacing.compact),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: authState.isSubmitting
-                    ? null
-                    : () => context.go(_registerLocation()),
-                child: const Text('Create a new account'),
-              ),
+            AppButton(
+              label: 'Create a new account',
+              variant: AppButtonVariant.secondary,
+              onPressed: authState.isSubmitting
+                  ? null
+                  : () => context.go(_registerLocation()),
             ),
           ],
         ),

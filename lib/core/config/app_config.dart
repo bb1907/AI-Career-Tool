@@ -1,10 +1,9 @@
+import 'constants.dart';
+
 abstract final class AppConfig {
-  static const appName = 'AI Career Tools';
-  static const homeHeadline =
-      'Build resumes, cover letters and interview plans faster.';
-  static const loginHeadline =
-      'Sign in to manage resumes, cover letters and interview prep in one place.';
-  static const registerHeadline =
-      'Create your account and start building your next career move.';
-  static const onboardingStorageKey = 'has_completed_onboarding';
+  static const appName = AppConstants.appName;
+  static const homeHeadline = AppConstants.homeHeadline;
+  static const loginHeadline = AppConstants.loginHeadline;
+  static const registerHeadline = AppConstants.registerHeadline;
+  static const onboardingStorageKey = AppConstants.onboardingStorageKey;
 }
