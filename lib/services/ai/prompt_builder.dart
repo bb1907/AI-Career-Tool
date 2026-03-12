@@ -33,6 +33,17 @@ Preferred tone: ${request.input['preferred_tone'] ?? ''}
           .trim();
     }
 
+    if (request.type == AiTaskType.coverLetterGenerate) {
+      return '''
+Company name: ${request.input['company_name'] ?? ''}
+Role title: ${request.input['role_title'] ?? ''}
+Job description: ${request.input['job_description'] ?? ''}
+User background: ${request.input['user_background'] ?? ''}
+Tone: ${request.input['tone'] ?? ''}
+'''
+          .trim();
+    }
+
     return jsonEncode(request.input);
   }
 

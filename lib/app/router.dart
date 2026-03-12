@@ -6,7 +6,8 @@ import '../features/auth/domain/entities/auth_state.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
-import '../features/cover_letter/presentation/pages/cover_letter_page.dart';
+import '../features/cover_letter/presentation/pages/cover_letter_input_page.dart';
+import '../features/cover_letter/presentation/pages/cover_letter_result_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/interview/presentation/pages/interview_page.dart';
 import '../features/onboarding/presentation/pages/splash_page.dart';
@@ -26,6 +27,7 @@ abstract final class AppRoutes {
   static const resume = '/resume';
   static const resumeResult = '/resume/result';
   static const coverLetter = '/cover-letter';
+  static const coverLetterResult = '/cover-letter/result';
   static const interview = '/interview';
   static const paywall = '/premium';
   static const settings = '/settings';
@@ -79,7 +81,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.coverLetter,
-        builder: (context, state) => const CoverLetterPage(),
+        builder: (context, state) => const CoverLetterInputPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.coverLetterResult,
+        builder: (context, state) => const CoverLetterResultPage(),
       ),
       GoRoute(
         path: AppRoutes.interview,

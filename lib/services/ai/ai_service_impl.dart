@@ -80,13 +80,9 @@ class AiServiceImpl implements AiService {
 
     return switch (type) {
       AiTaskType.resumeGenerate => _buildResumeOutput(normalizedInput),
-      AiTaskType.coverLetterGenerate => <String, dynamic>{
-        'opening': 'Placeholder cover letter output.',
-        'body': <String>[
-          'Connect experience to the role.',
-          'Close with a clear call to action.',
-        ],
-      },
+      AiTaskType.coverLetterGenerate => _buildCoverLetterOutput(
+        normalizedInput,
+      ),
       AiTaskType.interviewGenerate => <String, dynamic>{
         'questions': <String>[
           'Tell me about yourself.',
@@ -148,6 +144,39 @@ class AiServiceImpl implements AiService {
       'skills': skills.take(8).toList(growable: false),
       'education': education,
     };
+  }
+
+  Map<String, dynamic> _buildCoverLetterOutput(Map<String, dynamic> input) {
+    final companyName =
+        JsonParser.readOptionalString(input, 'company_name') ?? 'the company';
+    final roleTitle =
+        JsonParser.readOptionalString(input, 'role_title') ?? 'the role';
+    final jobDescription =
+        JsonParser.readOptionalString(input, 'job_description') ??
+        'the position requirements';
+    final userBackground =
+        JsonParser.readOptionalString(input, 'user_background') ??
+        'a relevant professional background';
+    final tone =
+        JsonParser.readOptionalString(input, 'tone')?.toLowerCase() ??
+        'professional';
+
+    final coverLetter =
+        '''
+Dear Hiring Team at $companyName,
+
+I am excited to apply for the $roleTitle role. What stands out most about this opportunity is the emphasis on $jobDescription, which closely aligns with my background and the kind of work I want to keep building on.
+
+Across my experience, I have developed $userBackground. That background has taught me how to turn context into clear execution, collaborate across functions, and communicate value in a way that is both practical and outcome-focused.
+
+I would bring a $tone voice, strong ownership, and a clear commitment to helping $companyName move faster on the priorities behind this role. I would welcome the opportunity to discuss how my experience can support your team.
+
+Sincerely,
+[Your Name]
+'''
+            .trim();
+
+    return <String, dynamic>{'cover_letter': coverLetter};
   }
 }
 

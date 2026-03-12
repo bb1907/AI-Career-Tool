@@ -8,6 +8,10 @@ import 'package:ai_career_tools/features/auth/domain/entities/auth_session.dart'
 import 'package:ai_career_tools/features/auth/domain/entities/sign_up_request.dart';
 import 'package:ai_career_tools/features/auth/domain/entities/sign_up_result.dart';
 import 'package:ai_career_tools/features/auth/presentation/providers/auth_controller.dart';
+import 'package:ai_career_tools/features/cover_letter/application/cover_letter_controller.dart';
+import 'package:ai_career_tools/features/cover_letter/domain/entities/cover_letter_request.dart';
+import 'package:ai_career_tools/features/cover_letter/domain/entities/cover_letter_result.dart';
+import 'package:ai_career_tools/features/cover_letter/domain/repositories/cover_letter_repository.dart';
 import 'package:ai_career_tools/features/onboarding/data/local/onboarding_local_storage.dart';
 import 'package:ai_career_tools/features/onboarding/presentation/controllers/onboarding_controller.dart';
 import 'package:ai_career_tools/features/resume/application/resume_controller.dart';
@@ -96,11 +100,44 @@ class _FakeResumeRepository implements ResumeRepository {
   }
 }
 
+class _FakeCoverLetterRepository implements CoverLetterRepository {
+  _FakeCoverLetterRepository({
+    required this.response,
+    this.delay = Duration.zero,
+  });
+
+  final CoverLetterResult response;
+  final Duration delay;
+  final List<CoverLetterResult> _history = [];
+
+  @override
+  Future<CoverLetterResult> generateCoverLetter(
+    CoverLetterRequest request,
+  ) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+
+    return response;
+  }
+
+  @override
+  Future<void> saveCoverLetter(CoverLetterResult result) async {
+    _history.insert(0, result);
+  }
+
+  @override
+  Future<List<CoverLetterResult>> fetchHistory() async {
+    return List<CoverLetterResult>.unmodifiable(_history);
+  }
+}
+
 Future<void> _pumpApp(
   WidgetTester tester, {
   required AuthRepository authRepository,
   required OnboardingLocalStorage onboardingStorage,
   ResumeRepository? resumeRepository,
+  CoverLetterRepository? coverLetterRepository,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -115,6 +152,14 @@ Future<void> _pumpApp(
                   experienceBullets: ['Generated bullet'],
                   skills: ['Figma', 'Research'],
                   education: 'B.A. in Design',
+                ),
+              ),
+        ),
+        coverLetterRepositoryProvider.overrideWithValue(
+          coverLetterRepository ??
+              _FakeCoverLetterRepository(
+                response: const CoverLetterResult(
+                  coverLetter: 'Generated cover letter',
                 ),
               ),
         ),
@@ -141,6 +186,10 @@ void main() {
     ],
     skills: ['Figma', 'Design Systems', 'User Research'],
     education: 'B.A. in Visual Communication Design, Bilkent University',
+  );
+  const generatedCoverLetter = CoverLetterResult(
+    coverLetter:
+        'Dear Hiring Team,\n\nI am excited to apply for the Senior Product Designer role at Acme Labs.\n\nSincerely,\nJane Doe',
   );
 
   testWidgets('shows splash screen while auth bootstrap is in progress', (
@@ -277,5 +326,64 @@ void main() {
     expect(find.text(generatedResume.summary), findsOneWidget);
     expect(find.text('Experience bullets'), findsOneWidget);
     expect(find.text('Skills'), findsOneWidget);
+  });
+
+  testWidgets('submits the cover letter form and opens the result page', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      coverLetterRepository: _FakeCoverLetterRepository(
+        response: generatedCoverLetter,
+        delay: const Duration(milliseconds: 300),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Cover Letter Generator').first,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cover Letter Generator').first);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Acme Labs');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'Senior Product Designer',
+    );
+    await tester.enterText(
+      find.byType(TextFormField).at(2),
+      'Design product experiences, collaborate across teams, and own quality from idea to launch.',
+    );
+    await tester.enterText(
+      find.byType(TextFormField).at(3),
+      '5 years designing B2B and consumer product experiences with measurable improvements in onboarding and retention.',
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Generate cover letter'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate cover letter'));
+    await tester.pump();
+
+    expect(find.text('Generating cover letter...'), findsWidgets);
+
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tailored company draft'), findsOneWidget);
+    expect(find.text('Editable draft'), findsOneWidget);
+    expect(find.text('Regenerate'), findsOneWidget);
+    expect(find.textContaining('Dear Hiring Team'), findsOneWidget);
   });
 }
