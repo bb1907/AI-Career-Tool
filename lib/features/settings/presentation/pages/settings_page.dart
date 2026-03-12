@@ -6,7 +6,7 @@ import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../auth/presentation/providers/auth_controller.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});

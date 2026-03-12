@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/config/app_config.dart';
+import '../../../../core/config/constants.dart';
 import '../../../../core/utils/app_spacing.dart';
 
 class SplashPage extends StatelessWidget {
@@ -37,7 +37,7 @@ class SplashPage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.page),
                 Text(
-                  AppConfig.appName,
+                  AppConstants.appName,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

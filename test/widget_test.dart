@@ -3,17 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ai_career_tools/app/app.dart';
+import 'package:ai_career_tools/features/auth/data/auth_repository.dart';
 import 'package:ai_career_tools/features/auth/domain/entities/auth_session.dart';
 import 'package:ai_career_tools/features/auth/domain/entities/sign_up_request.dart';
 import 'package:ai_career_tools/features/auth/domain/entities/sign_up_result.dart';
-import 'package:ai_career_tools/features/auth/domain/repositories/auth_repository.dart';
-import 'package:ai_career_tools/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:ai_career_tools/features/auth/presentation/providers/auth_controller.dart';
 import 'package:ai_career_tools/features/onboarding/data/local/onboarding_local_storage.dart';
 import 'package:ai_career_tools/features/onboarding/presentation/controllers/onboarding_controller.dart';
+import 'package:ai_career_tools/features/resume/application/resume_controller.dart';
 import 'package:ai_career_tools/features/resume/domain/entities/resume_request.dart';
 import 'package:ai_career_tools/features/resume/domain/entities/resume_result.dart';
 import 'package:ai_career_tools/features/resume/domain/repositories/resume_repository.dart';
-import 'package:ai_career_tools/features/resume/presentation/controllers/resume_builder_controller.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository({

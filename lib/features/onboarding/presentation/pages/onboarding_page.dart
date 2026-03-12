@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/config/constants.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../controllers/onboarding_controller.dart';
 
@@ -96,7 +96,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      AppConfig.appName,
+                      AppConstants.appName,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),

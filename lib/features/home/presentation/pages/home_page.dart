@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/config/constants.dart';
 import '../../../../core/utils/app_spacing.dart';
 
 class HomePage extends StatelessWidget {
@@ -73,7 +73,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
             Text(
-              AppConfig.homeHeadline,
+              AppConstants.homeHeadline,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),

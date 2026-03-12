@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/utils/input_validators.dart';
 import '../../application/resume_controller.dart';
 import '../utils/resume_form_parser.dart';
 import '../utils/resume_form_validators.dart';
@@ -161,7 +161,7 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
                                       hintText: 'Senior Product Designer',
                                     ),
                                     validator: (value) =>
-                                        InputValidators.requiredField(
+                                        Validators.requiredField(
                                           value,
                                           fieldName: 'Target role',
                                         ),
@@ -181,8 +181,7 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
                                       labelText: 'Years of experience',
                                       hintText: '5',
                                     ),
-                                    validator:
-                                        InputValidators.yearsOfExperience,
+                                    validator: Validators.yearsOfExperience,
                                   ),
                                 ),
                               ],
@@ -255,11 +254,10 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
                                 hintText:
                                     'B.A. in Visual Communication Design, Bilkent University',
                               ),
-                              validator: (value) =>
-                                  InputValidators.requiredField(
-                                    value,
-                                    fieldName: 'Education',
-                                  ),
+                              validator: (value) => Validators.requiredField(
+                                value,
+                                fieldName: 'Education',
+                              ),
                             ),
                             const SizedBox(height: AppSpacing.section),
                             DropdownButtonFormField<String>(
