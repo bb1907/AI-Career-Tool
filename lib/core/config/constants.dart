@@ -9,4 +9,6 @@ abstract final class AppConstants {
   static const onboardingStorageKey = 'has_completed_onboarding';
   static const aiTasksEndpointPath = '/v1/ai/tasks';
   static const aiRequestTimeout = Duration(seconds: 30);
+  static const aiMaxAttempts = 3;
+  static const aiRetryBaseDelay = Duration(milliseconds: 700);
 }

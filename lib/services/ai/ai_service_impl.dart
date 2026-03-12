@@ -20,10 +20,13 @@ class AiServiceImpl implements AiService {
   AiServiceImpl({
     this.apiClient = const ApiClient(),
     required SupabaseClient supabaseClient,
-  }) : _supabaseClient = supabaseClient;
+    String? backendBaseUrl,
+  }) : _supabaseClient = supabaseClient,
+       _backendBaseUrl = backendBaseUrl;
 
   final ApiClient apiClient;
   final SupabaseClient _supabaseClient;
+  final String? _backendBaseUrl;
 
   @override
   Future<AiTaskResponse> execute(AiTaskRequest request) async {
@@ -36,35 +39,37 @@ class AiServiceImpl implements AiService {
   }
 
   Future<AiTaskResponse> _executeUnsafe(AiTaskRequest request) async {
-    try {
-      final enrichedRequest = _enrichRequest(request);
-      final backendPayload = PromptBuilder.buildBackendPayload(enrichedRequest);
-      final rawResponse = await apiClient.postJson(
-        _buildEndpointUri(),
-        body: backendPayload,
-        headers: _buildHeaders(enrichedRequest),
-        timeout: AppConstants.aiRequestTimeout,
-      );
+    final enrichedRequest = _enrichRequest(request);
+    final backendPayload = PromptBuilder.buildBackendPayload(enrichedRequest);
+    final endpointUri = _buildEndpointUri();
+    AppException? lastRetryableError;
 
-      return JsonParser.parseAiTaskResponse(
-        rawResponse,
-        expectedType: request.type,
-      );
-    } on HttpException {
-      throw const AppException('The AI service returned an invalid response.');
-    } on AppException {
-      rethrow;
-    } on TimeoutException {
-      throw const AppException('The AI service timed out. Try again.');
-    } on SocketException {
-      throw const AppException(
-        'Could not reach the AI service. Check your connection and try again.',
-      );
-    } on FormatException {
-      throw const AppException('The AI response could not be parsed.');
-    } catch (_) {
-      throw const AppException('The AI service is temporarily unavailable.');
+    for (var attempt = 1; attempt <= AppConstants.aiMaxAttempts; attempt++) {
+      try {
+        final rawResponse = await apiClient.postJson(
+          endpointUri,
+          body: backendPayload,
+          headers: _buildHeaders(enrichedRequest),
+          timeout: AppConstants.aiRequestTimeout,
+        );
+
+        return JsonParser.parseAiTaskResponse(
+          rawResponse,
+          expectedType: request.type,
+        );
+      } catch (error) {
+        final normalizedError = _normalizeError(error);
+        if (!_shouldRetry(normalizedError, attempt)) {
+          throw normalizedError;
+        }
+
+        lastRetryableError = normalizedError;
+        await Future<void>.delayed(_retryDelay(attempt));
+      }
     }
+
+    throw lastRetryableError ??
+        const AppException('The AI service is temporarily unavailable.');
   }
 
   AiTaskRequest _enrichRequest(AiTaskRequest request) {
@@ -81,7 +86,9 @@ class AiServiceImpl implements AiService {
   }
 
   Uri _buildEndpointUri() {
-    final backendUrl = Env.requireAiBackendUrl();
+    final backendUrl = _backendBaseUrl?.trim().isNotEmpty == true
+        ? _backendBaseUrl!.trim()
+        : Env.requireAiBackendUrl();
 
     try {
       final baseUri = Uri.parse(backendUrl);
@@ -118,6 +125,67 @@ class AiServiceImpl implements AiService {
     }
 
     return '$trimmedBase/$trimmedSuffix';
+  }
+
+  AppException _normalizeError(Object error) {
+    if (error is AppException) {
+      return error;
+    }
+
+    if (error is TimeoutException) {
+      return const AppException(
+        'The AI service timed out. Try again.',
+        code: 'ai_timeout',
+        isRetryable: true,
+      );
+    }
+
+    if (error is SocketException) {
+      return const AppException(
+        'Could not reach the AI service. Check your connection and try again.',
+        code: 'ai_network_unreachable',
+        isRetryable: true,
+      );
+    }
+
+    if (error is HandshakeException) {
+      return const AppException(
+        'Could not establish a secure connection to the AI service.',
+        code: 'ai_tls_error',
+        isRetryable: true,
+      );
+    }
+
+    if (error is HttpException) {
+      return const AppException(
+        'The AI service returned an invalid response.',
+        code: 'ai_http_error',
+        isRetryable: true,
+      );
+    }
+
+    if (error is FormatException) {
+      return const AppException(
+        'The AI response could not be parsed.',
+        code: 'ai_invalid_json',
+      );
+    }
+
+    return const AppException(
+      'The AI service is temporarily unavailable.',
+      code: 'ai_unexpected_error',
+    );
+  }
+
+  bool _shouldRetry(AppException error, int attempt) {
+    return error.isRetryable && attempt < AppConstants.aiMaxAttempts;
+  }
+
+  Duration _retryDelay(int attempt) {
+    final multiplier = attempt <= 1 ? 1 : 1 << (attempt - 1);
+    return Duration(
+      milliseconds: AppConstants.aiRetryBaseDelay.inMilliseconds * multiplier,
+    );
   }
 }
 

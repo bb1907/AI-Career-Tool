@@ -9,6 +9,13 @@ abstract final class JsonParser {
     String source, {
     String context = 'response',
   }) {
+    if (source.trim().isEmpty) {
+      throw AppException(
+        'The AI $context was empty.',
+        code: 'ai_empty_response',
+      );
+    }
+
     try {
       final decoded = jsonDecode(source);
       if (decoded is Map<String, dynamic>) {
@@ -17,7 +24,10 @@ abstract final class JsonParser {
 
       throw FormatException('Expected a JSON object for $context.');
     } on FormatException {
-      throw AppException('The AI $context was not valid JSON.');
+      throw AppException(
+        'The AI $context was not valid JSON.',
+        code: 'ai_invalid_json',
+      );
     }
   }
 
@@ -34,6 +44,7 @@ abstract final class JsonParser {
     if (taskValue == null) {
       throw const AppException(
         'The AI response did not include a task identifier.',
+        code: 'ai_missing_task',
       );
     }
 
@@ -42,6 +53,7 @@ abstract final class JsonParser {
     if (responseType != expectedType) {
       throw const AppException(
         'The AI response did not match the requested task.',
+        code: 'ai_task_mismatch',
       );
     }
 
@@ -105,6 +117,7 @@ abstract final class JsonParser {
 
     throw AppException(
       'The AI response field "$key" had an invalid structure.',
+      code: 'ai_invalid_structure',
     );
   }
 
@@ -123,6 +136,7 @@ abstract final class JsonParser {
 
     throw AppException(
       'The AI response field "$key" had an invalid structure.',
+      code: 'ai_invalid_structure',
     );
   }
 
@@ -132,7 +146,10 @@ abstract final class JsonParser {
       return value.trim();
     }
 
-    throw AppException('The AI response field "$key" was missing.');
+    throw AppException(
+      'The AI response field "$key" was missing.',
+      code: 'ai_missing_field',
+    );
   }
 
   static String? readOptionalString(Map<String, dynamic> json, String key) {
@@ -171,18 +188,27 @@ abstract final class JsonParser {
     final value = json[key];
     if (value == null) {
       if (required) {
-        throw AppException('The AI response field "$key" was missing.');
+        throw AppException(
+          'The AI response field "$key" was missing.',
+          code: 'ai_missing_field',
+        );
       }
 
       return;
     }
 
     if (value is! String) {
-      throw AppException('The AI response field "$key" must be a string.');
+      throw AppException(
+        'The AI response field "$key" must be a string.',
+        code: 'ai_invalid_field_type',
+      );
     }
 
     if (!allowEmpty && value.trim().isEmpty) {
-      throw AppException('The AI response field "$key" was empty.');
+      throw AppException(
+        'The AI response field "$key" was empty.',
+        code: 'ai_empty_field',
+      );
     }
   }
 
@@ -196,7 +222,10 @@ abstract final class JsonParser {
       return;
     }
 
-    throw AppException('The AI response field "$key" must be an integer.');
+    throw AppException(
+      'The AI response field "$key" must be an integer.',
+      code: 'ai_invalid_field_type',
+    );
   }
 
   static void validateNumField(Map<String, dynamic> json, String key) {
@@ -209,7 +238,10 @@ abstract final class JsonParser {
       return;
     }
 
-    throw AppException('The AI response field "$key" must be numeric.');
+    throw AppException(
+      'The AI response field "$key" must be numeric.',
+      code: 'ai_invalid_field_type',
+    );
   }
 
   static List<String> readStringList(
@@ -223,7 +255,10 @@ abstract final class JsonParser {
     }
 
     if (value is! List) {
-      throw AppException('The AI response field "$key" must be a list.');
+      throw AppException(
+        'The AI response field "$key" must be a list.',
+        code: 'ai_invalid_field_type',
+      );
     }
 
     return value
@@ -238,7 +273,10 @@ abstract final class JsonParser {
   ) {
     final value = json[key];
     if (value is! List) {
-      throw AppException('The AI response field "$key" must be a list.');
+      throw AppException(
+        'The AI response field "$key" must be a list.',
+        code: 'ai_invalid_field_type',
+      );
     }
 
     return value
@@ -246,6 +284,7 @@ abstract final class JsonParser {
           if (item is! Map<String, dynamic>) {
             throw AppException(
               'The AI response field "$key" had an invalid question item.',
+              code: 'ai_invalid_structure',
             );
           }
 

@@ -65,32 +65,44 @@ class ApiClient {
       400 => AppException(
         backendMessage ??
             'The AI request was rejected. Review the input and try again.',
+        code: 'http_400',
       ),
       401 || 403 => AppException(
         backendMessage ?? 'The AI request was not authorized.',
+        code: 'http_$statusCode',
       ),
       404 => AppException(
         backendMessage ?? 'The AI endpoint could not be reached.',
+        code: 'http_404',
       ),
       408 || 504 => AppException(
         backendMessage ?? 'The AI service timed out. Try again.',
+        code: 'http_$statusCode',
+        isRetryable: true,
       ),
       409 => AppException(
         backendMessage ??
             'The AI service could not complete the request right now.',
+        code: 'http_409',
       ),
       422 => AppException(
         backendMessage ?? 'The AI response format was invalid.',
+        code: 'http_422',
       ),
       429 => AppException(
         backendMessage ??
             'The AI service is busy right now. Please try again shortly.',
+        code: 'http_429',
+        isRetryable: true,
       ),
       >= 500 => AppException(
         backendMessage ?? 'The AI service is temporarily unavailable.',
+        code: 'http_$statusCode',
+        isRetryable: true,
       ),
       _ => AppException(
         backendMessage ?? 'The AI request failed unexpectedly.',
+        code: 'http_$statusCode',
       ),
     };
   }
