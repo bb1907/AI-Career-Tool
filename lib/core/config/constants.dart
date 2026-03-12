@@ -7,4 +7,6 @@ abstract final class AppConstants {
   static const registerHeadline =
       'Create your account and start building your next career move.';
   static const onboardingStorageKey = 'has_completed_onboarding';
+  static const aiTasksEndpointPath = '/v1/ai/tasks';
+  static const aiRequestTimeout = Duration(seconds: 30);
 }
