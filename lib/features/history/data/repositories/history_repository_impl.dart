@@ -1,10 +1,12 @@
+import '../../../../core/errors/app_exception.dart';
 import '../../domain/entities/history_snapshot.dart';
+import '../../domain/entities/history_section.dart';
 import '../../domain/repositories/history_repository.dart';
 import '../../../cover_letter/domain/repositories/cover_letter_repository.dart';
-import '../../../cover_letter/domain/entities/cover_letter_result.dart';
 import '../../../interview/domain/repositories/interview_repository.dart';
-import '../../../interview/domain/entities/interview_result.dart';
 import '../../../resume/domain/repositories/resume_repository.dart';
+import '../../../cover_letter/domain/entities/cover_letter_result.dart';
+import '../../../interview/domain/entities/interview_result.dart';
 import '../../../resume/domain/entities/resume_result.dart';
 
 class HistoryRepositoryImpl implements HistoryRepository {
@@ -23,19 +25,38 @@ class HistoryRepositoryImpl implements HistoryRepository {
   @override
   Future<HistorySnapshot> fetchHistory() async {
     final results = await Future.wait<Object>([
-      _resumeRepository.fetchHistory(),
-      _coverLetterRepository.fetchHistory(),
-      _interviewRepository.fetchHistory(),
+      _loadSection<ResumeResult>(
+        _resumeRepository.fetchHistory,
+        fallbackMessage: 'Resume history could not be loaded right now.',
+      ),
+      _loadSection<CoverLetterResult>(
+        _coverLetterRepository.fetchHistory,
+        fallbackMessage: 'Cover letter history could not be loaded right now.',
+      ),
+      _loadSection<InterviewResult>(
+        _interviewRepository.fetchHistory,
+        fallbackMessage: 'Interview history could not be loaded right now.',
+      ),
     ]);
 
     return HistorySnapshot(
-      resumes: List<ResumeResult>.from(results[0] as List<ResumeResult>),
-      coverLetters: List<CoverLetterResult>.from(
-        results[1] as List<CoverLetterResult>,
-      ),
-      interviewSets: List<InterviewResult>.from(
-        results[2] as List<InterviewResult>,
-      ),
+      resumes: results[0] as HistorySection<ResumeResult>,
+      coverLetters: results[1] as HistorySection<CoverLetterResult>,
+      interviewSets: results[2] as HistorySection<InterviewResult>,
     );
+  }
+
+  Future<HistorySection<T>> _loadSection<T>(
+    Future<List<T>> Function() load, {
+    required String fallbackMessage,
+  }) async {
+    try {
+      final items = await load();
+      return HistorySection<T>(items: List<T>.from(items));
+    } on AppException catch (error) {
+      return HistorySection<T>(errorMessage: error.message);
+    } catch (_) {
+      return HistorySection<T>(errorMessage: fallbackMessage);
+    }
   }
 }

@@ -12,6 +12,7 @@ import '../../../cover_letter/domain/entities/cover_letter_result.dart';
 import '../../../interview/domain/entities/interview_result.dart';
 import '../../../resume/domain/entities/resume_result.dart';
 import '../../application/history_controller.dart';
+import '../../domain/entities/history_section.dart';
 import '../../domain/entities/history_snapshot.dart';
 import '../widgets/history_empty_state.dart';
 import '../widgets/history_section_card.dart';
@@ -39,7 +40,7 @@ class HistoryPage extends ConsumerWidget {
 
     final state = ref.watch(historyControllerProvider(userId));
 
-    if (state.isLoading && state.isEmpty) {
+    if (state.isLoading && !state.hasRenderableSections) {
       return const AppPlaceholderScaffold(
         eyebrow: 'History',
         title: 'Loading saved work...',
@@ -51,7 +52,7 @@ class HistoryPage extends ConsumerWidget {
       );
     }
 
-    if (state.errorMessage != null && state.isEmpty) {
+    if (state.errorMessage != null && !state.hasRenderableSections) {
       return AppPlaceholderScaffold(
         eyebrow: 'History',
         title: 'History unavailable',
@@ -65,7 +66,7 @@ class HistoryPage extends ConsumerWidget {
       );
     }
 
-    if (state.isEmpty) {
+    if (!state.hasRenderableSections) {
       return AppPlaceholderScaffold(
         eyebrow: 'History',
         title: 'Your saved work will appear here',
@@ -123,13 +124,26 @@ class HistoryPage extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.page),
-                  _ResumeHistorySection(items: state.snapshot.resumes),
-                  const SizedBox(height: AppSpacing.page),
-                  _CoverLetterHistorySection(
-                    items: state.snapshot.coverLetters,
+                  _ResumeHistorySection(
+                    section: state.snapshot.resumes,
+                    onRetry: () => ref
+                        .read(historyControllerProvider(userId).notifier)
+                        .loadHistory(),
                   ),
                   const SizedBox(height: AppSpacing.page),
-                  _InterviewHistorySection(items: state.snapshot.interviewSets),
+                  _CoverLetterHistorySection(
+                    section: state.snapshot.coverLetters,
+                    onRetry: () => ref
+                        .read(historyControllerProvider(userId).notifier)
+                        .loadHistory(),
+                  ),
+                  const SizedBox(height: AppSpacing.page),
+                  _InterviewHistorySection(
+                    section: state.snapshot.interviewSets,
+                    onRetry: () => ref
+                        .read(historyControllerProvider(userId).notifier)
+                        .loadHistory(),
+                  ),
                 ],
               ),
             ),
@@ -149,10 +163,6 @@ class _HistoryOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final totalCount =
-        snapshot.resumes.length +
-        snapshot.coverLetters.length +
-        snapshot.interviewSets.length;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -178,7 +188,7 @@ class _HistoryOverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.compact),
           Text(
-            '$totalCount saved items across resumes, cover letters and interview prep.',
+            '${snapshot.totalCount} saved items across resumes, cover letters and interview prep.',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
               height: 1.5,
@@ -191,23 +201,29 @@ class _HistoryOverviewCard extends StatelessWidget {
 }
 
 class _ResumeHistorySection extends StatelessWidget {
-  const _ResumeHistorySection({required this.items});
+  const _ResumeHistorySection({required this.section, required this.onRetry});
 
-  final List<ResumeResult> items;
+  final HistorySection<ResumeResult> section;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     return HistorySectionCard(
       title: 'Resumes',
-      subtitle: '${items.length} saved',
+      subtitle: section.hasError ? 'Unavailable' : '${section.count} saved',
       icon: Icons.description_outlined,
-      child: items.isEmpty
+      child: section.hasError
+          ? _HistorySectionError(
+              message: section.errorMessage!,
+              onRetry: onRetry,
+            )
+          : section.isEmpty
           ? const Text('No saved resumes yet.')
           : Column(
               children: [
-                for (var index = 0; index < items.length; index++) ...[
-                  _ResumeHistoryTile(item: items[index]),
-                  if (index != items.length - 1)
+                for (var index = 0; index < section.items.length; index++) ...[
+                  _ResumeHistoryTile(item: section.items[index]),
+                  if (index != section.items.length - 1)
                     const Divider(height: AppSpacing.page),
                 ],
               ],
@@ -258,23 +274,32 @@ class _ResumeHistoryTile extends StatelessWidget {
 }
 
 class _CoverLetterHistorySection extends StatelessWidget {
-  const _CoverLetterHistorySection({required this.items});
+  const _CoverLetterHistorySection({
+    required this.section,
+    required this.onRetry,
+  });
 
-  final List<CoverLetterResult> items;
+  final HistorySection<CoverLetterResult> section;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     return HistorySectionCard(
       title: 'Cover Letters',
-      subtitle: '${items.length} saved',
+      subtitle: section.hasError ? 'Unavailable' : '${section.count} saved',
       icon: Icons.edit_note_outlined,
-      child: items.isEmpty
+      child: section.hasError
+          ? _HistorySectionError(
+              message: section.errorMessage!,
+              onRetry: onRetry,
+            )
+          : section.isEmpty
           ? const Text('No saved cover letters yet.')
           : Column(
               children: [
-                for (var index = 0; index < items.length; index++) ...[
-                  _CoverLetterHistoryTile(item: items[index]),
-                  if (index != items.length - 1)
+                for (var index = 0; index < section.items.length; index++) ...[
+                  _CoverLetterHistoryTile(item: section.items[index]),
+                  if (index != section.items.length - 1)
                     const Divider(height: AppSpacing.page),
                 ],
               ],
@@ -300,27 +325,85 @@ class _CoverLetterHistoryTile extends StatelessWidget {
 }
 
 class _InterviewHistorySection extends StatelessWidget {
-  const _InterviewHistorySection({required this.items});
+  const _InterviewHistorySection({
+    required this.section,
+    required this.onRetry,
+  });
 
-  final List<InterviewResult> items;
+  final HistorySection<InterviewResult> section;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     return HistorySectionCard(
       title: 'Interview Sets',
-      subtitle: '${items.length} saved',
+      subtitle: section.hasError ? 'Unavailable' : '${section.count} saved',
       icon: Icons.record_voice_over_outlined,
-      child: items.isEmpty
+      child: section.hasError
+          ? _HistorySectionError(
+              message: section.errorMessage!,
+              onRetry: onRetry,
+            )
+          : section.isEmpty
           ? const Text('No saved interview prep yet.')
           : Column(
               children: [
-                for (var index = 0; index < items.length; index++) ...[
-                  _InterviewHistoryTile(item: items[index]),
-                  if (index != items.length - 1)
+                for (var index = 0; index < section.items.length; index++) ...[
+                  _InterviewHistoryTile(item: section.items[index]),
+                  if (index != section.items.length - 1)
                     const Divider(height: AppSpacing.page),
                 ],
               ],
             ),
+    );
+  }
+}
+
+class _HistorySectionError extends StatelessWidget {
+  const _HistorySectionError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.error),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: onRetry,
+                    child: const Text('Retry section load'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

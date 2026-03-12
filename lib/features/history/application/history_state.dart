@@ -12,6 +12,8 @@ class HistoryState {
   final String? errorMessage;
 
   bool get isEmpty => snapshot.isEmpty;
+  bool get hasSectionErrors => snapshot.hasAnyError;
+  bool get hasRenderableSections => !snapshot.isEmpty || snapshot.hasAnyError;
 
   HistoryState copyWith({
     bool? isLoading,

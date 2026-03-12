@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ai_career_tools/app/app.dart';
+import 'package:ai_career_tools/core/errors/app_exception.dart';
 import 'package:ai_career_tools/features/auth/data/auth_repository.dart';
 import 'package:ai_career_tools/features/auth/domain/entities/auth_session.dart';
 import 'package:ai_career_tools/features/auth/domain/entities/sign_up_request.dart';
@@ -21,6 +22,7 @@ import 'package:ai_career_tools/features/interview/domain/entities/interview_req
 import 'package:ai_career_tools/features/interview/domain/entities/interview_result.dart';
 import 'package:ai_career_tools/features/interview/domain/repositories/interview_repository.dart';
 import 'package:ai_career_tools/features/history/application/history_controller.dart';
+import 'package:ai_career_tools/features/history/domain/entities/history_section.dart';
 import 'package:ai_career_tools/features/history/domain/entities/history_snapshot.dart';
 import 'package:ai_career_tools/features/history/domain/repositories/history_repository.dart';
 import 'package:ai_career_tools/features/onboarding/data/local/onboarding_local_storage.dart';
@@ -167,11 +169,13 @@ class _FakeCoverLetterRepository implements CoverLetterRepository {
     required this.response,
     this.delay = Duration.zero,
     List<CoverLetterResult> initialHistory = const [],
+    this.fetchHistoryError,
   }) : _history = List<CoverLetterResult>.from(initialHistory);
 
   final CoverLetterResult response;
   final Duration delay;
   final List<CoverLetterResult> _history;
+  final Object? fetchHistoryError;
 
   @override
   Future<CoverLetterResult> generateCoverLetter(
@@ -191,6 +195,10 @@ class _FakeCoverLetterRepository implements CoverLetterRepository {
 
   @override
   Future<List<CoverLetterResult>> fetchHistory() async {
+    if (fetchHistoryError != null) {
+      throw fetchHistoryError!;
+    }
+
     return List<CoverLetterResult>.unmodifiable(_history);
   }
 }
@@ -712,24 +720,28 @@ void main() {
         activeUserId: restoredSession.userId,
         snapshotsByUserId: {
           restoredSession.userId: const HistorySnapshot(
-            resumes: [
-              ResumeResult(
-                summary: 'User A resume snapshot',
-                experienceBullets: ['A bullet'],
-                skills: ['Figma'],
-                education: 'A education',
-              ),
-            ],
+            resumes: HistorySection(
+              items: [
+                ResumeResult(
+                  summary: 'User A resume snapshot',
+                  experienceBullets: ['A bullet'],
+                  skills: ['Figma'],
+                  education: 'A education',
+                ),
+              ],
+            ),
           ),
           secondSession.userId: const HistorySnapshot(
-            resumes: [
-              ResumeResult(
-                summary: 'User B resume snapshot',
-                experienceBullets: ['B bullet'],
-                skills: ['Dart'],
-                education: 'B education',
-              ),
-            ],
+            resumes: HistorySection(
+              items: [
+                ResumeResult(
+                  summary: 'User B resume snapshot',
+                  experienceBullets: ['B bullet'],
+                  skills: ['Dart'],
+                  education: 'B education',
+                ),
+              ],
+            ),
           ),
         },
       );
@@ -776,6 +788,52 @@ void main() {
       expect(find.text('User A resume snapshot'), findsNothing);
     },
   );
+
+  testWidgets('renders healthy history sections when one source fails', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      resumeRepository: _FakeResumeRepository(
+        response: generatedResume,
+        initialHistory: const [generatedResume],
+      ),
+      coverLetterRepository: _FakeCoverLetterRepository(
+        response: generatedCoverLetter,
+        fetchHistoryError: const AppException(
+          'Cover letter history is temporarily unavailable.',
+        ),
+      ),
+      interviewRepository: _FakeInterviewRepository(
+        response: generatedInterviewResult,
+        initialHistory: const [generatedInterviewResult],
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('History'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('History unavailable'), findsNothing);
+    expect(find.text('Resumes'), findsOneWidget);
+    expect(find.text('Cover Letters'), findsOneWidget);
+    expect(find.text('Interview Sets'), findsOneWidget);
+    expect(
+      find.text('Cover letter history is temporarily unavailable.'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry section load'), findsOneWidget);
+    expect(find.textContaining('Senior Product Designer'), findsWidgets);
+    expect(
+      find.text(generatedInterviewResult.technicalQuestions.first.question),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('imports a CV and renders the parsed candidate profile', (
     WidgetTester tester,
