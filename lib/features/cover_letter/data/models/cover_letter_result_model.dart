@@ -1,11 +1,12 @@
 import '../../domain/entities/cover_letter_result.dart';
 
 class CoverLetterResultModel extends CoverLetterResult {
-  const CoverLetterResultModel({required super.coverLetter});
+  const CoverLetterResultModel({required super.coverLetter, super.createdAt});
 
   factory CoverLetterResultModel.fromJson(Map<String, dynamic> json) {
     return CoverLetterResultModel(
       coverLetter: json['cover_letter'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
     );
   }
 

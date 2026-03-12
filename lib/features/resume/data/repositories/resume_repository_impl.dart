@@ -31,6 +31,7 @@ class ResumeRepositoryImpl implements ResumeRepository {
         experienceBullets: result.experienceBullets,
         skills: result.skills,
         education: result.education,
+        createdAt: result.createdAt,
       ),
     );
   }

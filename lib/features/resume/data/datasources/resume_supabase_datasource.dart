@@ -38,7 +38,7 @@ class ResumeSupabaseDatasource implements ResumePersistenceDatasource {
     try {
       final response = await _databaseService
           .from('resumes')
-          .select('summary, experience_bullets, skills, education')
+          .select('summary, experience_bullets, skills, education, created_at')
           .eq('user_id', _databaseService.requireCurrentUserId())
           .order('created_at', ascending: false);
 

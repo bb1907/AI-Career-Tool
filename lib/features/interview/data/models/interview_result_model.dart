@@ -5,6 +5,7 @@ class InterviewResultModel extends InterviewResult {
   const InterviewResultModel({
     required super.technicalQuestions,
     required super.behavioralQuestions,
+    super.createdAt,
   });
 
   factory InterviewResultModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class InterviewResultModel extends InterviewResult {
               .whereType<Map<String, dynamic>>()
               .map(InterviewQuestionModel.fromJson)
               .toList(growable: false),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
     );
   }
 

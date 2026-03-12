@@ -28,7 +28,10 @@ class CoverLetterRepositoryImpl implements CoverLetterRepository {
   @override
   Future<void> saveCoverLetter(CoverLetterResult result) async {
     await _persistenceDatasource.save(
-      CoverLetterResultModel(coverLetter: result.coverLetter),
+      CoverLetterResultModel(
+        coverLetter: result.coverLetter,
+        createdAt: result.createdAt,
+      ),
     );
   }
 

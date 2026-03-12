@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/config/constants.dart';
 import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/loading_view.dart';
+import '../../../auth/presentation/providers/auth_controller.dart';
+import '../providers/recent_documents_provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   static const _featureCards = <_FeatureCardData>[
@@ -36,9 +41,15 @@ class HomePage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final userId = ref.watch(
+      authControllerProvider.select((authState) => authState.session?.userId),
+    );
+    final recentDocuments = userId == null
+        ? const AsyncData(RecentDocumentsState())
+        : ref.watch(recentDocumentsProvider(userId));
 
     return Scaffold(
       appBar: AppBar(
@@ -113,42 +124,199 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.compact),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.section),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Saved work now lives in History.',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.compact),
-                    Text(
-                      'Open one place to review saved resumes, cover letters and interview prep as soon as you store them.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                    FilledButton.tonalIcon(
-                      onPressed: () => context.go(AppRoutes.history),
-                      icon: const Icon(Icons.history_outlined),
-                      label: const Text('Open history'),
-                    ),
-                  ],
-                ),
-              ),
+            _RecentDocumentsCard(
+              recentDocuments: recentDocuments,
+              onHistoryPressed: () => context.go(AppRoutes.history),
             ),
             const SizedBox(height: AppSpacing.page),
             _PremiumUpsellCard(onPressed: () => context.go(AppRoutes.paywall)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentDocumentsCard extends StatelessWidget {
+  const _RecentDocumentsCard({
+    required this.recentDocuments,
+    required this.onHistoryPressed,
+  });
+
+  final AsyncValue<RecentDocumentsState> recentDocuments;
+  final VoidCallback onHistoryPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.section),
+        child: recentDocuments.when(
+          data: (state) {
+            if (state.isEmpty) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No saved work yet',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.compact),
+                  Text(
+                    'Generate and save a resume, cover letter or interview set to see it here first.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+                  FilledButton.tonalIcon(
+                    onPressed: onHistoryPressed,
+                    icon: const Icon(Icons.history_outlined),
+                    label: const Text('Open history'),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recently saved',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.compact),
+                Text(
+                  'Jump back into your latest saved outputs without opening the full history screen.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                if (state.hasSectionErrors) ...[
+                  const SizedBox(height: AppSpacing.compact),
+                  Text(
+                    'Some saved sources are temporarily unavailable.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.error,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.section),
+                for (var index = 0; index < state.items.length; index++) ...[
+                  _RecentDocumentTile(item: state.items[index]),
+                  if (index != state.items.length - 1)
+                    const Divider(height: AppSpacing.page),
+                ],
+                const SizedBox(height: AppSpacing.section),
+                FilledButton.tonalIcon(
+                  onPressed: onHistoryPressed,
+                  icon: const Icon(Icons.history_outlined),
+                  label: const Text('Open full history'),
+                ),
+              ],
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.section),
+            child: LoadingView(label: 'Loading recent work...'),
+          ),
+          error: (_, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Recent activity unavailable',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.compact),
+              ErrorView(
+                message: 'Recent saved work could not be loaded right now.',
+                onRetry: onHistoryPressed,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentDocumentTile extends StatelessWidget {
+  const _RecentDocumentTile({required this.item});
+
+  final RecentDocumentItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => context.go(item.route),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              alignment: Alignment.center,
+              child: Icon(item.icon, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.typeLabel,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ],
         ),
       ),

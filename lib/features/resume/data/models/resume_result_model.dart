@@ -6,6 +6,7 @@ class ResumeResultModel extends ResumeResult {
     required super.experienceBullets,
     required super.skills,
     required super.education,
+    super.createdAt,
   });
 
   factory ResumeResultModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class ResumeResultModel extends ResumeResult {
           .map((item) => item.toString())
           .toList(growable: false),
       education: json['education'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
     );
   }
 

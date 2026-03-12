@@ -40,7 +40,7 @@ class InterviewSupabaseDatasource implements InterviewPersistenceDatasource {
     try {
       final response = await _databaseService
           .from('interview_sets')
-          .select('technical_questions, behavioral_questions')
+          .select('technical_questions, behavioral_questions, created_at')
           .eq('user_id', _databaseService.requireCurrentUserId())
           .order('created_at', ascending: false);
 

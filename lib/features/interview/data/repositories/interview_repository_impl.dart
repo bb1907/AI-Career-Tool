@@ -31,6 +31,7 @@ class InterviewRepositoryImpl implements InterviewRepository {
       InterviewResultModel(
         technicalQuestions: result.technicalQuestions,
         behavioralQuestions: result.behavioralQuestions,
+        createdAt: result.createdAt,
       ),
     );
   }

@@ -470,6 +470,127 @@ void main() {
     expect(find.text('Interview Prep'), findsOneWidget);
   });
 
+  testWidgets('shows recent saved items on home as a mixed list', (
+    WidgetTester tester,
+  ) async {
+    final mostRecentCoverLetter = CoverLetterResult(
+      coverLetter: 'Cover letter for Orbit Labs',
+      createdAt: DateTime.utc(2026, 3, 12, 10, 30),
+    );
+    final recentInterview = InterviewResult(
+      technicalQuestions: const [
+        InterviewQuestion(
+          question: 'How do you scope mobile architecture decisions?',
+          sampleAnswer: 'I start with lifecycle, ownership and testability.',
+        ),
+      ],
+      behavioralQuestions: const [
+        InterviewQuestion(
+          question: 'Tell me about a difficult stakeholder conversation.',
+          sampleAnswer: 'I reframed the discussion around tradeoffs and risks.',
+        ),
+      ],
+      createdAt: DateTime.utc(2026, 3, 12, 9, 45),
+    );
+    final recentResume = ResumeResult(
+      summary: 'Resume tailored for senior mobile engineer applications',
+      experienceBullets: const ['Improved release confidence by 20%.'],
+      skills: const ['Flutter', 'Dart'],
+      education: 'B.S. in Computer Engineering',
+      createdAt: DateTime.utc(2026, 3, 12, 8, 30),
+    );
+    final olderResume = ResumeResult(
+      summary: 'Older resume draft',
+      experienceBullets: const ['Built reusable UI modules.'],
+      skills: const ['Flutter'],
+      education: 'B.S. in Computer Engineering',
+      createdAt: DateTime.utc(2026, 3, 11, 15, 0),
+    );
+
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      resumeRepository: _FakeResumeRepository(
+        response: generatedResume,
+        initialHistory: [recentResume, olderResume],
+      ),
+      coverLetterRepository: _FakeCoverLetterRepository(
+        response: generatedCoverLetter,
+        initialHistory: [mostRecentCoverLetter],
+      ),
+      interviewRepository: _FakeInterviewRepository(
+        response: generatedInterviewResult,
+        initialHistory: [recentInterview],
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Recently saved'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recently saved'), findsOneWidget);
+    expect(find.text('Cover Letter'), findsOneWidget);
+    expect(find.text('Interview Set'), findsOneWidget);
+    expect(find.text('Resume'), findsWidgets);
+    expect(find.text('Cover letter for Orbit Labs'), findsOneWidget);
+    expect(
+      find.text('How do you scope mobile architecture decisions?'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Resume tailored for senior mobile engineer applications'),
+      findsOneWidget,
+    );
+
+    final coverLetterY = tester
+        .getTopLeft(find.text('Cover letter for Orbit Labs'))
+        .dy;
+    final interviewY = tester
+        .getTopLeft(
+          find.text('How do you scope mobile architecture decisions?'),
+        )
+        .dy;
+    final resumeY = tester
+        .getTopLeft(
+          find.text('Resume tailored for senior mobile engineer applications'),
+        )
+        .dy;
+
+    expect(coverLetterY, lessThan(interviewY));
+    expect(interviewY, lessThan(resumeY));
+    expect(find.text('Open full history'), findsOneWidget);
+  });
+
+  testWidgets('shows an empty recent state when there is no saved work', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('No saved work yet'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No saved work yet'), findsOneWidget);
+    expect(find.text('Open history'), findsOneWidget);
+  });
+
   testWidgets('navigates from home to a feature route', (
     WidgetTester tester,
   ) async {

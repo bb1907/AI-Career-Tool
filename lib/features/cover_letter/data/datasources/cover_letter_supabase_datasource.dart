@@ -36,7 +36,7 @@ class CoverLetterSupabaseDatasource
     try {
       final response = await _databaseService
           .from('cover_letters')
-          .select('cover_letter')
+          .select('cover_letter, created_at')
           .eq('user_id', _databaseService.requireCurrentUserId())
           .order('created_at', ascending: false);
 
