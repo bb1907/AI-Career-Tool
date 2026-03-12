@@ -12,6 +12,8 @@ import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../paywall/application/premium_access_controller.dart';
 import '../../application/profile_import_controller.dart';
 import '../../domain/entities/candidate_profile.dart';
 import '../../domain/entities/cv_upload_file.dart';
@@ -89,6 +91,38 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      final accessDecision = await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .requestAccess(PremiumAccessFeature.cvParse);
+
+      if (!accessDecision.isAllowed) {
+        if (!mounted) {
+          return;
+        }
+
+        final unlocked = await context.push<bool>(
+          Uri(
+            path: AppRoutes.paywall,
+            queryParameters: {
+              'from': AppRoutes.profileImport,
+              'reason': 'usage_limit',
+              'feature': PremiumAccessFeature.cvParse.name,
+            },
+          ).toString(),
+        );
+
+        if (!mounted || unlocked != true) {
+          return;
+        }
+
+        final refreshedDecision = await ref
+            .read(premiumAccessControllerProvider.notifier)
+            .requestAccess(PremiumAccessFeature.cvParse);
+        if (!refreshedDecision.isAllowed) {
+          return;
+        }
+      }
+
       await ref
           .read(profileImportControllerProvider.notifier)
           .importSelectedCv();

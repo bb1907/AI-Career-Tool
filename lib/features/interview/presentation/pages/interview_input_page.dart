@@ -10,6 +10,8 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../paywall/application/premium_access_controller.dart';
 import '../../application/interview_controller.dart';
 import '../../domain/entities/interview_request.dart';
 
@@ -58,6 +60,42 @@ class _InterviewInputPageState extends ConsumerState<InterviewInputPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final accessDecision = await ref
+        .read(premiumAccessControllerProvider.notifier)
+        .requestAccess(PremiumAccessFeature.interviewGenerate);
+
+    if (!accessDecision.isAllowed) {
+      if (!mounted) {
+        return;
+      }
+
+      final unlocked = await context.push<bool>(
+        Uri(
+          path: AppRoutes.paywall,
+          queryParameters: {
+            'from': AppRoutes.interview,
+            'reason': 'usage_limit',
+            'feature': PremiumAccessFeature.interviewGenerate.name,
+          },
+        ).toString(),
+      );
+
+      if (!mounted || unlocked != true) {
+        return;
+      }
+
+      final refreshedDecision = await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .requestAccess(PremiumAccessFeature.interviewGenerate);
+      if (!refreshedDecision.isAllowed) {
+        return;
+      }
+    }
+
+    if (!mounted) {
       return;
     }
 

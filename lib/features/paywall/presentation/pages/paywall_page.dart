@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../services/subscription/subscription_package.dart';
 import '../../../../services/subscription/subscription_plan.dart';
+import '../../../../services/subscription/subscription_status.dart';
+import '../../application/premium_access_controller.dart';
 import '../../application/subscription_controller.dart';
 
 class PaywallPage extends ConsumerWidget {
-  const PaywallPage({super.key});
+  const PaywallPage({
+    super.key,
+    this.redirectTo,
+    this.sourceFeature,
+    this.reason,
+  });
+
+  final String? redirectTo;
+  final String? sourceFeature;
+  final String? reason;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final subscriptionState = ref.watch(subscriptionControllerProvider);
+    final accessState = ref.watch(premiumAccessControllerProvider);
+    final shouldShowLimitMessage =
+        !subscriptionState.isPremium &&
+        (reason == 'usage_limit' || accessState.hasReachedLimit);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Premium')),
@@ -73,6 +90,39 @@ class PaywallPage extends ConsumerWidget {
                           : 'Access remains active until ${_formatDate(subscriptionState.status.expiresAt!)}.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                  if (shouldShowLimitMessage) ...[
+                    const SizedBox(height: AppSpacing.section),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: Colors.white.withValues(alpha: 0.08),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Free limit reached',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.compact),
+                          Text(
+                            'You have used ${accessState.usedFreeGenerations} of ${accessState.freeGenerationLimit} free generations${sourceFeature == null ? '' : ' for ${_formatSourceFeature(sourceFeature!)}'}. Upgrade to continue from this flow without limits.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.84),
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -238,7 +288,9 @@ class PaywallPage extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await ref.read(subscriptionControllerProvider.notifier).purchase(package);
+      final status = await ref
+          .read(subscriptionControllerProvider.notifier)
+          .purchase(package);
       if (!context.mounted) {
         return;
       }
@@ -248,6 +300,8 @@ class PaywallPage extends ConsumerWidget {
         ..showSnackBar(
           SnackBar(content: Text('${package.plan.label} premium unlocked.')),
         );
+
+      _continueToOrigin(context, status);
     } on AppException catch (error) {
       if (!context.mounted || error.code == 'subscription_purchase_cancelled') {
         return;
@@ -268,18 +322,27 @@ class PaywallPage extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await ref
+      final status = await ref
           .read(subscriptionControllerProvider.notifier)
           .restorePurchases();
       if (!context.mounted) {
         return;
       }
 
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Purchases restored successfully.')),
-        );
+      if (status.isPremium) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('Purchases restored successfully.')),
+          );
+        _continueToOrigin(context, status);
+      } else {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('No active premium purchase found.')),
+          );
+      }
     } on AppException catch (error) {
       if (!context.mounted) {
         return;
@@ -294,6 +357,27 @@ class PaywallPage extends ConsumerWidget {
           ),
         );
     }
+  }
+
+  void _continueToOrigin(BuildContext context, SubscriptionStatus status) {
+    if (!status.isPremium) {
+      return;
+    }
+
+    final normalizedRedirectTo = redirectTo?.trim();
+    if (normalizedRedirectTo != null &&
+        normalizedRedirectTo.isNotEmpty &&
+        Navigator.of(context).canPop()) {
+      context.pop(true);
+      return;
+    }
+
+    if (normalizedRedirectTo == null || normalizedRedirectTo.isEmpty) {
+      context.go(AppRoutes.home);
+      return;
+    }
+
+    context.go(normalizedRedirectTo);
   }
 
   static String _formatDate(DateTime date) {
@@ -314,6 +398,17 @@ class PaywallPage extends ConsumerWidget {
     };
 
     return '$month ${date.day}, ${date.year}';
+  }
+
+  static String _formatSourceFeature(String rawFeature) {
+    return switch (rawFeature) {
+      'resumeGenerate' => 'Resume Builder',
+      'coverLetterGenerate' => 'Cover Letter Generator',
+      'interviewGenerate' => 'Interview Prep',
+      'cvParse' => 'CV Parser',
+      'voiceResume' => 'Voice Resume',
+      _ => 'this feature',
+    };
   }
 }
 

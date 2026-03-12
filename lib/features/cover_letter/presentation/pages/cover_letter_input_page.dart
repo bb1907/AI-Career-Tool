@@ -9,6 +9,8 @@ import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../paywall/application/premium_access_controller.dart';
 import '../../application/cover_letter_controller.dart';
 import '../../domain/entities/cover_letter_request.dart';
 
@@ -46,6 +48,42 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final accessDecision = await ref
+        .read(premiumAccessControllerProvider.notifier)
+        .requestAccess(PremiumAccessFeature.coverLetterGenerate);
+
+    if (!accessDecision.isAllowed) {
+      if (!mounted) {
+        return;
+      }
+
+      final unlocked = await context.push<bool>(
+        Uri(
+          path: AppRoutes.paywall,
+          queryParameters: {
+            'from': AppRoutes.coverLetter,
+            'reason': 'usage_limit',
+            'feature': PremiumAccessFeature.coverLetterGenerate.name,
+          },
+        ).toString(),
+      );
+
+      if (!mounted || unlocked != true) {
+        return;
+      }
+
+      final refreshedDecision = await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .requestAccess(PremiumAccessFeature.coverLetterGenerate);
+      if (!refreshedDecision.isAllowed) {
+        return;
+      }
+    }
+
+    if (!mounted) {
       return;
     }
 

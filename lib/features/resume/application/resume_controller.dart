@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/ai/ai_service_impl.dart';
 import '../../../services/supabase/database_service.dart';
+import '../../paywall/application/premium_access_controller.dart';
 import '../data/datasources/resume_remote_datasource.dart';
 import '../data/datasources/resume_supabase_datasource.dart';
 import '../data/repositories/resume_repository_impl.dart';
@@ -46,6 +48,9 @@ class ResumeController extends Notifier<ResumeState> {
       final result = await ref
           .read(resumeRepositoryProvider)
           .generateResume(request);
+      await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .recordSuccessfulUse(PremiumAccessFeature.resumeGenerate);
 
       state = state.copyWith(
         request: request,

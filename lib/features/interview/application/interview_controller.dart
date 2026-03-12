@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
+import '../../paywall/application/premium_access_controller.dart';
 import '../data/datasources/interview_remote_datasource.dart';
 import '../data/datasources/interview_supabase_datasource.dart';
 import '../data/repositories/interview_repository_impl.dart';
@@ -49,6 +51,9 @@ class InterviewController extends Notifier<InterviewState> {
       final result = await ref
           .read(interviewRepositoryProvider)
           .generateInterviewPrep(request);
+      await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .recordSuccessfulUse(PremiumAccessFeature.interviewGenerate);
 
       state = state.copyWith(
         request: request,

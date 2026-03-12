@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
+import '../../paywall/application/premium_access_controller.dart';
 import '../data/datasources/cover_letter_remote_datasource.dart';
 import '../data/datasources/cover_letter_supabase_datasource.dart';
 import '../data/repositories/cover_letter_repository_impl.dart';
@@ -51,6 +53,9 @@ class CoverLetterController extends Notifier<CoverLetterState> {
       final result = await ref
           .read(coverLetterRepositoryProvider)
           .generateCoverLetter(request);
+      await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .recordSuccessfulUse(PremiumAccessFeature.coverLetterGenerate);
 
       state = state.copyWith(
         request: request,

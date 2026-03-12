@@ -13,4 +13,6 @@ abstract final class AppConstants {
   static const aiRetryBaseDelay = Duration(milliseconds: 700);
   static const revenueCatEntitlementId = 'premium';
   static const subscriptionsTable = 'subscriptions';
+  static const freeGenerationsLimit = 3;
+  static const freeGenerationUsageStorageKeyPrefix = 'free_generation_usage_';
 }

@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
 import '../../../services/supabase/storage_service.dart';
+import '../../paywall/application/premium_access_controller.dart';
 import '../data/datasources/profile_import_remote_datasource.dart';
 import '../data/datasources/profile_import_supabase_datasource.dart';
 import '../data/repositories/profile_import_repository_impl.dart';
@@ -87,6 +89,9 @@ class ProfileImportController extends Notifier<ProfileImportState> {
           .read(profileImportRepositoryProvider)
           .importCv(file);
       final profile = await profileFuture;
+      await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .recordSuccessfulUse(PremiumAccessFeature.cvParse);
 
       state = state.copyWith(
         isImporting: false,

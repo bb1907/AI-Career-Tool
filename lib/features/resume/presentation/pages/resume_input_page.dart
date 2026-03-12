@@ -9,6 +9,8 @@ import '../../../../app/router.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../paywall/application/premium_access_controller.dart';
+import '../../../../services/subscription/premium_access_feature.dart';
 import '../../application/resume_controller.dart';
 import '../utils/resume_form_parser.dart';
 import '../utils/resume_form_validators.dart';
@@ -50,6 +52,42 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final accessDecision = await ref
+        .read(premiumAccessControllerProvider.notifier)
+        .requestAccess(PremiumAccessFeature.resumeGenerate);
+
+    if (!accessDecision.isAllowed) {
+      if (!mounted) {
+        return;
+      }
+
+      final unlocked = await context.push<bool>(
+        Uri(
+          path: AppRoutes.paywall,
+          queryParameters: {
+            'from': AppRoutes.resume,
+            'reason': 'usage_limit',
+            'feature': PremiumAccessFeature.resumeGenerate.name,
+          },
+        ).toString(),
+      );
+
+      if (!mounted || unlocked != true) {
+        return;
+      }
+
+      final refreshedDecision = await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .requestAccess(PremiumAccessFeature.resumeGenerate);
+      if (!refreshedDecision.isAllowed) {
+        return;
+      }
+    }
+
+    if (!mounted) {
       return;
     }
 

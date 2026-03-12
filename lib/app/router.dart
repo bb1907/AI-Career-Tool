@@ -111,7 +111,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.paywall,
-        builder: (context, state) => const PaywallPage(),
+        builder: (context, state) => PaywallPage(
+          redirectTo: state.uri.queryParameters['from'],
+          sourceFeature: state.uri.queryParameters['feature'],
+          reason: state.uri.queryParameters['reason'],
+        ),
       ),
       GoRoute(
         path: AppRoutes.settings,

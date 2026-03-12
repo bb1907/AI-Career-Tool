@@ -92,7 +92,7 @@ class SubscriptionController extends Notifier<SubscriptionState> {
     }
   }
 
-  Future<void> purchase(SubscriptionPackage package) async {
+  Future<SubscriptionStatus> purchase(SubscriptionPackage package) async {
     final activeUserId = state.userId;
 
     state = state.copyWith(
@@ -106,7 +106,7 @@ class SubscriptionController extends Notifier<SubscriptionState> {
           .purchasePackage(package);
 
       if (!ref.mounted || state.userId != activeUserId) {
-        return;
+        return state.status;
       }
 
       state = state.copyWith(
@@ -116,9 +116,10 @@ class SubscriptionController extends Notifier<SubscriptionState> {
       );
 
       await _syncStatus(activeUserId, updatedStatus, _authRevision);
+      return updatedStatus;
     } on AppException catch (error) {
       if (!ref.mounted || state.userId != activeUserId) {
-        return;
+        return state.status;
       }
 
       state = state.copyWith(
@@ -131,7 +132,7 @@ class SubscriptionController extends Notifier<SubscriptionState> {
       rethrow;
     } catch (_) {
       if (!ref.mounted || state.userId != activeUserId) {
-        return;
+        return state.status;
       }
 
       state = state.copyWith(
@@ -142,7 +143,7 @@ class SubscriptionController extends Notifier<SubscriptionState> {
     }
   }
 
-  Future<void> restorePurchases() async {
+  Future<SubscriptionStatus> restorePurchases() async {
     final activeUserId = state.userId;
 
     state = state.copyWith(isRestoring: true, clearError: true);
@@ -153,7 +154,7 @@ class SubscriptionController extends Notifier<SubscriptionState> {
           .restorePurchases();
 
       if (!ref.mounted || state.userId != activeUserId) {
-        return;
+        return state.status;
       }
 
       state = state.copyWith(
@@ -163,16 +164,17 @@ class SubscriptionController extends Notifier<SubscriptionState> {
       );
 
       await _syncStatus(activeUserId, restoredStatus, _authRevision);
+      return restoredStatus;
     } on AppException catch (error) {
       if (!ref.mounted || state.userId != activeUserId) {
-        return;
+        return state.status;
       }
 
       state = state.copyWith(isRestoring: false, errorMessage: error.message);
       rethrow;
     } catch (_) {
       if (!ref.mounted || state.userId != activeUserId) {
-        return;
+        return state.status;
       }
 
       state = state.copyWith(

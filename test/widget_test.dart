@@ -35,6 +35,8 @@ import 'package:ai_career_tools/features/resume/application/resume_controller.da
 import 'package:ai_career_tools/features/resume/domain/entities/resume_request.dart';
 import 'package:ai_career_tools/features/resume/domain/entities/resume_result.dart';
 import 'package:ai_career_tools/features/resume/domain/repositories/resume_repository.dart';
+import 'package:ai_career_tools/services/subscription/premium_access_feature.dart';
+import 'package:ai_career_tools/services/subscription/premium_access_service.dart';
 import 'package:ai_career_tools/services/subscription/revenuecat_subscription_service.dart';
 import 'package:ai_career_tools/services/subscription/subscription_package.dart';
 import 'package:ai_career_tools/services/subscription/subscription_plan.dart';
@@ -383,6 +385,62 @@ class _FakeSubscriptionSyncService implements SubscriptionSyncService {
   }) async {}
 }
 
+class _FakePremiumAccessService implements PremiumAccessService {
+  _FakePremiumAccessService({Map<String, int> initialUsageByUserId = const {}})
+    : _usageByUserId = Map<String, int>.from(initialUsageByUserId);
+
+  final Map<String, int> _usageByUserId;
+
+  @override
+  Future<PremiumAccessDecision> evaluateAccess({
+    required String? userId,
+    required bool isPremium,
+    required PremiumAccessFeature feature,
+  }) async {
+    final snapshot = await loadSnapshot(userId: userId, isPremium: isPremium);
+
+    if (snapshot.isPremium || !snapshot.hasReachedLimit) {
+      return PremiumAccessDecision(
+        feature: feature,
+        snapshot: snapshot,
+        isAllowed: true,
+      );
+    }
+
+    return PremiumAccessDecision(
+      feature: feature,
+      snapshot: snapshot,
+      isAllowed: false,
+      message: 'Free limit reached.',
+    );
+  }
+
+  @override
+  Future<PremiumAccessSnapshot> loadSnapshot({
+    required String? userId,
+    required bool isPremium,
+  }) async {
+    return PremiumAccessSnapshot(
+      userId: userId,
+      isPremium: isPremium,
+      usedFreeGenerations: userId == null ? 0 : (_usageByUserId[userId] ?? 0),
+    );
+  }
+
+  @override
+  Future<PremiumAccessSnapshot> recordSuccessfulUse({
+    required String? userId,
+    required bool isPremium,
+    required PremiumAccessFeature feature,
+  }) async {
+    if (!isPremium && userId != null) {
+      _usageByUserId[userId] = (_usageByUserId[userId] ?? 0) + 1;
+    }
+
+    return loadSnapshot(userId: userId, isPremium: isPremium);
+  }
+}
+
 Future<void> _pumpApp(
   WidgetTester tester, {
   required AuthRepository authRepository,
@@ -393,6 +451,7 @@ Future<void> _pumpApp(
   ProfileImportRepository? profileImportRepository,
   HistoryRepository? historyRepository,
   SubscriptionService? subscriptionService,
+  PremiumAccessService? premiumAccessService,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -461,9 +520,36 @@ Future<void> _pumpApp(
         subscriptionSyncServiceProvider.overrideWithValue(
           const _FakeSubscriptionSyncService(),
         ),
+        premiumAccessServiceProvider.overrideWithValue(
+          premiumAccessService ?? _FakePremiumAccessService(),
+        ),
       ],
       child: const AICareerToolsApp(),
     ),
+  );
+}
+
+Future<void> _fillResumeForm(WidgetTester tester) async {
+  await tester.enterText(
+    find.byType(TextFormField).at(0),
+    'Senior Product Designer',
+  );
+  await tester.enterText(find.byType(TextFormField).at(1), '5');
+  await tester.enterText(
+    find.byType(TextFormField).at(2),
+    'Product Designer at Atlas\nUX Designer at Northstar',
+  );
+  await tester.enterText(
+    find.byType(TextFormField).at(3),
+    'Figma, Design systems, User research, Prototyping',
+  );
+  await tester.enterText(
+    find.byType(TextFormField).at(4),
+    'Improved onboarding completion by 18%\nLaunched a reusable design system adopted by four squads',
+  );
+  await tester.enterText(
+    find.byType(TextFormField).at(5),
+    'B.A. in Visual Communication Design, Bilkent University',
   );
 }
 
@@ -749,27 +835,7 @@ void main() {
     await tester.tap(find.text('Resume Builder').first);
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byType(TextFormField).at(0),
-      'Senior Product Designer',
-    );
-    await tester.enterText(find.byType(TextFormField).at(1), '5');
-    await tester.enterText(
-      find.byType(TextFormField).at(2),
-      'Product Designer at Atlas\nUX Designer at Northstar',
-    );
-    await tester.enterText(
-      find.byType(TextFormField).at(3),
-      'Figma, Design systems, User research, Prototyping',
-    );
-    await tester.enterText(
-      find.byType(TextFormField).at(4),
-      'Improved onboarding completion by 18%\nLaunched a reusable design system adopted by four squads',
-    );
-    await tester.enterText(
-      find.byType(TextFormField).at(5),
-      'B.A. in Visual Communication Design, Bilkent University',
-    );
+    await _fillResumeForm(tester);
 
     await tester.scrollUntilVisible(
       find.text('Generate resume'),
@@ -789,6 +855,132 @@ void main() {
     expect(find.text(generatedResume.summary), findsOneWidget);
     expect(find.text('Experience bullets'), findsOneWidget);
     expect(find.text('Skills'), findsOneWidget);
+  });
+
+  testWidgets('shows paywall when a free user reaches the generation limit', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: _FakePremiumAccessService(
+        initialUsageByUserId: {restoredSession.userId: 3},
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Resume Builder').first);
+    await tester.pumpAndSettle();
+    await _fillResumeForm(tester);
+
+    await tester.scrollUntilVisible(
+      find.text('Generate resume'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate resume'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Free limit reached'), findsOneWidget);
+    expect(find.text('Available plans'), findsOneWidget);
+    expect(find.textContaining('3 of 3 free generations'), findsOneWidget);
+  });
+
+  testWidgets(
+    'returns to the originating flow after a successful premium purchase',
+    (WidgetTester tester) async {
+      await _pumpApp(
+        tester,
+        authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+        onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+        premiumAccessService: _FakePremiumAccessService(
+          initialUsageByUserId: {restoredSession.userId: 3},
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Resume Builder').first);
+      await tester.pumpAndSettle();
+      await _fillResumeForm(tester);
+
+      await tester.scrollUntilVisible(
+        find.text('Generate resume'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Generate resume'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Choose plan').first,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Choose plan').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('ATS-ready draft'), findsOneWidget);
+      expect(find.text('Experience bullets'), findsOneWidget);
+    },
+  );
+
+  testWidgets('premium users are not blocked by the free generation limit', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      subscriptionService: _FakeSubscriptionService(
+        status: SubscriptionStatus(
+          appUserId: restoredSession.userId,
+          plan: SubscriptionPlan.monthly,
+          isPremium: true,
+          entitlementId: 'premium',
+          productIdentifier: 'premium_monthly',
+          willRenew: true,
+        ),
+      ),
+      premiumAccessService: _FakePremiumAccessService(
+        initialUsageByUserId: {restoredSession.userId: 3},
+      ),
+      resumeRepository: _FakeResumeRepository(
+        response: generatedResume,
+        delay: const Duration(milliseconds: 300),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Resume Builder').first);
+    await tester.pumpAndSettle();
+    await _fillResumeForm(tester);
+
+    await tester.scrollUntilVisible(
+      find.text('Generate resume'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate resume'));
+    await tester.pump();
+
+    expect(find.text('Generating resume...'), findsWidgets);
+
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ATS-ready draft'), findsOneWidget);
+    expect(find.text('Free limit reached'), findsNothing);
   });
 
   testWidgets('submits the cover letter form and opens the result page', (
