@@ -1,16 +1,48 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
 
-class StorageService {
-  StorageService({SharedPreferencesAsync? preferences})
-    : _preferences = preferences ?? SharedPreferencesAsync();
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-  final SharedPreferencesAsync _preferences;
+import '../../core/errors/app_exception.dart';
+import 'supabase_client_provider.dart';
 
-  Future<void> writeBool(String key, bool value) {
-    return _preferences.setBool(key, value);
-  }
+final supabaseStorageServiceProvider = Provider<SupabaseStorageService>(
+  (ref) => SupabaseStorageService(ref.watch(supabaseClientProvider)),
+);
 
-  Future<bool?> readBool(String key) {
-    return _preferences.getBool(key);
+class SupabaseStorageService {
+  const SupabaseStorageService(this._client);
+
+  final SupabaseClient _client;
+
+  Future<String> uploadPdf({
+    required String bucket,
+    required String path,
+    required Uint8List bytes,
+  }) async {
+    try {
+      return await _client.storage
+          .from(bucket)
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              contentType: 'application/pdf',
+              upsert: false,
+            ),
+          );
+    } on StorageException catch (error) {
+      final message = error.message.toLowerCase();
+
+      if (message.contains('bucket')) {
+        throw const AppException(
+          'Supabase storage bucket is not ready yet. Create the cv-uploads bucket first.',
+        );
+      }
+
+      throw const AppException('CV upload failed. Try again.');
+    } catch (_) {
+      throw const AppException('CV upload failed. Try again.');
+    }
   }
 }

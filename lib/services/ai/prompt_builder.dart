@@ -44,6 +44,26 @@ Tone: ${request.input['tone'] ?? ''}
           .trim();
     }
 
+    if (request.type == AiTaskType.interviewGenerate) {
+      return '''
+Role name: ${request.input['role_name'] ?? ''}
+Seniority: ${request.input['seniority'] ?? ''}
+Company type: ${request.input['company_type'] ?? ''}
+Interview type: ${request.input['interview_type'] ?? ''}
+Focus areas: ${_joinList(request.input['focus_areas'])}
+'''
+          .trim();
+    }
+
+    if (request.type == AiTaskType.cvParse) {
+      return '''
+File name: ${request.input['file_name'] ?? ''}
+Extracted CV text:
+${request.input['cv_text'] ?? ''}
+'''
+          .trim();
+    }
+
     return jsonEncode(request.input);
   }
 

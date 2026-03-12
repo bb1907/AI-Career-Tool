@@ -83,19 +83,8 @@ class AiServiceImpl implements AiService {
       AiTaskType.coverLetterGenerate => _buildCoverLetterOutput(
         normalizedInput,
       ),
-      AiTaskType.interviewGenerate => <String, dynamic>{
-        'questions': <String>[
-          'Tell me about yourself.',
-          'Describe a recent high-impact project.',
-        ],
-        'focus_areas': <String>['Clarity', 'Metrics', 'Leadership'],
-      },
-      AiTaskType.cvParse => <String, dynamic>{
-        'full_name':
-            JsonParser.readOptionalString(normalizedInput, 'full_name') ??
-            'Candidate',
-        'skills': JsonParser.readStringList(normalizedInput, 'skills'),
-      },
+      AiTaskType.interviewGenerate => _buildInterviewOutput(normalizedInput),
+      AiTaskType.cvParse => _buildCvParseOutput(normalizedInput),
       AiTaskType.jobMatch => <String, dynamic>{
         'score': 0.78,
         'strengths': <String>['Relevant role alignment', 'Transferable skills'],
@@ -177,6 +166,174 @@ Sincerely,
             .trim();
 
     return <String, dynamic>{'cover_letter': coverLetter};
+  }
+
+  Map<String, dynamic> _buildInterviewOutput(Map<String, dynamic> input) {
+    final roleName =
+        JsonParser.readOptionalString(input, 'role_name') ?? 'the role';
+    final seniority =
+        JsonParser.readOptionalString(input, 'seniority') ?? 'Senior';
+    final companyType =
+        JsonParser.readOptionalString(input, 'company_type') ?? 'Startup';
+    final interviewType =
+        JsonParser.readOptionalString(input, 'interview_type') ?? 'Mixed';
+    final focusAreas = JsonParser.readStringList(
+      input,
+      'focus_areas',
+      fallback: const <String>['Execution', 'Communication', 'Strategy'],
+    );
+    final safeFocusAreas = focusAreas.isEmpty
+        ? const <String>['Execution', 'Communication', 'Strategy']
+        : focusAreas;
+
+    final technicalQuestions = <Map<String, dynamic>>[
+      <String, dynamic>{
+        'question':
+            'How would you approach a ${safeFocusAreas.first.toLowerCase()} challenge as a $seniority $roleName in a $companyType environment?',
+        'sample_answer':
+            'I would begin by clarifying the business goal, constraints and success metrics, then break the problem into smaller workstreams. From there I would prioritize the highest-leverage experiments, align stakeholders on tradeoffs and iterate based on measurable outcomes.',
+      },
+      <String, dynamic>{
+        'question':
+            'What framework would you use to evaluate success for a $roleName interview focused on ${safeFocusAreas.first.toLowerCase()} and ${safeFocusAreas[1 % safeFocusAreas.length].toLowerCase()}?',
+        'sample_answer':
+            'I would define the decision criteria first, including user impact, business value, implementation complexity and time-to-learn. Then I would explain how I use those criteria to compare options, make tradeoffs explicit and choose a path that balances speed with quality.',
+      },
+    ];
+
+    final behavioralQuestions = <Map<String, dynamic>>[
+      <String, dynamic>{
+        'question':
+            'Tell me about a time you had to influence stakeholders while working on ${safeFocusAreas.first.toLowerCase()}.',
+        'sample_answer':
+            'I would answer this with a concise STAR structure: the context, the conflicting priorities, the actions I took to align the team and the measurable result. I would emphasize how I listened to concerns, reframed the decision around shared goals and kept momentum without creating friction.',
+      },
+      <String, dynamic>{
+        'question':
+            'Describe a difficult interview scenario you might face in a $interviewType round for a $roleName role.',
+        'sample_answer':
+            'I would describe a case where the requirements were ambiguous or expectations changed mid-process. My answer would focus on how I stayed calm, clarified assumptions, communicated tradeoffs and adapted quickly while still driving toward a strong outcome.',
+      },
+    ];
+
+    return <String, dynamic>{
+      'technical_questions': technicalQuestions,
+      'behavioral_questions': behavioralQuestions,
+    };
+  }
+
+  Map<String, dynamic> _buildCvParseOutput(Map<String, dynamic> input) {
+    final cvText = JsonParser.readOptionalString(input, 'cv_text') ?? '';
+    final lines = cvText
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
+    final email =
+        RegExp(
+          r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}',
+          caseSensitive: false,
+        ).firstMatch(cvText)?.group(0) ??
+        '';
+    final years = RegExp(
+      r'(\d{1,2})\+?\s+years',
+      caseSensitive: false,
+    ).firstMatch(cvText)?.group(1);
+    final skillsLine = _extractLabeledLine(cvText, 'skills');
+    final educationLine = _extractLabeledLine(cvText, 'education');
+    final locationLine =
+        _extractLabeledLine(cvText, 'location') ??
+        lines
+            .skip(1)
+            .firstWhere(
+              (line) => line.contains(',') && !line.contains('@'),
+              orElse: () => '',
+            );
+    final roles = _extractRoleCandidates(cvText);
+    final skills = _extractCsvEntries(skillsLine).isEmpty
+        ? _extractKeywordCandidates(cvText, const <String>[
+            'Flutter',
+            'Dart',
+            'Figma',
+            'Product design',
+            'User research',
+            'Design systems',
+            'SQL',
+            'Python',
+            'Project management',
+          ])
+        : _extractCsvEntries(skillsLine);
+    final industries = _extractKeywordCandidates(cvText, const <String>[
+      'SaaS',
+      'Fintech',
+      'E-commerce',
+      'Healthtech',
+      'Edtech',
+      'B2B',
+      'Consumer',
+    ]);
+    final yearsExperience = int.tryParse(years ?? '') ?? 0;
+    final seniority = yearsExperience >= 8
+        ? 'Lead'
+        : yearsExperience >= 5
+        ? 'Senior'
+        : yearsExperience >= 2
+        ? 'Mid-level'
+        : 'Junior';
+
+    return <String, dynamic>{
+      'name': lines.isNotEmpty ? lines.first : 'Candidate',
+      'email': email,
+      'location': locationLine,
+      'years_experience': yearsExperience,
+      'roles': roles.isEmpty ? const <String>['Candidate'] : roles,
+      'skills': skills.isEmpty ? const <String>['Communication'] : skills,
+      'industries': industries,
+      'seniority': seniority,
+      'education': educationLine ?? 'Not provided',
+    };
+  }
+
+  String? _extractLabeledLine(String source, String label) {
+    final pattern = RegExp(
+      '$label\\s*[:|-]\\s*(.+)',
+      caseSensitive: false,
+      multiLine: true,
+    );
+
+    return pattern.firstMatch(source)?.group(1)?.trim();
+  }
+
+  List<String> _extractCsvEntries(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return const <String>[];
+    }
+
+    return value
+        .split(RegExp(r',|\u2022|;'))
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<String> _extractKeywordCandidates(String source, List<String> keywords) {
+    final lowerSource = source.toLowerCase();
+
+    return keywords
+        .where((keyword) => lowerSource.contains(keyword.toLowerCase()))
+        .toList(growable: false);
+  }
+
+  List<String> _extractRoleCandidates(String source) {
+    return _extractKeywordCandidates(source, const <String>[
+      'Software Engineer',
+      'Mobile Engineer',
+      'Product Designer',
+      'Product Manager',
+      'UX Designer',
+      'Data Analyst',
+      'Marketing Manager',
+    ]);
   }
 }
 

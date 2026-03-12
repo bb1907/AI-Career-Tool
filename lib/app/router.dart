@@ -8,12 +8,15 @@ import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/cover_letter/presentation/pages/cover_letter_input_page.dart';
 import '../features/cover_letter/presentation/pages/cover_letter_result_page.dart';
+import '../features/history/presentation/pages/history_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
-import '../features/interview/presentation/pages/interview_page.dart';
+import '../features/interview/presentation/pages/interview_input_page.dart';
+import '../features/interview/presentation/pages/interview_result_page.dart';
 import '../features/onboarding/presentation/pages/splash_page.dart';
 import '../features/onboarding/presentation/controllers/onboarding_controller.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/paywall/presentation/pages/paywall_page.dart';
+import '../features/profile_import/presentation/pages/profile_import_page.dart';
 import '../features/resume/presentation/pages/resume_input_page.dart';
 import '../features/resume/presentation/pages/resume_result_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
@@ -29,6 +32,9 @@ abstract final class AppRoutes {
   static const coverLetter = '/cover-letter';
   static const coverLetterResult = '/cover-letter/result';
   static const interview = '/interview';
+  static const interviewResult = '/interview/result';
+  static const profileImport = '/profile-import';
+  static const history = '/history';
   static const paywall = '/premium';
   static const settings = '/settings';
 }
@@ -89,7 +95,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.interview,
-        builder: (context, state) => const InterviewPage(),
+        builder: (context, state) => const InterviewInputPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.interviewResult,
+        builder: (context, state) => const InterviewResultPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.profileImport,
+        builder: (context, state) => const ProfileImportPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.history,
+        builder: (context, state) => const HistoryPage(),
       ),
       GoRoute(
         path: AppRoutes.paywall,

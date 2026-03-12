@@ -2,15 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
-import '../data/datasources/resume_local_datasource.dart';
+import '../../../services/supabase/database_service.dart';
 import '../data/datasources/resume_remote_datasource.dart';
+import '../data/datasources/resume_supabase_datasource.dart';
 import '../data/repositories/resume_repository_impl.dart';
 import '../domain/entities/resume_request.dart';
 import '../domain/repositories/resume_repository.dart';
 import 'resume_state.dart';
 
-final resumeLocalDatasourceProvider = Provider<ResumeLocalDatasource>(
-  (ref) => ResumeLocalDatasource(),
+final resumePersistenceDatasourceProvider = Provider<ResumeSupabaseDatasource>(
+  (ref) => ResumeSupabaseDatasource(ref.watch(databaseServiceProvider)),
 );
 
 final resumeRemoteDatasourceProvider = Provider<ResumeRemoteDatasource>(
@@ -20,7 +21,7 @@ final resumeRemoteDatasourceProvider = Provider<ResumeRemoteDatasource>(
 final resumeRepositoryProvider = Provider<ResumeRepository>(
   (ref) => ResumeRepositoryImpl(
     remoteDatasource: ref.watch(resumeRemoteDatasourceProvider),
-    localDatasource: ref.watch(resumeLocalDatasourceProvider),
+    persistenceDatasource: ref.watch(resumePersistenceDatasourceProvider),
   ),
 );
 

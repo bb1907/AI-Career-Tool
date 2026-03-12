@@ -47,9 +47,7 @@ class ResumeResultPage extends ConsumerWidget {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
-            content: Text('Resume saved for a future history integration.'),
-          ),
+          const SnackBar(content: Text('Resume saved to history.')),
         );
     } on AppException catch (error) {
       if (!context.mounted) {
@@ -160,7 +158,7 @@ class ResumeResultPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: AppSpacing.compact),
                             Text(
-                              'Review the generated content, copy it into your preferred resume template or save it for the next history integration.',
+                              'Review the generated content, copy it into your preferred resume template or save it into your history.',
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                                 height: 1.5,

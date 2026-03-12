@@ -1,7 +1,7 @@
 import '../../domain/entities/resume_request.dart';
 import '../../domain/entities/resume_result.dart';
 import '../../domain/repositories/resume_repository.dart';
-import '../datasources/resume_local_datasource.dart';
+import '../datasources/resume_persistence_datasource.dart';
 import '../datasources/resume_remote_datasource.dart';
 import '../models/resume_request_model.dart';
 import '../models/resume_result_model.dart';
@@ -9,12 +9,12 @@ import '../models/resume_result_model.dart';
 class ResumeRepositoryImpl implements ResumeRepository {
   ResumeRepositoryImpl({
     required ResumeRemoteDatasource remoteDatasource,
-    required ResumeLocalDatasource localDatasource,
+    required ResumePersistenceDatasource persistenceDatasource,
   }) : _remoteDatasource = remoteDatasource,
-       _localDatasource = localDatasource;
+       _persistenceDatasource = persistenceDatasource;
 
   final ResumeRemoteDatasource _remoteDatasource;
-  final ResumeLocalDatasource _localDatasource;
+  final ResumePersistenceDatasource _persistenceDatasource;
 
   @override
   Future<ResumeResult> generateResume(ResumeRequest request) async {
@@ -25,7 +25,7 @@ class ResumeRepositoryImpl implements ResumeRepository {
 
   @override
   Future<void> saveResume(ResumeResult result) async {
-    await _localDatasource.save(
+    await _persistenceDatasource.save(
       ResumeResultModel(
         summary: result.summary,
         experienceBullets: result.experienceBullets,
@@ -37,6 +37,6 @@ class ResumeRepositoryImpl implements ResumeRepository {
 
   @override
   Future<List<ResumeResult>> fetchHistory() async {
-    return _localDatasource.fetchHistory();
+    return _persistenceDatasource.fetchHistory();
   }
 }

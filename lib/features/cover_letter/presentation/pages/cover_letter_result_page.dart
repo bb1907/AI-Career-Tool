@@ -58,11 +58,7 @@ class _CoverLetterResultPageState extends ConsumerState<CoverLetterResultPage> {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Cover letter saved for a future history integration.',
-            ),
-          ),
+          const SnackBar(content: Text('Cover letter saved to history.')),
         );
     } on AppException catch (error) {
       if (!context.mounted) {
@@ -184,7 +180,7 @@ class _CoverLetterResultPageState extends ConsumerState<CoverLetterResultPage> {
                           ),
                           const SizedBox(height: AppSpacing.compact),
                           Text(
-                            'Edit the draft, regenerate it with the same inputs or save it for the upcoming history integration.',
+                            'Edit the draft, regenerate it with the same inputs or save it into your history.',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               height: 1.5,

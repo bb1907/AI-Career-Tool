@@ -35,27 +35,6 @@ class HomePage extends StatelessWidget {
     ),
   ];
 
-  static const _recentItems = <_RecentItemData>[
-    _RecentItemData(
-      title: 'Product Designer Resume',
-      subtitle: 'Updated 2 hours ago',
-      route: AppRoutes.resume,
-      typeLabel: 'Resume',
-    ),
-    _RecentItemData(
-      title: 'Growth Lead Cover Letter',
-      subtitle: 'Edited yesterday',
-      route: AppRoutes.coverLetter,
-      typeLabel: 'Cover Letter',
-    ),
-    _RecentItemData(
-      title: 'Series A PM Interview Pack',
-      subtitle: 'Prepared 2 days ago',
-      route: AppRoutes.interview,
-      typeLabel: 'Interview',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -82,6 +61,11 @@ class HomePage extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'History',
+            onPressed: () => context.go(AppRoutes.history),
+            icon: const Icon(Icons.history_outlined),
+          ),
+          IconButton(
             tooltip: 'Profile & Settings',
             onPressed: () => context.go(AppRoutes.settings),
             icon: const Icon(Icons.settings_outlined),
@@ -99,6 +83,7 @@ class HomePage extends StatelessWidget {
           children: [
             _HeroSummaryCard(
               onSettingsPressed: () => context.go(AppRoutes.settings),
+              onImportCvPressed: () => context.go(AppRoutes.profileImport),
             ),
             const SizedBox(height: AppSpacing.page),
             Text(
@@ -136,19 +121,28 @@ class HomePage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.section),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (
-                      var index = 0;
-                      index < _recentItems.length;
-                      index++
-                    ) ...[
-                      _RecentItemTile(
-                        data: _recentItems[index],
-                        onTap: () => context.go(_recentItems[index].route),
+                    Text(
+                      'Saved work now lives in History.',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                      if (index != _recentItems.length - 1)
-                        const Divider(height: AppSpacing.page),
-                    ],
+                    ),
+                    const SizedBox(height: AppSpacing.compact),
+                    Text(
+                      'Open one place to review saved resumes, cover letters and interview prep as soon as you store them.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.section),
+                    FilledButton.tonalIcon(
+                      onPressed: () => context.go(AppRoutes.history),
+                      icon: const Icon(Icons.history_outlined),
+                      label: const Text('Open history'),
+                    ),
                   ],
                 ),
               ),
@@ -163,9 +157,13 @@ class HomePage extends StatelessWidget {
 }
 
 class _HeroSummaryCard extends StatelessWidget {
-  const _HeroSummaryCard({required this.onSettingsPressed});
+  const _HeroSummaryCard({
+    required this.onSettingsPressed,
+    required this.onImportCvPressed,
+  });
 
   final VoidCallback onSettingsPressed;
+  final VoidCallback onImportCvPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +225,16 @@ class _HeroSummaryCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.9),
               height: 1.5,
             ),
+          ),
+          const SizedBox(height: AppSpacing.page),
+          FilledButton.tonalIcon(
+            onPressed: onImportCvPressed,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.16),
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.upload_file_outlined),
+            label: const Text('Import CV'),
           ),
         ],
       ),
@@ -297,66 +305,6 @@ class _FeatureCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RecentItemTile extends StatelessWidget {
-  const _RecentItemTile({required this.data, required this.onTap});
-
-  final _RecentItemData data;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                data.typeLabel,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.section),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data.subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.compact),
-            const Icon(Icons.chevron_right),
-          ],
         ),
       ),
     );
@@ -436,18 +384,4 @@ class _FeatureCardData {
   final String route;
   final IconData icon;
   final Color accent;
-}
-
-class _RecentItemData {
-  const _RecentItemData({
-    required this.title,
-    required this.subtitle,
-    required this.route,
-    required this.typeLabel,
-  });
-
-  final String title;
-  final String subtitle;
-  final String route;
-  final String typeLabel;
 }

@@ -2,16 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
-import '../data/datasources/cover_letter_local_datasource.dart';
+import '../../../services/supabase/database_service.dart';
 import '../data/datasources/cover_letter_remote_datasource.dart';
+import '../data/datasources/cover_letter_supabase_datasource.dart';
 import '../data/repositories/cover_letter_repository_impl.dart';
 import '../domain/entities/cover_letter_request.dart';
 import '../domain/repositories/cover_letter_repository.dart';
 import 'cover_letter_state.dart';
 
-final coverLetterLocalDatasourceProvider = Provider<CoverLetterLocalDatasource>(
-  (ref) => CoverLetterLocalDatasource(),
-);
+final coverLetterPersistenceDatasourceProvider =
+    Provider<CoverLetterSupabaseDatasource>(
+      (ref) =>
+          CoverLetterSupabaseDatasource(ref.watch(databaseServiceProvider)),
+    );
 
 final coverLetterRemoteDatasourceProvider =
     Provider<CoverLetterRemoteDatasource>(
@@ -21,7 +24,7 @@ final coverLetterRemoteDatasourceProvider =
 final coverLetterRepositoryProvider = Provider<CoverLetterRepository>(
   (ref) => CoverLetterRepositoryImpl(
     remoteDatasource: ref.watch(coverLetterRemoteDatasourceProvider),
-    localDatasource: ref.watch(coverLetterLocalDatasourceProvider),
+    persistenceDatasource: ref.watch(coverLetterPersistenceDatasourceProvider),
   ),
 );
 

@@ -1,7 +1,7 @@
 import '../../domain/entities/cover_letter_request.dart';
 import '../../domain/entities/cover_letter_result.dart';
 import '../../domain/repositories/cover_letter_repository.dart';
-import '../datasources/cover_letter_local_datasource.dart';
+import '../datasources/cover_letter_persistence_datasource.dart';
 import '../datasources/cover_letter_remote_datasource.dart';
 import '../models/cover_letter_request_model.dart';
 import '../models/cover_letter_result_model.dart';
@@ -9,12 +9,12 @@ import '../models/cover_letter_result_model.dart';
 class CoverLetterRepositoryImpl implements CoverLetterRepository {
   CoverLetterRepositoryImpl({
     required CoverLetterRemoteDatasource remoteDatasource,
-    required CoverLetterLocalDatasource localDatasource,
+    required CoverLetterPersistenceDatasource persistenceDatasource,
   }) : _remoteDatasource = remoteDatasource,
-       _localDatasource = localDatasource;
+       _persistenceDatasource = persistenceDatasource;
 
   final CoverLetterRemoteDatasource _remoteDatasource;
-  final CoverLetterLocalDatasource _localDatasource;
+  final CoverLetterPersistenceDatasource _persistenceDatasource;
 
   @override
   Future<CoverLetterResult> generateCoverLetter(
@@ -27,13 +27,13 @@ class CoverLetterRepositoryImpl implements CoverLetterRepository {
 
   @override
   Future<void> saveCoverLetter(CoverLetterResult result) async {
-    await _localDatasource.save(
+    await _persistenceDatasource.save(
       CoverLetterResultModel(coverLetter: result.coverLetter),
     );
   }
 
   @override
   Future<List<CoverLetterResult>> fetchHistory() async {
-    return _localDatasource.fetchHistory();
+    return _persistenceDatasource.fetchHistory();
   }
 }
