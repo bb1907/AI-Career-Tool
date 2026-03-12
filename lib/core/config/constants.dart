@@ -11,4 +11,6 @@ abstract final class AppConstants {
   static const aiRequestTimeout = Duration(seconds: 30);
   static const aiMaxAttempts = 3;
   static const aiRetryBaseDelay = Duration(milliseconds: 700);
+  static const revenueCatEntitlementId = 'premium';
+  static const subscriptionsTable = 'subscriptions';
 }

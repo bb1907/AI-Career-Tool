@@ -8,6 +8,7 @@ import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../../../paywall/application/subscription_controller.dart';
 import '../providers/recent_documents_provider.dart';
 
 class HomePage extends ConsumerWidget {
@@ -47,6 +48,7 @@ class HomePage extends ConsumerWidget {
     final userId = ref.watch(
       authControllerProvider.select((authState) => authState.session?.userId),
     );
+    final subscriptionState = ref.watch(subscriptionControllerProvider);
     final recentDocuments = userId == null
         ? const AsyncData(RecentDocumentsState())
         : ref.watch(recentDocumentsProvider(userId));
@@ -129,7 +131,13 @@ class HomePage extends ConsumerWidget {
               onHistoryPressed: () => context.go(AppRoutes.history),
             ),
             const SizedBox(height: AppSpacing.page),
-            _PremiumUpsellCard(onPressed: () => context.go(AppRoutes.paywall)),
+            _PremiumUpsellCard(
+              isPremium: subscriptionState.isPremium,
+              isLoading: subscriptionState.isLoading,
+              planLabel: subscriptionState.status.plan.label,
+              hasError: subscriptionState.errorMessage != null,
+              onPressed: () => context.go(AppRoutes.paywall),
+            ),
           ],
         ),
       ),
@@ -480,13 +488,35 @@ class _FeatureCard extends StatelessWidget {
 }
 
 class _PremiumUpsellCard extends StatelessWidget {
-  const _PremiumUpsellCard({required this.onPressed});
+  const _PremiumUpsellCard({
+    required this.isPremium,
+    required this.isLoading,
+    required this.planLabel,
+    required this.hasError,
+    required this.onPressed,
+  });
 
+  final bool isPremium;
+  final bool isLoading;
+  final String planLabel;
+  final bool hasError;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final label = isPremium ? 'Premium active' : 'Premium';
+    final headline = isPremium
+        ? '$planLabel plan enabled'
+        : 'Unlock richer feedback and faster drafts.';
+    final description = switch ((isPremium, isLoading)) {
+      (true, _) =>
+        'Your account already has premium access for deeper resume feedback, stronger cover letters and more advanced interview prep.',
+      (false, true) => 'Checking your latest subscription status...',
+      _ =>
+        'Get deeper ATS suggestions, sharper cover letter personalization and more advanced interview prep flows.',
+    };
+    final buttonLabel = isPremium ? 'Manage subscription' : 'Explore Premium';
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -498,7 +528,7 @@ class _PremiumUpsellCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Premium',
+            label,
             style: theme.textTheme.labelLarge?.copyWith(
               color: const Color(0xFFFDE68A),
               fontWeight: FontWeight.w700,
@@ -506,7 +536,7 @@ class _PremiumUpsellCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.compact),
           Text(
-            'Unlock richer feedback and faster drafts.',
+            headline,
             style: theme.textTheme.headlineSmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -514,12 +544,28 @@ class _PremiumUpsellCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.compact),
           Text(
-            'Get deeper ATS suggestions, sharper cover letter personalization and more advanced interview prep flows.',
+            description,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.82),
               height: 1.45,
             ),
           ),
+          if (isLoading) ...[
+            const SizedBox(height: AppSpacing.section),
+            const LinearProgressIndicator(
+              minHeight: 4,
+              borderRadius: BorderRadius.all(Radius.circular(999)),
+            ),
+          ],
+          if (hasError && !isPremium) ...[
+            const SizedBox(height: AppSpacing.compact),
+            Text(
+              'Subscription details are temporarily unavailable.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.78),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.page),
           SizedBox(
             width: 220,
@@ -529,7 +575,7 @@ class _PremiumUpsellCard extends StatelessWidget {
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF111827),
               ),
-              child: const Text('Explore Premium'),
+              child: Text(buttonLabel),
             ),
           ),
         ],

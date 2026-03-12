@@ -35,6 +35,12 @@ import 'package:ai_career_tools/features/resume/application/resume_controller.da
 import 'package:ai_career_tools/features/resume/domain/entities/resume_request.dart';
 import 'package:ai_career_tools/features/resume/domain/entities/resume_result.dart';
 import 'package:ai_career_tools/features/resume/domain/repositories/resume_repository.dart';
+import 'package:ai_career_tools/services/subscription/revenuecat_subscription_service.dart';
+import 'package:ai_career_tools/services/subscription/subscription_package.dart';
+import 'package:ai_career_tools/services/subscription/subscription_plan.dart';
+import 'package:ai_career_tools/services/subscription/subscription_service.dart';
+import 'package:ai_career_tools/services/subscription/subscription_status.dart';
+import 'package:ai_career_tools/services/subscription/subscription_sync_service.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository({
@@ -270,6 +276,113 @@ class _FakeHistoryRepository implements HistoryRepository {
   }
 }
 
+class _FakeSubscriptionService implements SubscriptionService {
+  _FakeSubscriptionService({
+    SubscriptionStatus? status,
+    List<SubscriptionPackage> packages = const <SubscriptionPackage>[
+      SubscriptionPackage(
+        identifier: 'weekly',
+        productIdentifier: 'premium_weekly',
+        plan: SubscriptionPlan.weekly,
+        title: 'Weekly Premium',
+        description: 'Short-term premium access',
+        priceLabel: r'$4.99',
+        billingLabel: r'$4.99 / week',
+      ),
+      SubscriptionPackage(
+        identifier: 'monthly',
+        productIdentifier: 'premium_monthly',
+        plan: SubscriptionPlan.monthly,
+        title: 'Monthly Premium',
+        description: 'Monthly premium access',
+        priceLabel: r'$12.99',
+        billingLabel: r'$12.99 / month',
+      ),
+      SubscriptionPackage(
+        identifier: 'annual',
+        productIdentifier: 'premium_annual',
+        plan: SubscriptionPlan.annual,
+        title: 'Annual Premium',
+        description: 'Best long-term value',
+        priceLabel: r'$79.99',
+        billingLabel: r'$79.99 / year',
+      ),
+    ],
+  }) : _status = status ?? const SubscriptionStatus(),
+       _packages = List<SubscriptionPackage>.unmodifiable(packages);
+
+  final _controller = StreamController<SubscriptionStatus>.broadcast();
+  SubscriptionStatus _status;
+  final List<SubscriptionPackage> _packages;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Stream<SubscriptionStatus> observeSubscriptionStatus() => _controller.stream;
+
+  @override
+  Future<List<SubscriptionPackage>> loadPackages() async => _packages;
+
+  @override
+  Future<SubscriptionStatus> purchasePackage(
+    SubscriptionPackage package,
+  ) async {
+    _status = SubscriptionStatus(
+      appUserId: _status.appUserId,
+      plan: package.plan,
+      isPremium: true,
+      entitlementId: 'premium',
+      productIdentifier: package.productIdentifier,
+      willRenew: true,
+    );
+    _controller.add(_status);
+    return _status;
+  }
+
+  @override
+  Future<SubscriptionStatus> refreshStatus() async => _status;
+
+  @override
+  Future<SubscriptionStatus> restorePurchases() async {
+    _controller.add(_status);
+    return _status;
+  }
+
+  @override
+  Future<SubscriptionStatus> syncUser(String? appUserId) async {
+    _status = appUserId == null
+        ? _status.copyWith(
+            clearAppUserId: true,
+            plan: SubscriptionPlan.free,
+            isPremium: false,
+            clearEntitlement: true,
+            clearProductIdentifier: true,
+            clearExpiresAt: true,
+            clearManagementUrl: true,
+            willRenew: false,
+          )
+        : _status.copyWith(appUserId: appUserId);
+    _controller.add(_status);
+    return _status;
+  }
+
+  @override
+  void dispose() {
+    _controller.close();
+  }
+}
+
+class _FakeSubscriptionSyncService implements SubscriptionSyncService {
+  const _FakeSubscriptionSyncService();
+
+  @override
+  Future<void> syncStatus({
+    required String userId,
+    required SubscriptionStatus status,
+  }) async {}
+}
+
 Future<void> _pumpApp(
   WidgetTester tester, {
   required AuthRepository authRepository,
@@ -279,6 +392,7 @@ Future<void> _pumpApp(
   InterviewRepository? interviewRepository,
   ProfileImportRepository? profileImportRepository,
   HistoryRepository? historyRepository,
+  SubscriptionService? subscriptionService,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -341,6 +455,12 @@ Future<void> _pumpApp(
         ),
         if (historyRepository != null)
           historyRepositoryProvider.overrideWithValue(historyRepository),
+        subscriptionServiceProvider.overrideWithValue(
+          subscriptionService ?? _FakeSubscriptionService(),
+        ),
+        subscriptionSyncServiceProvider.overrideWithValue(
+          const _FakeSubscriptionSyncService(),
+        ),
       ],
       child: const AICareerToolsApp(),
     ),
