@@ -53,4 +53,27 @@ void main() {
       throwsA(isA<AppException>()),
     );
   });
+
+  test('parses a valid job match response envelope', () {
+    final response = JsonParser.parseAiTaskResponse('''
+      {
+        "request_id": "req_match_123",
+        "task": "job_match",
+        "output": {
+          "match_score": 82,
+          "missing_skills": ["Kubernetes"],
+          "strengths": ["Flutter architecture", "Product mindset"],
+          "positioning_summary": "Lead with mobile platform ownership and delivery impact."
+        }
+      }
+      ''', expectedType: AiTaskType.jobMatch);
+
+    expect(response.type, AiTaskType.jobMatch);
+    expect(response.output['match_score'], 82);
+    expect(response.output['missing_skills'], ['Kubernetes']);
+    expect(
+      response.output['positioning_summary'],
+      contains('mobile platform ownership'),
+    );
+  });
 }

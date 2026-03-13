@@ -81,7 +81,7 @@ class _CoverLetterResultPageState extends ConsumerState<CoverLetterResultPage> {
         eyebrow: 'Cover letter',
         title: 'Generating cover letter...',
         description:
-            'We are tailoring the draft to the company, role and job description you provided.',
+            'We are analyzing job fit and tailoring the draft to the company, role and job description you provided.',
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: AppSpacing.page),
           child: LoadingView(),

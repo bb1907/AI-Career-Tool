@@ -40,6 +40,8 @@ Preferred tone: ${request.input['preferred_tone'] ?? ''}
           request.input['selected_job'] as Map<String, dynamic>?;
       final clarifyingContext =
           request.input['clarifying_context'] as Map<String, dynamic>?;
+      final fitAnalysis =
+          request.input['fit_analysis'] as Map<String, dynamic>?;
 
       return '''
 Company name: ${request.input['company_name'] ?? ''}
@@ -61,6 +63,10 @@ Selected job url: ${selectedJob?['url'] ?? ''}
 Selected job location: ${selectedJob?['location'] ?? ''}
 Selected job title: ${selectedJob?['title'] ?? ''}
 Selected job company: ${selectedJob?['company'] ?? ''}
+Match score: ${fitAnalysis?['match_score'] ?? ''}
+Match strengths: ${_joinList(fitAnalysis?['strengths'])}
+Missing skills to acknowledge carefully: ${_joinList(fitAnalysis?['missing_skills'])}
+Recommended positioning summary: ${fitAnalysis?['positioning_summary'] ?? ''}
 Clarifying answer - why this company: ${clarifyingContext?['why_this_company'] ?? ''}
 Clarifying answer - key achievement: ${clarifyingContext?['key_achievement'] ?? ''}
 Clarifying answer - emphasis notes: ${clarifyingContext?['emphasis_notes'] ?? ''}
@@ -84,6 +90,33 @@ Focus areas: ${_joinList(request.input['focus_areas'])}
 File name: ${request.input['file_name'] ?? ''}
 Extracted CV text:
 ${request.input['cv_text'] ?? ''}
+'''
+          .trim();
+    }
+
+    if (request.type == AiTaskType.jobMatch) {
+      final candidateProfile =
+          request.input['candidate_profile'] as Map<String, dynamic>?;
+      final selectedJob =
+          request.input['selected_job'] as Map<String, dynamic>?;
+
+      return '''
+Candidate name: ${candidateProfile?['name'] ?? ''}
+Candidate location: ${candidateProfile?['location'] ?? ''}
+Candidate years of experience: ${candidateProfile?['years_experience'] ?? ''}
+Candidate roles: ${_joinList(candidateProfile?['roles'])}
+Candidate skills: ${_joinList(candidateProfile?['skills'])}
+Candidate industries: ${_joinList(candidateProfile?['industries'])}
+Candidate seniority: ${candidateProfile?['seniority'] ?? ''}
+Candidate education: ${candidateProfile?['education'] ?? ''}
+Selected job title: ${selectedJob?['title'] ?? request.input['role_title'] ?? ''}
+Selected job company: ${selectedJob?['company'] ?? request.input['company_name'] ?? ''}
+Selected job location: ${selectedJob?['location'] ?? ''}
+Selected job source: ${selectedJob?['source'] ?? ''}
+Selected job url: ${selectedJob?['url'] ?? ''}
+Job description:
+${selectedJob?['job_description'] ?? request.input['job_description'] ?? ''}
+Return valid JSON with match_score, missing_skills, strengths, and positioning_summary.
 '''
           .trim();
     }

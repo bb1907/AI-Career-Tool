@@ -9,6 +9,7 @@ import '../../../services/analytics/analytics_service.dart';
 import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
 import '../../paywall/application/premium_access_controller.dart';
+import '../data/datasources/cover_letter_analysis_remote_datasource.dart';
 import '../data/datasources/cover_letter_remote_datasource.dart';
 import '../data/datasources/cover_letter_supabase_datasource.dart';
 import '../data/repositories/cover_letter_repository_impl.dart';
@@ -27,9 +28,18 @@ final coverLetterRemoteDatasourceProvider =
       (ref) => CoverLetterRemoteDatasource(ref.watch(aiServiceProvider)),
     );
 
+final coverLetterAnalysisRemoteDatasourceProvider =
+    Provider<CoverLetterAnalysisRemoteDatasource>(
+      (ref) =>
+          CoverLetterAnalysisRemoteDatasource(ref.watch(aiServiceProvider)),
+    );
+
 final coverLetterRepositoryProvider = Provider<CoverLetterRepository>(
   (ref) => CoverLetterRepositoryImpl(
     remoteDatasource: ref.watch(coverLetterRemoteDatasourceProvider),
+    analysisRemoteDatasource: ref.watch(
+      coverLetterAnalysisRemoteDatasourceProvider,
+    ),
     persistenceDatasource: ref.watch(coverLetterPersistenceDatasourceProvider),
   ),
 );

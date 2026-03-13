@@ -103,9 +103,21 @@ abstract final class JsonParser {
           required: false,
         );
       case AiTaskType.jobMatch:
-        validateNumField(output, 'score');
+        validateNumField(
+          output,
+          output.containsKey('match_score') ? 'match_score' : 'score',
+        );
         readStringList(output, 'strengths');
-        readStringList(output, 'gaps');
+        readStringList(
+          output,
+          output.containsKey('missing_skills') ? 'missing_skills' : 'gaps',
+        );
+        validateStringField(
+          output,
+          'positioning_summary',
+          allowEmpty: true,
+          required: false,
+        );
     }
   }
 

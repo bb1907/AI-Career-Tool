@@ -1,6 +1,7 @@
 import '../../domain/entities/cover_letter_request.dart';
 import '../../domain/entities/cover_letter_candidate_context.dart';
 import '../../domain/entities/cover_letter_clarifying_context.dart';
+import '../../domain/entities/cover_letter_fit_analysis.dart';
 import '../../domain/entities/cover_letter_job_context.dart';
 
 class CoverLetterRequestModel {
@@ -13,6 +14,7 @@ class CoverLetterRequestModel {
     this.candidateContext,
     this.jobContext,
     this.clarifyingContext,
+    this.fitAnalysis,
   });
 
   final String companyName;
@@ -23,6 +25,7 @@ class CoverLetterRequestModel {
   final CoverLetterCandidateContext? candidateContext;
   final CoverLetterJobContext? jobContext;
   final CoverLetterClarifyingContext? clarifyingContext;
+  final CoverLetterFitAnalysis? fitAnalysis;
 
   factory CoverLetterRequestModel.fromEntity(CoverLetterRequest request) {
     return CoverLetterRequestModel(
@@ -34,6 +37,7 @@ class CoverLetterRequestModel {
       candidateContext: request.candidateContext,
       jobContext: request.jobContext,
       clarifyingContext: request.clarifyingContext,
+      fitAnalysis: request.fitAnalysis,
     );
   }
 
@@ -47,6 +51,7 @@ class CoverLetterRequestModel {
       candidateContext: candidateContext,
       jobContext: jobContext,
       clarifyingContext: clarifyingContext,
+      fitAnalysis: fitAnalysis,
     );
   }
 
@@ -84,6 +89,13 @@ class CoverLetterRequestModel {
           'why_this_company': clarifyingContext!.whyThisCompany,
           'key_achievement': clarifyingContext!.keyAchievement,
           'emphasis_notes': clarifyingContext!.emphasisNotes,
+        },
+      if (fitAnalysis != null)
+        'fit_analysis': {
+          'match_score': fitAnalysis!.matchScore,
+          'missing_skills': fitAnalysis!.missingSkills,
+          'strengths': fitAnalysis!.strengths,
+          'positioning_summary': fitAnalysis!.positioningSummary,
         },
     };
   }
