@@ -196,11 +196,13 @@ class _FakeCoverLetterRepository implements CoverLetterRepository {
   final Duration delay;
   final List<CoverLetterResult> _history;
   final Object? fetchHistoryError;
+  CoverLetterRequest? lastRequest;
 
   @override
   Future<CoverLetterResult> generateCoverLetter(
     CoverLetterRequest request,
   ) async {
+    lastRequest = request;
     if (delay > Duration.zero) {
       await Future<void>.delayed(delay);
     }
@@ -1029,6 +1031,9 @@ void main() {
     final jobMatchingRepository = _FakeJobMatchingRepository(
       results: matchedJobs,
     );
+    final coverLetterRepository = _FakeCoverLetterRepository(
+      response: generatedCoverLetter,
+    );
 
     await _pumpApp(
       tester,
@@ -1039,6 +1044,7 @@ void main() {
         latestProfile: parsedCandidateProfile,
       ),
       jobMatchingRepository: jobMatchingRepository,
+      coverLetterRepository: coverLetterRepository,
     );
 
     await tester.pump();
@@ -1058,10 +1064,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cover Letter Generator'), findsOneWidget);
-    expect(
-      find.textContaining('Selected job details from Northstar Labs'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Selected job context'), findsOneWidget);
 
     final fields = find.byType(TextFormField);
     expect(
@@ -1075,6 +1078,61 @@ void main() {
     expect(
       tester.widget<TextFormField>(fields.at(2)).controller!.text,
       matchedJobs.first.jobDescription,
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Add optional clarifying details'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add optional clarifying details'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Why this company?'),
+      'Their B2B workflow and product maturity match the problems I enjoy most.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Most relevant achievement'),
+      'I improved onboarding completion by 18% across a complex product flow.',
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+
+    final generateButton = find.widgetWithText(
+      FilledButton,
+      'Generate cover letter',
+    );
+
+    await tester.scrollUntilVisible(
+      generateButton,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    final generateWidget = tester.widget<FilledButton>(generateButton);
+    generateWidget.onPressed!.call();
+    await tester.pump();
+
+    expect(coverLetterRepository.lastRequest, isNotNull);
+    expect(
+      coverLetterRepository.lastRequest!.jobContext?.company,
+      'Northstar Labs',
+    );
+    expect(
+      coverLetterRepository.lastRequest!.jobContext?.jobDescription,
+      matchedJobs.first.jobDescription,
+    );
+    expect(
+      coverLetterRepository.lastRequest!.candidateContext?.skills,
+      contains('Figma'),
+    );
+    expect(
+      coverLetterRepository.lastRequest!.clarifyingContext?.whyThisCompany,
+      contains('B2B workflow'),
     );
   });
 

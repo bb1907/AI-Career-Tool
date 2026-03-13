@@ -20,6 +20,9 @@ import '../../../profile_import/application/candidate_profile_prefill.dart';
 import '../../../profile_import/domain/entities/candidate_profile.dart';
 import '../../../profile_import/presentation/widgets/candidate_profile_prefill_banner.dart';
 import '../../application/cover_letter_controller.dart';
+import '../../domain/entities/cover_letter_candidate_context.dart';
+import '../../domain/entities/cover_letter_clarifying_context.dart';
+import '../../domain/entities/cover_letter_job_context.dart';
 import '../../domain/entities/cover_letter_request.dart';
 
 class CoverLetterInputPage extends ConsumerStatefulWidget {
@@ -43,10 +46,14 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   final _roleTitleController = TextEditingController();
   final _jobDescriptionController = TextEditingController();
   final _userBackgroundController = TextEditingController();
+  final _whyCompanyController = TextEditingController();
+  final _achievementController = TextEditingController();
+  final _emphasisController = TextEditingController();
   String _tone = _toneOptions.first;
   String? _appliedProfileSignature;
   String? _appliedJobSignature;
   bool _isSubmitting = false;
+  bool _showClarifyingDetails = false;
 
   @override
   void dispose() {
@@ -54,6 +61,9 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
     _roleTitleController.dispose();
     _jobDescriptionController.dispose();
     _userBackgroundController.dispose();
+    _whyCompanyController.dispose();
+    _achievementController.dispose();
+    _emphasisController.dispose();
     super.dispose();
   }
 
@@ -123,6 +133,52 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
     return [job.id, job.title, job.company, job.location, job.url].join('::');
   }
 
+  CoverLetterCandidateContext? _buildCandidateContext(
+    CandidateProfile? profile,
+  ) {
+    if (profile == null) {
+      return null;
+    }
+
+    return CoverLetterCandidateContext(
+      name: profile.name,
+      email: profile.email,
+      location: profile.location,
+      yearsExperience: profile.yearsExperience,
+      roles: profile.roles,
+      skills: profile.skills,
+      industries: profile.industries,
+      seniority: profile.seniority,
+      education: profile.education,
+    );
+  }
+
+  CoverLetterJobContext? _buildJobContext(JobListing? job) {
+    if (job == null) {
+      return null;
+    }
+
+    return CoverLetterJobContext(
+      jobId: job.id,
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      source: job.source,
+      url: job.url,
+      jobDescription: job.jobDescription,
+    );
+  }
+
+  CoverLetterClarifyingContext? _buildClarifyingContext() {
+    final clarifyingContext = CoverLetterClarifyingContext(
+      whyThisCompany: _whyCompanyController.text.trim(),
+      keyAchievement: _achievementController.text.trim(),
+      emphasisNotes: _emphasisController.text.trim(),
+    );
+
+    return clarifyingContext.hasContent ? clarifyingContext : null;
+  }
+
   Future<void> _submit() async {
     final isGenerating = ref.read(coverLetterControllerProvider).isGenerating;
     if (_isSubmitting || isGenerating || !_formKey.currentState!.validate()) {
@@ -171,12 +227,20 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
       }
 
       FocusScope.of(context).unfocus();
+      final candidateProfile = ref
+          .read(candidateProfileControllerProvider)
+          .asData
+          ?.value;
+      final selectedJob = ref.read(selectedJobControllerProvider);
       final request = CoverLetterRequest(
         companyName: _companyNameController.text.trim(),
         roleTitle: _roleTitleController.text.trim(),
         jobDescription: _jobDescriptionController.text.trim(),
         userBackground: _userBackgroundController.text.trim(),
         tone: _tone,
+        candidateContext: _buildCandidateContext(candidateProfile),
+        jobContext: _buildJobContext(selectedJob),
+        clarifyingContext: _buildClarifyingContext(),
       );
 
       unawaited(
@@ -279,9 +343,12 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
                           ],
                           if (selectedJob != null) ...[
                             const SizedBox(height: AppSpacing.section),
-                            CandidateProfilePrefillBanner(
-                              message:
-                                  'Selected job details from ${selectedJob.company} were applied to the company, role and job description fields.',
+                            _SelectedJobBanner(
+                              job: selectedJob,
+                              onChange: () => context.go(AppRoutes.jobMatching),
+                              onClear: () => ref
+                                  .read(selectedJobControllerProvider.notifier)
+                                  .clear(),
                             ),
                           ],
                         ],
@@ -364,6 +431,70 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
                               ),
                             ),
                             const SizedBox(height: AppSpacing.section),
+                            Card(
+                              elevation: 0,
+                              color: theme.colorScheme.surfaceContainerLowest,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SwitchListTile.adaptive(
+                                      contentPadding: EdgeInsets.zero,
+                                      value: _showClarifyingDetails,
+                                      title: const Text(
+                                        'Add optional clarifying details',
+                                      ),
+                                      subtitle: const Text(
+                                        'Use this when you want the letter to lean into a specific motivation, achievement or angle.',
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _showClarifyingDetails = value;
+                                        });
+                                      },
+                                    ),
+                                    if (_showClarifyingDetails) ...[
+                                      const SizedBox(
+                                        height: AppSpacing.compact,
+                                      ),
+                                      AppTextField(
+                                        controller: _whyCompanyController,
+                                        labelText: 'Why this company?',
+                                        hintText:
+                                            'Why does this team, mission or product stand out to you?',
+                                        minLines: 2,
+                                        maxLines: 4,
+                                      ),
+                                      const SizedBox(
+                                        height: AppSpacing.section,
+                                      ),
+                                      AppTextField(
+                                        controller: _achievementController,
+                                        labelText: 'Most relevant achievement',
+                                        hintText:
+                                            'Which outcome or project should this letter highlight most?',
+                                        minLines: 2,
+                                        maxLines: 4,
+                                      ),
+                                      const SizedBox(
+                                        height: AppSpacing.section,
+                                      ),
+                                      AppTextField(
+                                        controller: _emphasisController,
+                                        labelText:
+                                            'Anything else to emphasize?',
+                                        hintText:
+                                            'Add any extra context, strengths or signals you want reflected in the draft.',
+                                        minLines: 2,
+                                        maxLines: 4,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.section),
                             DropdownButtonFormField<String>(
                               initialValue: _tone,
                               decoration: const InputDecoration(
@@ -408,6 +539,77 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SelectedJobBanner extends StatelessWidget {
+  const _SelectedJobBanner({
+    required this.job,
+    required this.onChange,
+    required this.onClear,
+  });
+
+  final JobListing job;
+  final VoidCallback onChange;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: colorScheme.primaryContainer,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Selected job context',
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${job.title} at ${job.company}',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Company, role and description fields were filled from this listing. You can still edit them before generating.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onPrimaryContainer,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.section),
+          Wrap(
+            spacing: AppSpacing.compact,
+            runSpacing: AppSpacing.compact,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onChange,
+                icon: const Icon(Icons.travel_explore_outlined),
+                label: const Text('Choose different job'),
+              ),
+              OutlinedButton(
+                onPressed: onClear,
+                child: const Text('Clear selected job'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

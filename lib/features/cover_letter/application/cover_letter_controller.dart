@@ -66,6 +66,10 @@ class CoverLetterController extends Notifier<CoverLetterState> {
               'job_description_length': request.jobDescription.length,
               'background_length': request.userBackground.length,
               'role_present': request.roleTitle.trim().isNotEmpty,
+              'uses_selected_job': request.jobContext != null,
+              'uses_candidate_profile': request.candidateContext != null,
+              'has_clarifying_context':
+                  request.clarifyingContext?.hasContent ?? false,
             },
           ),
     );

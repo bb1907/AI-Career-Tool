@@ -34,12 +34,36 @@ Preferred tone: ${request.input['preferred_tone'] ?? ''}
     }
 
     if (request.type == AiTaskType.coverLetterGenerate) {
+      final candidateProfile =
+          request.input['candidate_profile'] as Map<String, dynamic>?;
+      final selectedJob =
+          request.input['selected_job'] as Map<String, dynamic>?;
+      final clarifyingContext =
+          request.input['clarifying_context'] as Map<String, dynamic>?;
+
       return '''
 Company name: ${request.input['company_name'] ?? ''}
 Role title: ${request.input['role_title'] ?? ''}
 Job description: ${request.input['job_description'] ?? ''}
 User background: ${request.input['user_background'] ?? ''}
 Tone: ${request.input['tone'] ?? ''}
+Candidate profile name: ${candidateProfile?['name'] ?? ''}
+Candidate profile email: ${candidateProfile?['email'] ?? ''}
+Candidate profile location: ${candidateProfile?['location'] ?? ''}
+Candidate profile years of experience: ${candidateProfile?['years_experience'] ?? ''}
+Candidate profile roles: ${_joinList(candidateProfile?['roles'])}
+Candidate profile skills: ${_joinList(candidateProfile?['skills'])}
+Candidate profile industries: ${_joinList(candidateProfile?['industries'])}
+Candidate profile seniority: ${candidateProfile?['seniority'] ?? ''}
+Candidate profile education: ${candidateProfile?['education'] ?? ''}
+Selected job source: ${selectedJob?['source'] ?? ''}
+Selected job url: ${selectedJob?['url'] ?? ''}
+Selected job location: ${selectedJob?['location'] ?? ''}
+Selected job title: ${selectedJob?['title'] ?? ''}
+Selected job company: ${selectedJob?['company'] ?? ''}
+Clarifying answer - why this company: ${clarifyingContext?['why_this_company'] ?? ''}
+Clarifying answer - key achievement: ${clarifyingContext?['key_achievement'] ?? ''}
+Clarifying answer - emphasis notes: ${clarifyingContext?['emphasis_notes'] ?? ''}
 '''
           .trim();
     }
