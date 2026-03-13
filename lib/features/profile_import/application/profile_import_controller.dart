@@ -133,7 +133,8 @@ class ProfileImportController extends Notifier<ProfileImportState> {
       state = state.copyWith(
         isImporting: false,
         processingLabel: null,
-        errorMessage: 'CV import failed. Try again.',
+        errorMessage:
+            'We couldn\'t import and parse this CV right now. Please try again.',
       );
     }
   }

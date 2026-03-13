@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router.dart';
 import '../../../../core/config/constants.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -27,6 +28,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSubmittingLocally = false;
 
   @override
   void dispose() {
@@ -36,12 +38,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    if (_isSubmittingLocally || !_formKey.currentState!.validate()) {
       return;
     }
 
     FocusScope.of(context).unfocus();
-    final messenger = ScaffoldMessenger.of(context);
+    setState(() {
+      _isSubmittingLocally = true;
+    });
 
     try {
       await ref
@@ -51,18 +55,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             password: _passwordController.text,
           );
     } on AppException catch (error) {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        AppFeedback.showError(context, error.message);
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingLocally = false;
+        });
+      }
     }
   }
 
@@ -80,6 +81,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final isSubmitting = authState.isSubmitting || _isSubmittingLocally;
 
     return AppPlaceholderScaffold(
       eyebrow: 'Public route',
@@ -132,14 +134,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const SizedBox(height: AppSpacing.page),
             AppButton(
               label: 'Sign in',
-              isLoading: authState.isSubmitting,
+              isLoading: isSubmitting,
               onPressed: _submit,
             ),
             const SizedBox(height: AppSpacing.compact),
             AppButton(
               label: 'Create a new account',
               variant: AppButtonVariant.secondary,
-              onPressed: authState.isSubmitting
+              onPressed: isSubmitting
                   ? null
                   : () => context.go(_registerLocation()),
             ),

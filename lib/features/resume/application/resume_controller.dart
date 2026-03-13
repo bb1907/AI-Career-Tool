@@ -39,6 +39,10 @@ class ResumeController extends Notifier<ResumeState> {
   ResumeState build() => const ResumeState();
 
   Future<void> startGeneration(ResumeRequest request) async {
+    if (state.isGenerating) {
+      return;
+    }
+
     state = state.copyWith(
       request: request,
       isGenerating: true,
@@ -102,7 +106,8 @@ class ResumeController extends Notifier<ResumeState> {
       await _releasePendingUsage();
       state = state.copyWith(
         isGenerating: false,
-        errorMessage: 'We could not generate the resume right now. Try again.',
+        errorMessage:
+            'We couldn\'t generate your resume right now. Please try again.',
         clearResponse: true,
       );
     }

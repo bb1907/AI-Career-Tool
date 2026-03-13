@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -166,6 +167,11 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (subscriptionState.isLoading &&
+                subscriptionState.hasPackages) ...[
+              const SizedBox(height: AppSpacing.compact),
+              const LinearProgressIndicator(),
+            ],
             const SizedBox(height: AppSpacing.compact),
             if (subscriptionState.isLoading && !subscriptionState.hasPackages)
               const Card(
@@ -313,8 +319,6 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
     BuildContext context,
     SubscriptionPackage package,
   ) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     try {
       final status = await ref
           .read(subscriptionControllerProvider.notifier)
@@ -327,11 +331,10 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
         return;
       }
 
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('${package.plan.label} premium unlocked.')),
-        );
+      AppFeedback.showSuccess(
+        context,
+        '${package.plan.label} premium unlocked successfully.',
+      );
 
       _continueToOrigin(context, status);
     } on AppException catch (error) {
@@ -339,20 +342,11 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
         return;
       }
 
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+      AppFeedback.showError(context, error.message);
     }
   }
 
   Future<void> _restorePurchases(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     try {
       final status = await ref
           .read(subscriptionControllerProvider.notifier)
@@ -362,32 +356,17 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
       }
 
       if (status.isPremium) {
-        messenger
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(content: Text('Purchases restored successfully.')),
-          );
+        AppFeedback.showSuccess(context, 'Purchases restored successfully.');
         _continueToOrigin(context, status);
       } else {
-        messenger
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(content: Text('No active premium purchase found.')),
-          );
+        AppFeedback.showInfo(context, 'No active premium purchase was found.');
       }
     } on AppException catch (error) {
       if (!context.mounted) {
         return;
       }
 
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+      AppFeedback.showError(context, error.message);
     }
   }
 

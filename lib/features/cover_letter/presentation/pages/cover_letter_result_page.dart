@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
@@ -31,21 +32,14 @@ class _CoverLetterResultPageState extends ConsumerState<CoverLetterResultPage> {
   }
 
   Future<void> _copyDraft(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(ClipboardData(text: _editorController.text));
-
     if (!context.mounted) {
       return;
     }
-
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Cover letter copied.')));
+    AppFeedback.showSuccess(context, 'Cover letter copied to your clipboard.');
   }
 
   Future<void> _saveDraft(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     try {
       await ref
           .read(coverLetterControllerProvider.notifier)
@@ -54,25 +48,12 @@ class _CoverLetterResultPageState extends ConsumerState<CoverLetterResultPage> {
       if (!context.mounted) {
         return;
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Cover letter saved to history.')),
-        );
+      AppFeedback.showSuccess(context, 'Cover letter saved to your history.');
     } on AppException catch (error) {
       if (!context.mounted) {
         return;
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+      AppFeedback.showError(context, error.message);
     }
   }
 

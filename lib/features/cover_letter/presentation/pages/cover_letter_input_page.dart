@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -41,6 +43,7 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   final _userBackgroundController = TextEditingController();
   String _tone = _toneOptions.first;
   String? _appliedProfileSignature;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -92,64 +95,90 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    final isGenerating = ref.read(coverLetterControllerProvider).isGenerating;
+    if (_isSubmitting || isGenerating || !_formKey.currentState!.validate()) {
       return;
     }
 
-    final accessDecision = await ref
-        .read(premiumAccessControllerProvider.notifier)
-        .requestAccess(PremiumAccessFeature.coverLetterGenerate);
+    setState(() {
+      _isSubmitting = true;
+    });
 
-    if (!accessDecision.isAllowed) {
+    try {
+      final accessDecision = await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .requestAccess(PremiumAccessFeature.coverLetterGenerate);
+
+      if (!accessDecision.isAllowed) {
+        if (!mounted) {
+          return;
+        }
+
+        final unlocked = await context.push<bool>(
+          Uri(
+            path: AppRoutes.paywall,
+            queryParameters: {
+              'from': AppRoutes.coverLetter,
+              'reason': 'usage_limit',
+              'feature': PremiumAccessFeature.coverLetterGenerate.name,
+            },
+          ).toString(),
+        );
+
+        if (!mounted || unlocked != true) {
+          return;
+        }
+
+        final refreshedDecision = await ref
+            .read(premiumAccessControllerProvider.notifier)
+            .requestAccess(PremiumAccessFeature.coverLetterGenerate);
+        if (!refreshedDecision.isAllowed) {
+          return;
+        }
+      }
+
       if (!mounted) {
         return;
       }
 
-      final unlocked = await context.push<bool>(
-        Uri(
-          path: AppRoutes.paywall,
-          queryParameters: {
-            'from': AppRoutes.coverLetter,
-            'reason': 'usage_limit',
-            'feature': PremiumAccessFeature.coverLetterGenerate.name,
-          },
-        ).toString(),
+      FocusScope.of(context).unfocus();
+      final request = CoverLetterRequest(
+        companyName: _companyNameController.text.trim(),
+        roleTitle: _roleTitleController.text.trim(),
+        jobDescription: _jobDescriptionController.text.trim(),
+        userBackground: _userBackgroundController.text.trim(),
+        tone: _tone,
       );
 
-      if (!mounted || unlocked != true) {
+      unawaited(
+        ref
+            .read(coverLetterControllerProvider.notifier)
+            .startGeneration(request),
+      );
+
+      if (!mounted) {
         return;
       }
 
-      final refreshedDecision = await ref
-          .read(premiumAccessControllerProvider.notifier)
-          .requestAccess(PremiumAccessFeature.coverLetterGenerate);
-      if (!refreshedDecision.isAllowed) {
-        return;
+      context.push(AppRoutes.coverLetterResult);
+    } on AppException catch (error) {
+      if (mounted) {
+        AppFeedback.showError(context, error.message);
+      }
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'We couldn\'t start cover letter generation right now. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
-
-    if (!mounted) {
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-    final request = CoverLetterRequest(
-      companyName: _companyNameController.text.trim(),
-      roleTitle: _roleTitleController.text.trim(),
-      jobDescription: _jobDescriptionController.text.trim(),
-      userBackground: _userBackgroundController.text.trim(),
-      tone: _tone,
-    );
-
-    unawaited(
-      ref.read(coverLetterControllerProvider.notifier).startGeneration(request),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    context.push(AppRoutes.coverLetterResult);
   }
 
   @override
@@ -322,11 +351,13 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
                             ),
                             const SizedBox(height: AppSpacing.page),
                             AppButton(
-                              label: state.isGenerating
+                              label: state.isGenerating || _isSubmitting
                                   ? 'Generating cover letter...'
                                   : 'Generate cover letter',
-                              isLoading: state.isGenerating,
-                              onPressed: state.isGenerating ? null : _submit,
+                              isLoading: state.isGenerating || _isSubmitting,
+                              onPressed: state.isGenerating || _isSubmitting
+                                  ? null
+                                  : _submit,
                               icon: const Icon(Icons.auto_awesome),
                             ),
                           ],

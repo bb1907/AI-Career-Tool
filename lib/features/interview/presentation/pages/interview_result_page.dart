@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
@@ -16,8 +17,6 @@ class InterviewResultPage extends ConsumerWidget {
   const InterviewResultPage({super.key});
 
   Future<void> _savePrep(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     try {
       await ref
           .read(interviewControllerProvider.notifier)
@@ -26,25 +25,12 @@ class InterviewResultPage extends ConsumerWidget {
       if (!context.mounted) {
         return;
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Interview prep saved to history.')),
-        );
+      AppFeedback.showSuccess(context, 'Interview prep saved to your history.');
     } on AppException catch (error) {
       if (!context.mounted) {
         return;
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+      AppFeedback.showError(context, error.message);
     }
   }
 

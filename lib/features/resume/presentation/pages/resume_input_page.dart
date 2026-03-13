@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -43,6 +45,7 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
   final _educationController = TextEditingController();
   String _preferredTone = _toneOptions.first;
   String? _appliedProfileSignature;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -99,68 +102,92 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    final isGenerating = ref.read(resumeBuilderControllerProvider).isGenerating;
+    if (_isSubmitting || isGenerating || !_formKey.currentState!.validate()) {
       return;
     }
 
-    final accessDecision = await ref
-        .read(premiumAccessControllerProvider.notifier)
-        .requestAccess(PremiumAccessFeature.resumeGenerate);
+    setState(() {
+      _isSubmitting = true;
+    });
 
-    if (!accessDecision.isAllowed) {
+    try {
+      final accessDecision = await ref
+          .read(premiumAccessControllerProvider.notifier)
+          .requestAccess(PremiumAccessFeature.resumeGenerate);
+
+      if (!accessDecision.isAllowed) {
+        if (!mounted) {
+          return;
+        }
+
+        final unlocked = await context.push<bool>(
+          Uri(
+            path: AppRoutes.paywall,
+            queryParameters: {
+              'from': AppRoutes.resume,
+              'reason': 'usage_limit',
+              'feature': PremiumAccessFeature.resumeGenerate.name,
+            },
+          ).toString(),
+        );
+
+        if (!mounted || unlocked != true) {
+          return;
+        }
+
+        final refreshedDecision = await ref
+            .read(premiumAccessControllerProvider.notifier)
+            .requestAccess(PremiumAccessFeature.resumeGenerate);
+        if (!refreshedDecision.isAllowed) {
+          return;
+        }
+      }
+
       if (!mounted) {
         return;
       }
 
-      final unlocked = await context.push<bool>(
-        Uri(
-          path: AppRoutes.paywall,
-          queryParameters: {
-            'from': AppRoutes.resume,
-            'reason': 'usage_limit',
-            'feature': PremiumAccessFeature.resumeGenerate.name,
-          },
-        ).toString(),
+      FocusScope.of(context).unfocus();
+      final request = ResumeFormParser.buildRequest(
+        targetRole: _targetRoleController.text,
+        yearsOfExperience: _yearsController.text,
+        pastRoles: _pastRolesController.text,
+        topSkills: _topSkillsController.text,
+        achievements: _achievementsController.text,
+        education: _educationController.text,
+        preferredTone: _preferredTone,
       );
 
-      if (!mounted || unlocked != true) {
+      unawaited(
+        ref
+            .read(resumeBuilderControllerProvider.notifier)
+            .startGeneration(request),
+      );
+
+      if (!mounted) {
         return;
       }
 
-      final refreshedDecision = await ref
-          .read(premiumAccessControllerProvider.notifier)
-          .requestAccess(PremiumAccessFeature.resumeGenerate);
-      if (!refreshedDecision.isAllowed) {
-        return;
+      context.push(AppRoutes.resumeResult);
+    } on AppException catch (error) {
+      if (mounted) {
+        AppFeedback.showError(context, error.message);
+      }
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'We couldn\'t start resume generation right now. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
-
-    if (!mounted) {
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-    final request = ResumeFormParser.buildRequest(
-      targetRole: _targetRoleController.text,
-      yearsOfExperience: _yearsController.text,
-      pastRoles: _pastRolesController.text,
-      topSkills: _topSkillsController.text,
-      achievements: _achievementsController.text,
-      education: _educationController.text,
-      preferredTone: _preferredTone,
-    );
-
-    unawaited(
-      ref
-          .read(resumeBuilderControllerProvider.notifier)
-          .startGeneration(request),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    context.push(AppRoutes.resumeResult);
   }
 
   @override
@@ -382,11 +409,13 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
                             ),
                             const SizedBox(height: AppSpacing.page),
                             AppButton(
-                              label: state.isGenerating
+                              label: state.isGenerating || _isSubmitting
                                   ? 'Generating resume...'
                                   : 'Generate resume',
-                              isLoading: state.isGenerating,
-                              onPressed: state.isGenerating ? null : _submit,
+                              isLoading: state.isGenerating || _isSubmitting,
+                              onPressed: state.isGenerating || _isSubmitting
+                                  ? null
+                                  : _submit,
                               icon: const Icon(Icons.auto_awesome),
                             ),
                           ],

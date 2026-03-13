@@ -44,6 +44,10 @@ class CoverLetterController extends Notifier<CoverLetterState> {
   CoverLetterState build() => const CoverLetterState();
 
   Future<void> startGeneration(CoverLetterRequest request) async {
+    if (state.isGenerating) {
+      return;
+    }
+
     state = state.copyWith(
       request: request,
       isGenerating: true,
@@ -104,7 +108,7 @@ class CoverLetterController extends Notifier<CoverLetterState> {
       state = state.copyWith(
         isGenerating: false,
         errorMessage:
-            'We could not generate the cover letter right now. Try again.',
+            'We couldn\'t generate your cover letter right now. Please try again.',
         clearResult: true,
       );
     }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router.dart';
 import '../../../../core/config/constants.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -31,6 +32,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _targetRoleController = TextEditingController();
   final _yearsController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSubmittingLocally = false;
 
   @override
   void dispose() {
@@ -43,12 +45,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    if (_isSubmittingLocally || !_formKey.currentState!.validate()) {
       return;
     }
 
     FocusScope.of(context).unfocus();
-    final messenger = ScaffoldMessenger.of(context);
+    setState(() {
+      _isSubmittingLocally = true;
+    });
 
     try {
       final result = await ref
@@ -67,26 +71,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         return;
       }
 
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(result.message)));
+      AppFeedback.showSuccess(context, result.message);
 
       if (result.requiresEmailConfirmation) {
         context.go(_loginLocation());
       }
     } on AppException catch (error) {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        AppFeedback.showError(context, error.message);
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingLocally = false;
+        });
+      }
     }
   }
 
@@ -104,6 +103,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final isSubmitting = authState.isSubmitting || _isSubmittingLocally;
 
     return AppPlaceholderScaffold(
       eyebrow: 'Public route',
@@ -177,14 +177,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             const SizedBox(height: AppSpacing.page),
             AppButton(
               label: 'Create account',
-              isLoading: authState.isSubmitting,
+              isLoading: isSubmitting,
               onPressed: _submit,
             ),
             const SizedBox(height: AppSpacing.compact),
             AppButton(
               label: 'I already have an account',
               variant: AppButtonVariant.secondary,
-              onPressed: authState.isSubmitting
+              onPressed: isSubmitting
                   ? null
                   : () => context.go(_loginLocation()),
             ),

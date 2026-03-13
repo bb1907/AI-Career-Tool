@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -18,23 +19,16 @@ class ResumeResultPage extends ConsumerWidget {
   const ResumeResultPage({super.key});
 
   Future<void> _copyResume(BuildContext context, ResumeResult result) async {
-    final messenger = ScaffoldMessenger.of(context);
     await Clipboard.setData(
       ClipboardData(text: ResumeClipboardFormatter.format(result)),
     );
-
     if (!context.mounted) {
       return;
     }
-
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Resume copied.')));
+    AppFeedback.showSuccess(context, 'Resume copied to your clipboard.');
   }
 
   Future<void> _saveResume(WidgetRef ref, BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     try {
       await ref
           .read(resumeBuilderControllerProvider.notifier)
@@ -43,25 +37,12 @@ class ResumeResultPage extends ConsumerWidget {
       if (!context.mounted) {
         return;
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Resume saved to history.')),
-        );
+      AppFeedback.showSuccess(context, 'Resume saved to your history.');
     } on AppException catch (error) {
       if (!context.mounted) {
         return;
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+      AppFeedback.showError(context, error.message);
     }
   }
 

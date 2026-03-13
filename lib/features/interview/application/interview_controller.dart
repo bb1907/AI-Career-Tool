@@ -42,6 +42,10 @@ class InterviewController extends Notifier<InterviewState> {
   InterviewState build() => const InterviewState();
 
   Future<void> startGeneration(InterviewRequest request) async {
+    if (state.isGenerating) {
+      return;
+    }
+
     state = state.copyWith(
       request: request,
       isGenerating: true,
@@ -103,7 +107,7 @@ class InterviewController extends Notifier<InterviewState> {
       state = state.copyWith(
         isGenerating: false,
         errorMessage:
-            'We could not generate interview prep right now. Try again.',
+            'We couldn\'t generate interview prep right now. Please try again.',
         clearResult: true,
       );
     }

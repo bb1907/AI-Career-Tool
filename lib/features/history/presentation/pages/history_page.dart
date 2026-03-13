@@ -135,6 +135,10 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _HistoryOverviewCard(snapshot: state.snapshot),
+                  if (state.isLoading) ...[
+                    const SizedBox(height: AppSpacing.section),
+                    const LinearProgressIndicator(),
+                  ],
                   if (state.errorMessage != null) ...[
                     const SizedBox(height: AppSpacing.page),
                     ErrorView(

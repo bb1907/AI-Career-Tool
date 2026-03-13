@@ -128,6 +128,9 @@ class HomePage extends ConsumerWidget {
             const SizedBox(height: AppSpacing.compact),
             _RecentDocumentsCard(
               recentDocuments: recentDocuments,
+              onRetry: userId == null
+                  ? null
+                  : () => ref.invalidate(recentDocumentsProvider(userId)),
               onHistoryPressed: () => context.go(AppRoutes.history),
             ),
             const SizedBox(height: AppSpacing.page),
@@ -148,10 +151,12 @@ class HomePage extends ConsumerWidget {
 class _RecentDocumentsCard extends StatelessWidget {
   const _RecentDocumentsCard({
     required this.recentDocuments,
+    required this.onRetry,
     required this.onHistoryPressed,
   });
 
   final AsyncValue<RecentDocumentsState> recentDocuments;
+  final VoidCallback? onRetry;
   final VoidCallback onHistoryPressed;
 
   @override
@@ -251,7 +256,13 @@ class _RecentDocumentsCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.compact),
               ErrorView(
                 message: 'Recent saved work could not be loaded right now.',
-                onRetry: onHistoryPressed,
+                onRetry: onRetry,
+              ),
+              const SizedBox(height: AppSpacing.section),
+              FilledButton.tonalIcon(
+                onPressed: onHistoryPressed,
+                icon: const Icon(Icons.history_outlined),
+                label: const Text('Open history'),
               ),
             ],
           ),

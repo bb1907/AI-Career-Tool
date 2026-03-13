@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -31,8 +32,17 @@ class ProfileImportPage extends ConsumerStatefulWidget {
 }
 
 class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
+  bool _isPickingFile = false;
+  bool _isStartingImport = false;
+
   Future<void> _pickPdf() async {
-    final messenger = ScaffoldMessenger.of(context);
+    if (_isPickingFile) {
+      return;
+    }
+
+    setState(() {
+      _isPickingFile = true;
+    });
 
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -62,18 +72,15 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
             ),
           );
     } on AppException catch (error) {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        AppFeedback.showError(context, error.message);
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingFile = false;
+        });
+      }
     }
   }
 
@@ -91,7 +98,14 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
   }
 
   Future<void> _startImport() async {
-    final messenger = ScaffoldMessenger.of(context);
+    if (_isStartingImport ||
+        ref.read(profileImportControllerProvider).isImporting) {
+      return;
+    }
+
+    setState(() {
+      _isStartingImport = true;
+    });
 
     try {
       final accessDecision = await ref
@@ -130,18 +144,15 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
           .read(profileImportControllerProvider.notifier)
           .importSelectedCv();
     } on AppException catch (error) {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        AppFeedback.showError(context, error.message);
       }
-
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isStartingImport = false;
+        });
+      }
     }
   }
 
@@ -151,6 +162,18 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
     final candidateProfileState = ref.watch(candidateProfileControllerProvider);
     final theme = Theme.of(context);
     final currentProfile = candidateProfileState.asData?.value;
+    final isBusy = state.isImporting || _isStartingImport || _isPickingFile;
+
+    ref.listen(profileImportControllerProvider, (previous, next) {
+      if (previous?.isImporting == true &&
+          !next.isImporting &&
+          next.errorMessage == null) {
+        AppFeedback.showSuccess(
+          context,
+          'CV uploaded and candidate profile saved successfully.',
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -212,19 +235,17 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
                                     : 'Choose another PDF',
                                 expanded: false,
                                 icon: const Icon(Icons.upload_file_outlined),
-                                onPressed: state.isImporting ? null : _pickPdf,
+                                onPressed: isBusy ? null : _pickPdf,
                               ),
                               AppButton(
-                                label: state.isImporting
+                                label: isBusy
                                     ? 'Processing...'
                                     : 'Upload and parse',
                                 expanded: false,
                                 variant: AppButtonVariant.tonal,
                                 icon: const Icon(Icons.auto_awesome_outlined),
-                                isLoading: state.isImporting,
-                                onPressed:
-                                    state.selectedFile == null ||
-                                        state.isImporting
+                                isLoading: isBusy,
+                                onPressed: state.selectedFile == null || isBusy
                                     ? null
                                     : _startImport,
                               ),
@@ -238,8 +259,8 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
                   if (state.selectedFile != null)
                     SelectedCvCard(
                       file: state.selectedFile!,
-                      onReplace: state.isImporting ? null : _pickPdf,
-                      onClear: state.isImporting
+                      onReplace: isBusy ? null : _pickPdf,
+                      onClear: isBusy
                           ? null
                           : () => ref
                                 .read(profileImportControllerProvider.notifier)
@@ -356,7 +377,6 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
     final seniorityController = TextEditingController(text: profile.seniority);
     final educationController = TextEditingController(text: profile.education);
     final formKey = GlobalKey<FormState>();
-    final messenger = ScaffoldMessenger.of(context);
     var isSaving = false;
 
     try {
@@ -364,7 +384,6 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
         context: context,
         isScrollControlled: true,
         builder: (context) {
-          final colorScheme = Theme.of(context).colorScheme;
           final navigator = Navigator.of(context);
 
           return StatefulBuilder(
@@ -401,26 +420,16 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
                   }
 
                   navigator.pop();
-                  messenger
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      const SnackBar(
-                        content: Text('Candidate profile updated.'),
-                      ),
-                    );
+                  AppFeedback.showSuccess(
+                    this.context,
+                    'Candidate profile updated successfully.',
+                  );
                 } on AppException catch (error) {
                   if (!mounted) {
                     return;
                   }
 
-                  messenger
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      SnackBar(
-                        content: Text(error.message),
-                        backgroundColor: colorScheme.error,
-                      ),
-                    );
+                  AppFeedback.showError(this.context, error.message);
                   setModalState(() {
                     isSaving = false;
                   });
@@ -429,16 +438,10 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
                     return;
                   }
 
-                  messenger
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                          'Candidate profile could not be updated right now.',
-                        ),
-                        backgroundColor: colorScheme.error,
-                      ),
-                    );
+                  AppFeedback.showError(
+                    this.context,
+                    'Candidate profile could not be updated right now.',
+                  );
                   setModalState(() {
                     isSaving = false;
                   });

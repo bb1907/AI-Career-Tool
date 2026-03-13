@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/app_exception.dart';
 import '../../../../services/analytics/analytics_events.dart';
 import '../../../../services/analytics/analytics_service.dart';
 import '../../../../services/supabase/auth_service.dart';
@@ -51,6 +52,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> signIn({required String email, required String password}) async {
+    if (state.isSubmitting) {
+      return;
+    }
+
     state = const AuthState.unauthenticated(isSubmitting: true);
 
     try {
@@ -73,6 +78,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<SignUpResult> signUp(SignUpRequest request) async {
+    if (state.isSubmitting) {
+      throw const AppException('Account creation is already in progress.');
+    }
+
     state = const AuthState.unauthenticated(isSubmitting: true);
     unawaited(
       ref
@@ -112,6 +121,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    if (state.isSubmitting) {
+      return;
+    }
+
     final currentSession = state.session;
 
     if (currentSession != null) {

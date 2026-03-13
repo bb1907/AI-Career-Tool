@@ -49,6 +49,10 @@ class SubscriptionController extends Notifier<SubscriptionState> {
   }
 
   Future<void> refresh() async {
+    if (state.isBusy) {
+      return;
+    }
+
     final activeUserId = state.userId;
     final revision = ++_authRevision;
 
@@ -99,6 +103,10 @@ class SubscriptionController extends Notifier<SubscriptionState> {
     String? sourceFeature,
     String? reason,
   }) async {
+    if (state.isBusy) {
+      return state.status;
+    }
+
     final activeUserId = state.userId;
 
     state = state.copyWith(
@@ -178,6 +186,10 @@ class SubscriptionController extends Notifier<SubscriptionState> {
   }
 
   Future<SubscriptionStatus> restorePurchases() async {
+    if (state.isBusy) {
+      return state.status;
+    }
+
     final activeUserId = state.userId;
 
     state = state.copyWith(isRestoring: true, clearError: true);
