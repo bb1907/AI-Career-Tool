@@ -9,11 +9,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
 import '../../../paywall/application/premium_access_controller.dart';
+import '../../application/candidate_profile_controller.dart';
 import '../../application/profile_import_controller.dart';
 import '../../domain/entities/candidate_profile.dart';
 import '../../domain/entities/cv_upload_file.dart';
@@ -145,7 +148,9 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(profileImportControllerProvider);
+    final candidateProfileState = ref.watch(candidateProfileControllerProvider);
     final theme = Theme.of(context);
+    final currentProfile = candidateProfileState.asData?.value;
 
     return Scaffold(
       appBar: AppBar(
@@ -272,9 +277,54 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
                       ),
                     ),
                   ],
-                  if (state.profile != null) ...[
+                  if (candidateProfileState.isLoading &&
+                      currentProfile == null &&
+                      !state.isImporting) ...[
                     const SizedBox(height: AppSpacing.page),
-                    _CandidateProfileView(profile: state.profile!),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: LoadingView(
+                          label: 'Loading your candidate profile...',
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (candidateProfileState.hasError &&
+                      currentProfile == null &&
+                      !state.isImporting) ...[
+                    const SizedBox(height: AppSpacing.page),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: ErrorView(
+                          message:
+                              'Your saved candidate profile could not be loaded right now.',
+                          onRetry: () {
+                            ref
+                                .read(
+                                  candidateProfileControllerProvider.notifier,
+                                )
+                                .refresh();
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (currentProfile != null) ...[
+                    const SizedBox(height: AppSpacing.page),
+                    _CandidateProfileView(
+                      profile: currentProfile,
+                      onEdit: () => _editCandidateProfile(currentProfile),
+                    ),
                   ],
                 ],
               ),
@@ -284,12 +334,244 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
       ),
     );
   }
+
+  Future<void> _editCandidateProfile(CandidateProfile profile) async {
+    final nameController = TextEditingController(text: profile.name);
+    final emailController = TextEditingController(text: profile.email);
+    final locationController = TextEditingController(text: profile.location);
+    final yearsController = TextEditingController(
+      text: profile.yearsExperience > 0
+          ? profile.yearsExperience.toString()
+          : '',
+    );
+    final rolesController = TextEditingController(
+      text: profile.roles.join('\n'),
+    );
+    final skillsController = TextEditingController(
+      text: profile.skills.join(', '),
+    );
+    final industriesController = TextEditingController(
+      text: profile.industries.join(', '),
+    );
+    final seniorityController = TextEditingController(text: profile.seniority);
+    final educationController = TextEditingController(text: profile.education);
+    final formKey = GlobalKey<FormState>();
+    final messenger = ScaffoldMessenger.of(context);
+    var isSaving = false;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) {
+          final colorScheme = Theme.of(context).colorScheme;
+          final navigator = Navigator.of(context);
+
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              Future<void> save() async {
+                if (!formKey.currentState!.validate() || isSaving) {
+                  return;
+                }
+
+                setModalState(() {
+                  isSaving = true;
+                });
+
+                try {
+                  final updatedProfile = profile.copyWith(
+                    name: nameController.text.trim(),
+                    email: emailController.text.trim(),
+                    location: locationController.text.trim(),
+                    yearsExperience:
+                        int.tryParse(yearsController.text.trim()) ?? 0,
+                    roles: rolesController.text.splitToEntries(),
+                    skills: skillsController.text.splitToEntries(),
+                    industries: industriesController.text.splitToEntries(),
+                    seniority: seniorityController.text.trim(),
+                    education: educationController.text.trim(),
+                  );
+
+                  await ref
+                      .read(candidateProfileControllerProvider.notifier)
+                      .updateProfile(updatedProfile);
+
+                  if (!mounted) {
+                    return;
+                  }
+
+                  navigator.pop();
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(
+                        content: Text('Candidate profile updated.'),
+                      ),
+                    );
+                } on AppException catch (error) {
+                  if (!mounted) {
+                    return;
+                  }
+
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text(error.message),
+                        backgroundColor: colorScheme.error,
+                      ),
+                    );
+                  setModalState(() {
+                    isSaving = false;
+                  });
+                } catch (_) {
+                  if (!mounted) {
+                    return;
+                  }
+
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'Candidate profile could not be updated right now.',
+                        ),
+                        backgroundColor: colorScheme.error,
+                      ),
+                    );
+                  setModalState(() {
+                    isSaving = false;
+                  });
+                }
+              }
+
+              return Padding(
+                padding: EdgeInsets.only(
+                  left: AppSpacing.page,
+                  right: AppSpacing.page,
+                  top: AppSpacing.page,
+                  bottom:
+                      MediaQuery.of(context).viewInsets.bottom +
+                      AppSpacing.page,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Form(
+                    key: formKey,
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Text(
+                          'Edit candidate profile',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: AppSpacing.compact),
+                        Text(
+                          'Update the extracted profile once and reuse it across resume, cover letter and interview flows.',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                height: 1.5,
+                              ),
+                        ),
+                        const SizedBox(height: AppSpacing.page),
+                        AppTextField(
+                          controller: nameController,
+                          labelText: 'Name',
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: emailController,
+                          labelText: 'Email',
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: locationController,
+                          labelText: 'Location',
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: yearsController,
+                          labelText: 'Years of experience',
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: rolesController,
+                          labelText: 'Roles',
+                          helperText:
+                              'Use commas or new lines to separate roles.',
+                          minLines: 3,
+                          maxLines: 5,
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: skillsController,
+                          labelText: 'Skills',
+                          helperText:
+                              'Use commas or new lines to separate skills.',
+                          minLines: 3,
+                          maxLines: 5,
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: industriesController,
+                          labelText: 'Industries',
+                          helperText:
+                              'Use commas or new lines to separate industries.',
+                          minLines: 2,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: seniorityController,
+                          labelText: 'Seniority',
+                        ),
+                        const SizedBox(height: AppSpacing.section),
+                        AppTextField(
+                          controller: educationController,
+                          labelText: 'Education',
+                          minLines: 2,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: AppSpacing.page),
+                        AppButton(
+                          label: isSaving ? 'Saving...' : 'Save profile',
+                          isLoading: isSaving,
+                          onPressed: isSaving ? null : save,
+                          icon: const Icon(Icons.save_outlined),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      nameController.dispose();
+      emailController.dispose();
+      locationController.dispose();
+      yearsController.dispose();
+      rolesController.dispose();
+      skillsController.dispose();
+      industriesController.dispose();
+      seniorityController.dispose();
+      educationController.dispose();
+    }
+  }
 }
 
 class _CandidateProfileView extends StatelessWidget {
-  const _CandidateProfileView({required this.profile});
+  const _CandidateProfileView({required this.profile, required this.onEdit});
 
   final CandidateProfile profile;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -313,6 +595,12 @@ class _CandidateProfileView extends StatelessWidget {
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
+                ),
+                const SizedBox(height: AppSpacing.compact),
+                FilledButton.tonalIcon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit profile'),
                 ),
                 const SizedBox(height: AppSpacing.compact),
                 Text(

@@ -11,6 +11,10 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
 import '../../../paywall/application/premium_access_controller.dart';
+import '../../../profile_import/application/candidate_profile_controller.dart';
+import '../../../profile_import/application/candidate_profile_prefill.dart';
+import '../../../profile_import/domain/entities/candidate_profile.dart';
+import '../../../profile_import/presentation/widgets/candidate_profile_prefill_banner.dart';
 import '../../application/cover_letter_controller.dart';
 import '../../domain/entities/cover_letter_request.dart';
 
@@ -36,6 +40,7 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   final _jobDescriptionController = TextEditingController();
   final _userBackgroundController = TextEditingController();
   String _tone = _toneOptions.first;
+  String? _appliedProfileSignature;
 
   @override
   void dispose() {
@@ -44,6 +49,46 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
     _jobDescriptionController.dispose();
     _userBackgroundController.dispose();
     super.dispose();
+  }
+
+  void _scheduleProfilePrefill(CandidateProfile? profile) {
+    if (profile == null) {
+      return;
+    }
+
+    final signature = _profileSignature(profile);
+    if (_appliedProfileSignature == signature) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _appliedProfileSignature == signature) {
+        return;
+      }
+
+      final prefill = CandidateProfilePrefill.forCoverLetter(profile);
+      _fillIfEmpty(_roleTitleController, prefill.roleTitle);
+      _fillIfEmpty(_userBackgroundController, prefill.userBackground);
+      _appliedProfileSignature = signature;
+    });
+  }
+
+  void _fillIfEmpty(TextEditingController controller, String value) {
+    if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
+      controller.text = value.trim();
+    }
+  }
+
+  String _profileSignature(CandidateProfile profile) {
+    return [
+      profile.id ?? '',
+      profile.uploadedCvId ?? '',
+      profile.name,
+      profile.roles.join('|'),
+      profile.skills.join('|'),
+      profile.industries.join('|'),
+      profile.education,
+    ].join('::');
   }
 
   Future<void> _submit() async {
@@ -110,7 +155,11 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(coverLetterControllerProvider);
+    final candidateProfile = ref.watch(candidateProfileControllerProvider);
     final theme = Theme.of(context);
+    final profile = candidateProfile.asData?.value;
+
+    _scheduleProfilePrefill(profile);
 
     return Scaffold(
       appBar: AppBar(
@@ -161,6 +210,13 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
                               height: 1.5,
                             ),
                           ),
+                          if (profile != null) ...[
+                            const SizedBox(height: AppSpacing.section),
+                            const CandidateProfilePrefillBanner(
+                              message:
+                                  'Your imported candidate profile prefilled the role and background fields. Adjust them as needed for this company.',
+                            ),
+                          ],
                         ],
                       ),
                     ),

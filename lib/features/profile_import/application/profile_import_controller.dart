@@ -12,6 +12,7 @@ import '../data/repositories/profile_import_repository_impl.dart';
 import '../data/services/syncfusion_pdf_text_extraction_service.dart';
 import '../domain/entities/cv_upload_file.dart';
 import '../domain/repositories/profile_import_repository.dart';
+import 'candidate_profile_controller.dart';
 import 'profile_import_state.dart';
 
 final pdfTextExtractionServiceProvider =
@@ -50,17 +51,12 @@ class ProfileImportController extends Notifier<ProfileImportState> {
   ProfileImportState build() => const ProfileImportState();
 
   void selectFile(CvUploadFile file) {
-    state = state.copyWith(
-      selectedFile: file,
-      clearError: true,
-      clearProfile: true,
-    );
+    state = state.copyWith(selectedFile: file, clearError: true);
   }
 
   void clearSelection() {
     state = state.copyWith(
       clearFile: true,
-      clearProfile: true,
       clearError: true,
       processingLabel: null,
     );
@@ -81,7 +77,6 @@ class ProfileImportController extends Notifier<ProfileImportState> {
       isImporting: true,
       processingLabel: 'Uploading and parsing CV...',
       clearError: true,
-      clearProfile: true,
     );
 
     try {
@@ -92,12 +87,11 @@ class ProfileImportController extends Notifier<ProfileImportState> {
       await ref
           .read(premiumAccessControllerProvider.notifier)
           .recordSuccessfulUse(PremiumAccessFeature.cvParse);
+      ref
+          .read(candidateProfileControllerProvider.notifier)
+          .setImportedProfile(profile);
 
-      state = state.copyWith(
-        isImporting: false,
-        processingLabel: null,
-        profile: profile,
-      );
+      state = state.copyWith(isImporting: false, processingLabel: null);
     } on AppException catch (error) {
       await _releasePendingUsage();
       state = state.copyWith(

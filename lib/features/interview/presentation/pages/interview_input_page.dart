@@ -12,6 +12,10 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
 import '../../../paywall/application/premium_access_controller.dart';
+import '../../../profile_import/application/candidate_profile_controller.dart';
+import '../../../profile_import/application/candidate_profile_prefill.dart';
+import '../../../profile_import/domain/entities/candidate_profile.dart';
+import '../../../profile_import/presentation/widgets/candidate_profile_prefill_banner.dart';
 import '../../application/interview_controller.dart';
 import '../../domain/entities/interview_request.dart';
 
@@ -50,12 +54,62 @@ class _InterviewInputPageState extends ConsumerState<InterviewInputPage> {
   String _seniority = _seniorityOptions[2];
   String _companyType = _companyTypeOptions.first;
   String _interviewType = _interviewTypeOptions.first;
+  String? _appliedProfileSignature;
 
   @override
   void dispose() {
     _roleNameController.dispose();
     _focusAreasController.dispose();
     super.dispose();
+  }
+
+  void _scheduleProfilePrefill(CandidateProfile? profile) {
+    if (profile == null) {
+      return;
+    }
+
+    final signature = _profileSignature(profile);
+    if (_appliedProfileSignature == signature) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _appliedProfileSignature == signature) {
+        return;
+      }
+
+      final prefill = CandidateProfilePrefill.forInterview(profile);
+      _fillIfEmpty(_roleNameController, prefill.roleName);
+      _fillIfEmpty(_focusAreasController, prefill.focusAreas);
+      if (_isSupportedSeniority(prefill.seniority) &&
+          _seniority == _seniorityOptions[2]) {
+        setState(() {
+          _seniority = prefill.seniority;
+        });
+      }
+      _appliedProfileSignature = signature;
+    });
+  }
+
+  bool _isSupportedSeniority(String value) {
+    return _seniorityOptions.contains(value);
+  }
+
+  void _fillIfEmpty(TextEditingController controller, String value) {
+    if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
+      controller.text = value.trim();
+    }
+  }
+
+  String _profileSignature(CandidateProfile profile) {
+    return [
+      profile.id ?? '',
+      profile.uploadedCvId ?? '',
+      profile.roles.join('|'),
+      profile.skills.join('|'),
+      profile.industries.join('|'),
+      profile.seniority,
+    ].join('::');
   }
 
   Future<void> _submit() async {
@@ -122,7 +176,11 @@ class _InterviewInputPageState extends ConsumerState<InterviewInputPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(interviewControllerProvider);
+    final candidateProfile = ref.watch(candidateProfileControllerProvider);
     final theme = Theme.of(context);
+    final profile = candidateProfile.asData?.value;
+
+    _scheduleProfilePrefill(profile);
 
     return Scaffold(
       appBar: AppBar(
@@ -173,6 +231,13 @@ class _InterviewInputPageState extends ConsumerState<InterviewInputPage> {
                               height: 1.5,
                             ),
                           ),
+                          if (profile != null) ...[
+                            const SizedBox(height: AppSpacing.section),
+                            const CandidateProfilePrefillBanner(
+                              message:
+                                  'Role, seniority and focus areas were prefilled from your imported candidate profile. Tweak them for each interview loop.',
+                            ),
+                          ],
                         ],
                       ),
                     ),

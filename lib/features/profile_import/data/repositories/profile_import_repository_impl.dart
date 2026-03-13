@@ -4,6 +4,7 @@ import '../../domain/entities/cv_upload_file.dart';
 import '../../domain/repositories/profile_import_repository.dart';
 import '../datasources/profile_import_remote_datasource.dart';
 import '../datasources/profile_import_supabase_datasource.dart';
+import '../models/candidate_profile_model.dart';
 import '../services/pdf_text_extraction_service.dart';
 
 class ProfileImportRepositoryImpl implements ProfileImportRepository {
@@ -32,13 +33,13 @@ class ProfileImportRepositoryImpl implements ProfileImportRepository {
         fileName: file.fileName,
       );
 
-      await _supabaseDatasource.saveCandidateProfile(
+      final savedProfile = await _supabaseDatasource.saveCandidateProfile(
         uploadedCvId: uploadedCv.id,
         profile: profile,
       );
       await _supabaseDatasource.markUploadParsed(uploadedCv.id);
 
-      return profile;
+      return savedProfile;
     } on AppException catch (error) {
       await _safelyMarkFailed(uploadedCv.id, error.message);
       rethrow;
@@ -46,6 +47,18 @@ class ProfileImportRepositoryImpl implements ProfileImportRepository {
       await _safelyMarkFailed(uploadedCv.id, 'CV parsing failed unexpectedly.');
       throw const AppException('CV parsing failed unexpectedly.');
     }
+  }
+
+  @override
+  Future<CandidateProfile?> fetchLatestProfile() {
+    return _supabaseDatasource.fetchLatestCandidateProfile();
+  }
+
+  @override
+  Future<CandidateProfile> updateProfile(CandidateProfile profile) {
+    return _supabaseDatasource.updateCandidateProfile(
+      CandidateProfileModel.fromEntity(profile),
+    );
   }
 
   Future<void> _safelyMarkFailed(String uploadedCvId, String message) async {

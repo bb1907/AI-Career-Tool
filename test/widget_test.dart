@@ -254,10 +254,12 @@ class _FakeProfileImportRepository implements ProfileImportRepository {
   _FakeProfileImportRepository({
     required this.response,
     this.delay = Duration.zero,
-  });
+    CandidateProfile? latestProfile,
+  }) : _latestProfile = latestProfile;
 
   final CandidateProfile response;
   final Duration delay;
+  CandidateProfile? _latestProfile;
 
   @override
   Future<CandidateProfile> importCv(CvUploadFile file) async {
@@ -265,7 +267,17 @@ class _FakeProfileImportRepository implements ProfileImportRepository {
       await Future<void>.delayed(delay);
     }
 
+    _latestProfile = response;
     return response;
+  }
+
+  @override
+  Future<CandidateProfile?> fetchLatestProfile() async => _latestProfile;
+
+  @override
+  Future<CandidateProfile> updateProfile(CandidateProfile profile) async {
+    _latestProfile = profile;
+    return profile;
   }
 }
 
@@ -871,6 +883,50 @@ void main() {
     expect(find.text('Generate resume'), findsOneWidget);
   });
 
+  testWidgets('prefills the resume form from the saved candidate profile', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      profileImportRepository: _FakeProfileImportRepository(
+        response: parsedCandidateProfile,
+        latestProfile: parsedCandidateProfile,
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Resume Builder').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+
+    expect(
+      find.textContaining('prefilled from your imported candidate profile'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(0)).controller!.text,
+      'Product Designer',
+    );
+    expect(tester.widget<TextFormField>(fields.at(1)).controller!.text, '5');
+    expect(
+      tester.widget<TextFormField>(fields.at(2)).controller!.text,
+      'Product Designer\nUX Designer',
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(3)).controller!.text,
+      'Figma, Design Systems, User Research',
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(5)).controller!.text,
+      'B.A. in Visual Communication Design',
+    );
+  });
+
   testWidgets('submits the resume form and opens the result page', (
     WidgetTester tester,
   ) async {
@@ -1078,6 +1134,50 @@ void main() {
     expect(find.text('Free limit reached'), findsNothing);
   });
 
+  testWidgets(
+    'prefills the cover letter form from the saved candidate profile',
+    (WidgetTester tester) async {
+      await _pumpApp(
+        tester,
+        authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+        onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+        profileImportRepository: _FakeProfileImportRepository(
+          response: parsedCandidateProfile,
+          latestProfile: parsedCandidateProfile,
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Cover Letter Generator').first,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cover Letter Generator').first);
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextFormField);
+
+      expect(
+        find.textContaining('prefilled the role and background fields'),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<TextFormField>(fields.at(1)).controller!.text,
+        'Product Designer',
+      );
+      expect(
+        tester.widget<TextFormField>(fields.at(3)).controller!.text,
+        contains(
+          'Core strengths include Figma, Design Systems, User Research.',
+        ),
+      );
+    },
+  );
+
   testWidgets('submits the cover letter form and opens the result page', (
     WidgetTester tester,
   ) async {
@@ -1139,6 +1239,54 @@ void main() {
     expect(find.text('Regenerate'), findsOneWidget);
     expect(find.textContaining('Dear Hiring Team'), findsOneWidget);
     expect(accessService.committedUsageFor(restoredSession.userId), 1);
+  });
+
+  testWidgets('prefills the interview form from the saved candidate profile', (
+    WidgetTester tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      profileImportRepository: _FakeProfileImportRepository(
+        response: parsedCandidateProfile,
+        latestProfile: parsedCandidateProfile,
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Interview Prep').first,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Interview Prep').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+    final dropdowns = find.byType(DropdownButtonFormField<String>);
+
+    expect(
+      find.textContaining('prefilled from your imported candidate profile'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(0)).controller!.text,
+      'Product Designer',
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(1)).controller!.text,
+      'Figma, Design Systems, User Research, SaaS, B2B',
+    );
+    expect(
+      tester
+          .widget<DropdownButtonFormField<String>>(dropdowns.at(0))
+          .initialValue,
+      'Senior',
+    );
   });
 
   testWidgets('submits the interview form and opens the result page', (

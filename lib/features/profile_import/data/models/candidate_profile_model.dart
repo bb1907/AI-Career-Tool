@@ -2,6 +2,8 @@ import '../../domain/entities/candidate_profile.dart';
 
 class CandidateProfileModel extends CandidateProfile {
   const CandidateProfileModel({
+    super.id,
+    super.uploadedCvId,
     required super.name,
     required super.email,
     required super.location,
@@ -15,6 +17,8 @@ class CandidateProfileModel extends CandidateProfile {
 
   factory CandidateProfileModel.fromJson(Map<String, dynamic> json) {
     return CandidateProfileModel(
+      id: json['id'] as String?,
+      uploadedCvId: json['uploaded_cv_id'] as String?,
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       location: json['location'] as String? ?? '',
@@ -38,6 +42,8 @@ class CandidateProfileModel extends CandidateProfile {
 
   factory CandidateProfileModel.fromEntity(CandidateProfile profile) {
     return CandidateProfileModel(
+      id: profile.id,
+      uploadedCvId: profile.uploadedCvId,
       name: profile.name,
       email: profile.email,
       location: profile.location,
@@ -51,6 +57,20 @@ class CandidateProfileModel extends CandidateProfile {
   }
 
   Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+      'location': location,
+      'years_experience': yearsExperience,
+      'roles': roles,
+      'skills': skills,
+      'industries': industries,
+      'seniority': seniority,
+      'education': education,
+    };
+  }
+
+  Map<String, dynamic> toUpdateJson() {
     return {
       'name': name,
       'email': email,

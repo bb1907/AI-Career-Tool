@@ -9,8 +9,12 @@ import '../../../../app/router.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../paywall/application/premium_access_controller.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../paywall/application/premium_access_controller.dart';
+import '../../../profile_import/application/candidate_profile_controller.dart';
+import '../../../profile_import/application/candidate_profile_prefill.dart';
+import '../../../profile_import/domain/entities/candidate_profile.dart';
+import '../../../profile_import/presentation/widgets/candidate_profile_prefill_banner.dart';
 import '../../application/resume_controller.dart';
 import '../utils/resume_form_parser.dart';
 import '../utils/resume_form_validators.dart';
@@ -38,6 +42,7 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
   final _achievementsController = TextEditingController();
   final _educationController = TextEditingController();
   String _preferredTone = _toneOptions.first;
+  String? _appliedProfileSignature;
 
   @override
   void dispose() {
@@ -48,6 +53,49 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
     _achievementsController.dispose();
     _educationController.dispose();
     super.dispose();
+  }
+
+  void _scheduleProfilePrefill(CandidateProfile? profile) {
+    if (profile == null) {
+      return;
+    }
+
+    final signature = _profileSignature(profile);
+    if (_appliedProfileSignature == signature) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _appliedProfileSignature == signature) {
+        return;
+      }
+
+      final prefill = CandidateProfilePrefill.forResume(profile);
+      _fillIfEmpty(_targetRoleController, prefill.targetRole);
+      _fillIfEmpty(_yearsController, prefill.yearsOfExperience);
+      _fillIfEmpty(_pastRolesController, prefill.pastRoles);
+      _fillIfEmpty(_topSkillsController, prefill.topSkills);
+      _fillIfEmpty(_educationController, prefill.education);
+      _appliedProfileSignature = signature;
+    });
+  }
+
+  void _fillIfEmpty(TextEditingController controller, String value) {
+    if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
+      controller.text = value.trim();
+    }
+  }
+
+  String _profileSignature(CandidateProfile profile) {
+    return [
+      profile.id ?? '',
+      profile.uploadedCvId ?? '',
+      profile.name,
+      profile.yearsExperience.toString(),
+      profile.roles.join('|'),
+      profile.skills.join('|'),
+      profile.education,
+    ].join('::');
   }
 
   Future<void> _submit() async {
@@ -118,7 +166,11 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(resumeBuilderControllerProvider);
+    final candidateProfile = ref.watch(candidateProfileControllerProvider);
     final theme = Theme.of(context);
+    final profile = candidateProfile.asData?.value;
+
+    _scheduleProfilePrefill(profile);
 
     return Scaffold(
       appBar: AppBar(
@@ -169,6 +221,13 @@ class _ResumeInputPageState extends ConsumerState<ResumeInputPage> {
                               height: 1.5,
                             ),
                           ),
+                          if (profile != null) ...[
+                            const SizedBox(height: AppSpacing.section),
+                            const CandidateProfilePrefillBanner(
+                              message:
+                                  'Fields below were prefilled from your imported candidate profile. You can edit anything before generating.',
+                            ),
+                          ],
                         ],
                       ),
                     ),

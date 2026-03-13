@@ -1,5 +1,7 @@
 class CandidateProfile {
   const CandidateProfile({
+    this.id,
+    this.uploadedCvId,
     required this.name,
     required this.email,
     required this.location,
@@ -11,6 +13,8 @@ class CandidateProfile {
     required this.education,
   });
 
+  final String? id;
+  final String? uploadedCvId;
   final String name;
   final String email;
   final String location;
@@ -22,6 +26,8 @@ class CandidateProfile {
   final String education;
 
   CandidateProfile copyWith({
+    Object? id = _sentinel,
+    Object? uploadedCvId = _sentinel,
     String? name,
     String? email,
     String? location,
@@ -33,6 +39,10 @@ class CandidateProfile {
     String? education,
   }) {
     return CandidateProfile(
+      id: identical(id, _sentinel) ? this.id : id as String?,
+      uploadedCvId: identical(uploadedCvId, _sentinel)
+          ? this.uploadedCvId
+          : uploadedCvId as String?,
       name: name ?? this.name,
       email: email ?? this.email,
       location: location ?? this.location,
@@ -44,4 +54,6 @@ class CandidateProfile {
       education: education ?? this.education,
     );
   }
+
+  static const _sentinel = Object();
 }

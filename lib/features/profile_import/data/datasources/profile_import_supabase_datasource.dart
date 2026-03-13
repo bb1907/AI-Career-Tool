@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/errors/app_exception.dart';
 import '../../../../services/supabase/database_error_mapper.dart';
 import '../../../../services/supabase/database_service.dart';
 import '../../../../services/supabase/storage_service.dart';
@@ -60,18 +61,26 @@ class ProfileImportSupabaseDatasource {
     }
   }
 
-  Future<void> saveCandidateProfile({
+  Future<CandidateProfileModel> saveCandidateProfile({
     required String uploadedCvId,
     required CandidateProfileModel profile,
   }) async {
     final userId = _databaseService.requireCurrentUserId();
 
     try {
-      await _databaseService
+      final response = await _databaseService
           .from('candidate_profiles')
           .insert(
             profile.toDatabaseJson(uploadedCvId: uploadedCvId, userId: userId),
-          );
+          )
+          .select(
+            'id, uploaded_cv_id, name, email, location, years_experience, roles, skills, industries, seniority, education',
+          )
+          .single();
+
+      return CandidateProfileModel.fromJson(
+        Map<String, dynamic>.from(response),
+      );
     } on PostgrestException catch (error) {
       throw DatabaseErrorMapper.map(
         error,
@@ -81,6 +90,77 @@ class ProfileImportSupabaseDatasource {
       throw DatabaseErrorMapper.map(
         error,
         fallbackMessage: 'Candidate profile could not be saved right now.',
+      );
+    }
+  }
+
+  Future<CandidateProfileModel?> fetchLatestCandidateProfile() async {
+    final userId = _databaseService.requireCurrentUserId();
+
+    try {
+      final response = await _databaseService
+          .from('candidate_profiles')
+          .select(
+            'id, uploaded_cv_id, name, email, location, years_experience, roles, skills, industries, seniority, education',
+          )
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (response == null) {
+        return null;
+      }
+
+      return CandidateProfileModel.fromJson(
+        Map<String, dynamic>.from(response),
+      );
+    } on PostgrestException catch (error) {
+      throw DatabaseErrorMapper.map(
+        error,
+        fallbackMessage: 'Candidate profile could not be loaded right now.',
+      );
+    } catch (error) {
+      throw DatabaseErrorMapper.map(
+        error,
+        fallbackMessage: 'Candidate profile could not be loaded right now.',
+      );
+    }
+  }
+
+  Future<CandidateProfileModel> updateCandidateProfile(
+    CandidateProfileModel profile,
+  ) async {
+    final userId = _databaseService.requireCurrentUserId();
+    final profileId = profile.id;
+
+    if (profileId == null || profileId.isEmpty) {
+      throw const AppException('Candidate profile could not be updated yet.');
+    }
+
+    try {
+      final response = await _databaseService
+          .from('candidate_profiles')
+          .update(profile.toUpdateJson())
+          .eq('id', profileId)
+          .eq('user_id', userId)
+          .select(
+            'id, uploaded_cv_id, name, email, location, years_experience, roles, skills, industries, seniority, education',
+          )
+          .single();
+
+      return CandidateProfileModel.fromJson(
+        Map<String, dynamic>.from(response),
+      );
+    } on PostgrestException catch (error) {
+      throw DatabaseErrorMapper.map(
+        error,
+        fallbackMessage: 'Candidate profile could not be updated right now.',
+      );
+    } catch (error) {
+      throw DatabaseErrorMapper.map(
+        error,
+        fallbackMessage: 'Candidate profile could not be updated right now.',
       );
     }
   }
