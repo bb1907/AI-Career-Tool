@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/analytics/analytics_events.dart';
+import '../../../services/analytics/analytics_service.dart';
 import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
 import '../../../services/supabase/storage_service.dart';
@@ -78,6 +82,17 @@ class ProfileImportController extends Notifier<ProfileImportState> {
       processingLabel: 'Uploading and parsing CV...',
       clearError: true,
     );
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logEvent(
+            AnalyticsEvents.cvImportStarted,
+            parameters: {
+              'file_type': file.mimeType,
+              'file_size_kb': (file.sizeInBytes / 1024).round(),
+            },
+          ),
+    );
 
     try {
       final profileFuture = ref
@@ -87,6 +102,20 @@ class ProfileImportController extends Notifier<ProfileImportState> {
       await ref
           .read(premiumAccessControllerProvider.notifier)
           .recordSuccessfulUse(PremiumAccessFeature.cvParse);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.cvImportCompleted,
+              parameters: {
+                'years_experience': profile.yearsExperience,
+                'roles_count': profile.roles.length,
+                'skills_count': profile.skills.length,
+                'industries_count': profile.industries.length,
+                'has_education': profile.education.trim().isNotEmpty,
+              },
+            ),
+      );
       ref
           .read(candidateProfileControllerProvider.notifier)
           .setImportedProfile(profile);

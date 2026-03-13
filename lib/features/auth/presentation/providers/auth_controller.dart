@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../services/analytics/analytics_events.dart';
+import '../../../../services/analytics/analytics_service.dart';
 import '../../../../services/supabase/auth_service.dart';
 import '../../../../services/supabase/supabase_client_provider.dart';
 import '../../data/auth_repository.dart';
@@ -54,6 +58,14 @@ class AuthController extends Notifier<AuthState> {
           .read(authRepositoryProvider)
           .signIn(email: email, password: password);
       state = AuthState.authenticated(session);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.loginCompleted,
+              parameters: const {'auth_method': 'email_password'},
+            ),
+      );
     } catch (_) {
       state = const AuthState.unauthenticated();
       rethrow;
@@ -62,12 +74,36 @@ class AuthController extends Notifier<AuthState> {
 
   Future<SignUpResult> signUp(SignUpRequest request) async {
     state = const AuthState.unauthenticated(isSubmitting: true);
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logEvent(
+            AnalyticsEvents.signupStarted,
+            parameters: {
+              'auth_method': 'email_password',
+              'years_experience': request.yearsOfExperience,
+              'has_target_role': request.targetRole.trim().isNotEmpty,
+            },
+          ),
+    );
 
     try {
       final result = await ref.read(authRepositoryProvider).signUp(request);
       state = result.session == null
           ? const AuthState.unauthenticated()
           : AuthState.authenticated(result.session!);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.signupCompleted,
+              parameters: {
+                'auth_method': 'email_password',
+                'requires_email_confirmation': result.requiresEmailConfirmation,
+                'has_session': result.session != null,
+              },
+            ),
+      );
       return result;
     } catch (_) {
       state = const AuthState.unauthenticated();

@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/analytics/analytics_events.dart';
+import '../../../services/analytics/analytics_service.dart';
 import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
 import '../../paywall/application/premium_access_controller.dart';
@@ -46,6 +50,20 @@ class InterviewController extends Notifier<InterviewState> {
       clearResult: true,
       clearError: true,
     );
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logEvent(
+            AnalyticsEvents.interviewGenerationStarted,
+            parameters: {
+              'seniority': request.seniority,
+              'company_type': request.companyType,
+              'interview_type': request.interviewType,
+              'focus_areas_count': request.focusAreas.length,
+              'role_present': request.roleName.trim().isNotEmpty,
+            },
+          ),
+    );
 
     try {
       final result = await ref
@@ -54,6 +72,17 @@ class InterviewController extends Notifier<InterviewState> {
       await ref
           .read(premiumAccessControllerProvider.notifier)
           .recordSuccessfulUse(PremiumAccessFeature.interviewGenerate);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.interviewGenerationCompleted,
+              parameters: {
+                'technical_questions_count': result.technicalQuestions.length,
+                'behavioral_questions_count': result.behavioralQuestions.length,
+              },
+            ),
+      );
 
       state = state.copyWith(
         request: request,

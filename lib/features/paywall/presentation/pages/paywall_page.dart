@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,13 +9,15 @@ import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../../services/analytics/analytics_events.dart';
+import '../../../../services/analytics/analytics_service.dart';
 import '../../../../services/subscription/subscription_package.dart';
 import '../../../../services/subscription/subscription_plan.dart';
 import '../../../../services/subscription/subscription_status.dart';
 import '../../application/premium_access_controller.dart';
 import '../../application/subscription_controller.dart';
 
-class PaywallPage extends ConsumerWidget {
+class PaywallPage extends ConsumerStatefulWidget {
   const PaywallPage({
     super.key,
     this.redirectTo,
@@ -26,14 +30,40 @@ class PaywallPage extends ConsumerWidget {
   final String? reason;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaywallPage> createState() => _PaywallPageState();
+}
+
+class _PaywallPageState extends ConsumerState<PaywallPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.microtask(() {
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.paywallViewed,
+              parameters: {
+                'reason': widget.reason,
+                'source_feature': widget.sourceFeature,
+                'redirect_present':
+                    widget.redirectTo != null &&
+                    widget.redirectTo!.trim().isNotEmpty,
+              },
+            ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final subscriptionState = ref.watch(subscriptionControllerProvider);
     final accessState = ref.watch(premiumAccessControllerProvider);
     final shouldShowLimitMessage =
         !subscriptionState.isPremium &&
-        (reason == 'usage_limit' || accessState.hasReachedLimit);
+        (widget.reason == 'usage_limit' || accessState.hasReachedLimit);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Premium')),
@@ -116,7 +146,7 @@ class PaywallPage extends ConsumerWidget {
                           ),
                           const SizedBox(height: AppSpacing.compact),
                           Text(
-                            'You have used ${accessState.usedFreeGenerations} of ${accessState.freeGenerationLimit} free generations${sourceFeature == null ? '' : ' for ${_formatSourceFeature(sourceFeature!)}'}. Upgrade to continue from this flow without limits.',
+                            'You have used ${accessState.usedFreeGenerations} of ${accessState.freeGenerationLimit} free generations${widget.sourceFeature == null ? '' : ' for ${_formatSourceFeature(widget.sourceFeature!)}'}. Upgrade to continue from this flow without limits.',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.84),
                               height: 1.45,
@@ -215,7 +245,6 @@ class PaywallPage extends ConsumerWidget {
                           ? null
                           : () => _purchasePackage(
                               context,
-                              ref,
                               subscriptionState.packages[index],
                             ),
                     ),
@@ -260,7 +289,7 @@ class PaywallPage extends ConsumerWidget {
                     FilledButton.tonalIcon(
                       onPressed: subscriptionState.isRestoring
                           ? null
-                          : () => _restorePurchases(context, ref),
+                          : () => _restorePurchases(context),
                       icon: subscriptionState.isRestoring
                           ? const SizedBox(
                               width: 18,
@@ -282,7 +311,6 @@ class PaywallPage extends ConsumerWidget {
 
   Future<void> _purchasePackage(
     BuildContext context,
-    WidgetRef ref,
     SubscriptionPackage package,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -290,7 +318,11 @@ class PaywallPage extends ConsumerWidget {
     try {
       final status = await ref
           .read(subscriptionControllerProvider.notifier)
-          .purchase(package);
+          .purchase(
+            package,
+            sourceFeature: widget.sourceFeature,
+            reason: widget.reason,
+          );
       if (!context.mounted) {
         return;
       }
@@ -318,7 +350,7 @@ class PaywallPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _restorePurchases(BuildContext context, WidgetRef ref) async {
+  Future<void> _restorePurchases(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
@@ -364,7 +396,7 @@ class PaywallPage extends ConsumerWidget {
       return;
     }
 
-    final normalizedRedirectTo = redirectTo?.trim();
+    final normalizedRedirectTo = widget.redirectTo?.trim();
     if (normalizedRedirectTo != null &&
         normalizedRedirectTo.isNotEmpty &&
         Navigator.of(context).canPop()) {

@@ -35,6 +35,8 @@ import 'package:ai_career_tools/features/resume/application/resume_controller.da
 import 'package:ai_career_tools/features/resume/domain/entities/resume_request.dart';
 import 'package:ai_career_tools/features/resume/domain/entities/resume_result.dart';
 import 'package:ai_career_tools/features/resume/domain/repositories/resume_repository.dart';
+import 'package:ai_career_tools/services/analytics/analytics_events.dart';
+import 'package:ai_career_tools/services/analytics/analytics_service.dart';
 import 'package:ai_career_tools/services/subscription/premium_access_feature.dart';
 import 'package:ai_career_tools/services/subscription/premium_access_service.dart';
 import 'package:ai_career_tools/services/subscription/revenuecat_subscription_service.dart';
@@ -403,6 +405,46 @@ class _FakeSubscriptionSyncService implements SubscriptionSyncService {
   }) async {}
 }
 
+class _TrackedAnalyticsEvent {
+  const _TrackedAnalyticsEvent({required this.name, required this.parameters});
+
+  final String name;
+  final Map<String, Object?> parameters;
+}
+
+class _FakeAnalyticsService implements AnalyticsService {
+  final List<_TrackedAnalyticsEvent> events = <_TrackedAnalyticsEvent>[];
+  String? lastUserId;
+
+  bool hasEvent(String name) => events.any((event) => event.name == name);
+
+  @override
+  Future<void> initialize() async {
+    events.add(
+      const _TrackedAnalyticsEvent(
+        name: AnalyticsEvents.appOpen,
+        parameters: <String, Object?>{},
+      ),
+    );
+  }
+
+  @override
+  Future<void> logEvent(
+    String name, {
+    Map<String, Object?> parameters = const <String, Object?>{},
+  }) async {
+    events.add(_TrackedAnalyticsEvent(name: name, parameters: parameters));
+  }
+
+  @override
+  Future<void> setUserId(String? userId) async {
+    lastUserId = userId;
+  }
+
+  @override
+  void dispose() {}
+}
+
 class _FakePremiumAccessService implements PremiumAccessService {
   _FakePremiumAccessService({Map<String, int> initialUsageByUserId = const {}})
     : _usageByUserId = Map<String, int>.from(initialUsageByUserId);
@@ -519,6 +561,7 @@ Future<void> _pumpApp(
   HistoryRepository? historyRepository,
   SubscriptionService? subscriptionService,
   PremiumAccessService? premiumAccessService,
+  AnalyticsService? analyticsService,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -586,6 +629,9 @@ Future<void> _pumpApp(
         ),
         subscriptionSyncServiceProvider.overrideWithValue(
           const _FakeSubscriptionSyncService(),
+        ),
+        analyticsServiceProvider.overrideWithValue(
+          analyticsService ?? _FakeAnalyticsService(),
         ),
         premiumAccessServiceProvider.overrideWithValue(
           premiumAccessService ?? _FakePremiumAccessService(),
@@ -931,11 +977,13 @@ void main() {
     WidgetTester tester,
   ) async {
     final accessService = _FakePremiumAccessService();
+    final analyticsService = _FakeAnalyticsService();
 
     await _pumpApp(
       tester,
       authRepository: _FakeAuthRepository(restoredSession: restoredSession),
       onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      analyticsService: analyticsService,
       premiumAccessService: accessService,
       resumeRepository: _FakeResumeRepository(
         response: generatedResume,
@@ -970,6 +1018,14 @@ void main() {
     expect(find.text('Experience bullets'), findsOneWidget);
     expect(find.text('Skills'), findsOneWidget);
     expect(accessService.committedUsageFor(restoredSession.userId), 1);
+    expect(
+      analyticsService.hasEvent(AnalyticsEvents.resumeGenerationStarted),
+      true,
+    );
+    expect(
+      analyticsService.hasEvent(AnalyticsEvents.resumeGenerationCompleted),
+      true,
+    );
   });
 
   testWidgets('does not count failed resume generations against usage', (
@@ -1044,10 +1100,13 @@ void main() {
   testWidgets(
     'returns to the originating flow after a successful premium purchase',
     (WidgetTester tester) async {
+      final analyticsService = _FakeAnalyticsService();
+
       await _pumpApp(
         tester,
         authRepository: _FakeAuthRepository(restoredSession: restoredSession),
         onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+        analyticsService: analyticsService,
         premiumAccessService: _FakePremiumAccessService(
           initialUsageByUserId: {restoredSession.userId: 3},
         ),
@@ -1080,6 +1139,12 @@ void main() {
 
       expect(find.text('ATS-ready draft'), findsOneWidget);
       expect(find.text('Experience bullets'), findsOneWidget);
+      expect(analyticsService.hasEvent(AnalyticsEvents.paywallViewed), true);
+      expect(analyticsService.hasEvent(AnalyticsEvents.purchaseStarted), true);
+      expect(
+        analyticsService.hasEvent(AnalyticsEvents.purchaseCompleted),
+        true,
+      );
     },
   );
 
@@ -1357,10 +1422,13 @@ void main() {
   testWidgets('shows grouped history sections for saved content', (
     WidgetTester tester,
   ) async {
+    final analyticsService = _FakeAnalyticsService();
+
     await _pumpApp(
       tester,
       authRepository: _FakeAuthRepository(restoredSession: restoredSession),
       onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      analyticsService: analyticsService,
       resumeRepository: _FakeResumeRepository(
         response: generatedResume,
         initialHistory: const [generatedResume],
@@ -1392,6 +1460,7 @@ void main() {
       find.text(generatedInterviewResult.technicalQuestions.first.question),
       findsOneWidget,
     );
+    expect(analyticsService.hasEvent(AnalyticsEvents.historyOpened), true);
   });
 
   testWidgets(

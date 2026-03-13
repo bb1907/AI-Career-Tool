@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../services/analytics/analytics_events.dart';
+import '../../../services/analytics/analytics_service.dart';
 import '../../../services/subscription/revenuecat_subscription_service.dart';
 import '../../../services/subscription/subscription_package.dart';
 import '../../../services/subscription/subscription_status.dart';
@@ -92,12 +94,30 @@ class SubscriptionController extends Notifier<SubscriptionState> {
     }
   }
 
-  Future<SubscriptionStatus> purchase(SubscriptionPackage package) async {
+  Future<SubscriptionStatus> purchase(
+    SubscriptionPackage package, {
+    String? sourceFeature,
+    String? reason,
+  }) async {
     final activeUserId = state.userId;
 
     state = state.copyWith(
       purchasingPackageId: package.identifier,
       clearError: true,
+    );
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logEvent(
+            AnalyticsEvents.purchaseStarted,
+            parameters: {
+              'plan': package.plan.name,
+              'package_id': package.identifier,
+              'product_id': package.productIdentifier,
+              'source_feature': sourceFeature,
+              'reason': reason,
+            },
+          ),
     );
 
     try {
@@ -113,6 +133,20 @@ class SubscriptionController extends Notifier<SubscriptionState> {
         status: updatedStatus,
         clearPurchasingPackageId: true,
         clearError: true,
+      );
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.purchaseCompleted,
+              parameters: {
+                'plan': updatedStatus.plan.name,
+                'package_id': package.identifier,
+                'product_id': updatedStatus.productIdentifier,
+                'source_feature': sourceFeature,
+                'reason': reason,
+              },
+            ),
       );
 
       await _syncStatus(activeUserId, updatedStatus, _authRevision);

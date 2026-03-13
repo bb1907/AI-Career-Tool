@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
-import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/analytics/analytics_events.dart';
+import '../../../services/analytics/analytics_service.dart';
+import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
 import '../../paywall/application/premium_access_controller.dart';
 import '../data/datasources/resume_remote_datasource.dart';
@@ -43,6 +47,21 @@ class ResumeController extends Notifier<ResumeState> {
       clearResponse: true,
       clearError: true,
     );
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logEvent(
+            AnalyticsEvents.resumeGenerationStarted,
+            parameters: {
+              'years_experience': request.yearsOfExperience,
+              'past_roles_count': request.pastRoles.length,
+              'skills_count': request.topSkills.length,
+              'achievements_count': request.achievements.length,
+              'education_present': request.education.trim().isNotEmpty,
+              'tone': request.preferredTone,
+            },
+          ),
+    );
 
     try {
       final result = await ref
@@ -51,6 +70,19 @@ class ResumeController extends Notifier<ResumeState> {
       await ref
           .read(premiumAccessControllerProvider.notifier)
           .recordSuccessfulUse(PremiumAccessFeature.resumeGenerate);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.resumeGenerationCompleted,
+              parameters: {
+                'experience_bullets_count': result.experienceBullets.length,
+                'skills_count': result.skills.length,
+                'summary_length': result.summary.length,
+                'education_present': result.education.trim().isNotEmpty,
+              },
+            ),
+      );
 
       state = state.copyWith(
         request: request,

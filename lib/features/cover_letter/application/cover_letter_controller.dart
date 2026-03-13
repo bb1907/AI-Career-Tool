@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../services/ai/ai_service_impl.dart';
+import '../../../services/analytics/analytics_events.dart';
+import '../../../services/analytics/analytics_service.dart';
 import '../../../services/subscription/premium_access_feature.dart';
 import '../../../services/supabase/database_service.dart';
 import '../../paywall/application/premium_access_controller.dart';
@@ -48,6 +52,19 @@ class CoverLetterController extends Notifier<CoverLetterState> {
       clearResult: true,
       clearError: true,
     );
+    unawaited(
+      ref
+          .read(analyticsServiceProvider)
+          .logEvent(
+            AnalyticsEvents.coverLetterGenerationStarted,
+            parameters: {
+              'tone': request.tone,
+              'job_description_length': request.jobDescription.length,
+              'background_length': request.userBackground.length,
+              'role_present': request.roleTitle.trim().isNotEmpty,
+            },
+          ),
+    );
 
     try {
       final result = await ref
@@ -56,6 +73,17 @@ class CoverLetterController extends Notifier<CoverLetterState> {
       await ref
           .read(premiumAccessControllerProvider.notifier)
           .recordSuccessfulUse(PremiumAccessFeature.coverLetterGenerate);
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(
+              AnalyticsEvents.coverLetterGenerationCompleted,
+              parameters: {
+                'cover_letter_length': result.coverLetter.length,
+                'has_content': result.coverLetter.trim().isNotEmpty,
+              },
+            ),
+      );
 
       state = state.copyWith(
         request: request,

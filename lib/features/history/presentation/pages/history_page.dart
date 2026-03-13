@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,8 @@ import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/app_placeholder_scaffold.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../../services/analytics/analytics_events.dart';
+import '../../../../services/analytics/analytics_service.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../../cover_letter/domain/entities/cover_letter_result.dart';
 import '../../../interview/domain/entities/interview_result.dart';
@@ -17,11 +21,28 @@ import '../../domain/entities/history_snapshot.dart';
 import '../widgets/history_empty_state.dart';
 import '../widgets/history_section_card.dart';
 
-class HistoryPage extends ConsumerWidget {
+class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends ConsumerState<HistoryPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.microtask(() {
+      unawaited(
+        ref
+            .read(analyticsServiceProvider)
+            .logEvent(AnalyticsEvents.historyOpened),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userId = ref.watch(
       authControllerProvider.select((authState) => authState.session?.userId),
     );
