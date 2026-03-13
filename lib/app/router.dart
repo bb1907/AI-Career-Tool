@@ -9,6 +9,7 @@ import '../features/auth/presentation/pages/register_page.dart';
 import '../features/cover_letter/presentation/pages/cover_letter_input_page.dart';
 import '../features/cover_letter/presentation/pages/cover_letter_result_page.dart';
 import '../features/history/presentation/pages/history_page.dart';
+import '../features/job_matching/presentation/pages/job_matching_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/interview/presentation/pages/interview_input_page.dart';
 import '../features/interview/presentation/pages/interview_result_page.dart';
@@ -35,6 +36,7 @@ abstract final class AppRoutes {
   static const interviewResult = '/interview/result';
   static const profileImport = '/profile-import';
   static const history = '/history';
+  static const jobMatching = '/job-matching';
   static const paywall = '/premium';
   static const settings = '/settings';
 }
@@ -108,6 +110,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.history,
         builder: (context, state) => const HistoryPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.jobMatching,
+        builder: (context, state) => const JobMatchingPage(),
       ),
       GoRoute(
         path: AppRoutes.paywall,

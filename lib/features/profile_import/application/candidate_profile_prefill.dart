@@ -38,6 +38,18 @@ class InterviewPrefillData {
   final String focusAreas;
 }
 
+class JobSearchPrefillData {
+  const JobSearchPrefillData({
+    required this.role,
+    required this.location,
+    required this.yearsOfExperience,
+  });
+
+  final String role;
+  final String location;
+  final String yearsOfExperience;
+}
+
 abstract final class CandidateProfilePrefill {
   static ResumePrefillData forResume(CandidateProfile profile) {
     return ResumePrefillData(
@@ -85,6 +97,16 @@ abstract final class CandidateProfilePrefill {
       roleName: _firstOrEmpty(profile.roles),
       seniority: _normalizeSeniority(profile.seniority),
       focusAreas: focusAreas.join(', '),
+    );
+  }
+
+  static JobSearchPrefillData forJobSearch(CandidateProfile profile) {
+    return JobSearchPrefillData(
+      role: _firstOrEmpty(profile.roles),
+      location: profile.location.trim(),
+      yearsOfExperience: profile.yearsExperience > 0
+          ? profile.yearsExperience.toString()
+          : '',
     );
   }
 

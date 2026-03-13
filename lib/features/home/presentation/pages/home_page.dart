@@ -97,6 +97,7 @@ class HomePage extends ConsumerWidget {
             _HeroSummaryCard(
               onSettingsPressed: () => context.go(AppRoutes.settings),
               onImportCvPressed: () => context.go(AppRoutes.profileImport),
+              onJobMatchingPressed: () => context.go(AppRoutes.jobMatching),
             ),
             const SizedBox(height: AppSpacing.page),
             Text(
@@ -347,10 +348,12 @@ class _HeroSummaryCard extends StatelessWidget {
   const _HeroSummaryCard({
     required this.onSettingsPressed,
     required this.onImportCvPressed,
+    required this.onJobMatchingPressed,
   });
 
   final VoidCallback onSettingsPressed;
   final VoidCallback onImportCvPressed;
+  final VoidCallback onJobMatchingPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -414,14 +417,29 @@ class _HeroSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.page),
-          FilledButton.tonalIcon(
-            onPressed: onImportCvPressed,
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.16),
-              foregroundColor: Colors.white,
-            ),
-            icon: const Icon(Icons.upload_file_outlined),
-            label: const Text('Import CV'),
+          Wrap(
+            spacing: AppSpacing.compact,
+            runSpacing: AppSpacing.compact,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onImportCvPressed,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.16),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.upload_file_outlined),
+                label: const Text('Import CV'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onJobMatchingPressed,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.16),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.travel_explore_outlined),
+                label: const Text('Find jobs'),
+              ),
+            ],
           ),
         ],
       ),

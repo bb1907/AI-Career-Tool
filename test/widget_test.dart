@@ -25,6 +25,10 @@ import 'package:ai_career_tools/features/history/application/history_controller.
 import 'package:ai_career_tools/features/history/domain/entities/history_section.dart';
 import 'package:ai_career_tools/features/history/domain/entities/history_snapshot.dart';
 import 'package:ai_career_tools/features/history/domain/repositories/history_repository.dart';
+import 'package:ai_career_tools/features/job_matching/application/job_matching_controller.dart';
+import 'package:ai_career_tools/features/job_matching/domain/entities/job_listing.dart';
+import 'package:ai_career_tools/features/job_matching/domain/entities/job_search_request.dart';
+import 'package:ai_career_tools/features/job_matching/domain/repositories/job_matching_repository.dart';
 import 'package:ai_career_tools/features/onboarding/data/local/onboarding_local_storage.dart';
 import 'package:ai_career_tools/features/onboarding/presentation/controllers/onboarding_controller.dart';
 import 'package:ai_career_tools/features/profile_import/application/profile_import_controller.dart';
@@ -298,6 +302,19 @@ class _FakeHistoryRepository implements HistoryRepository {
   }
 }
 
+class _FakeJobMatchingRepository implements JobMatchingRepository {
+  _FakeJobMatchingRepository({required this.results});
+
+  final List<JobListing> results;
+  JobSearchRequest? lastRequest;
+
+  @override
+  Future<List<JobListing>> searchJobs(JobSearchRequest request) async {
+    lastRequest = request;
+    return List<JobListing>.unmodifiable(results);
+  }
+}
+
 class _FakeSubscriptionService implements SubscriptionService {
   _FakeSubscriptionService({
     SubscriptionStatus? status,
@@ -559,6 +576,7 @@ Future<void> _pumpApp(
   InterviewRepository? interviewRepository,
   ProfileImportRepository? profileImportRepository,
   HistoryRepository? historyRepository,
+  JobMatchingRepository? jobMatchingRepository,
   SubscriptionService? subscriptionService,
   PremiumAccessService? premiumAccessService,
   AnalyticsService? analyticsService,
@@ -624,6 +642,10 @@ Future<void> _pumpApp(
         ),
         if (historyRepository != null)
           historyRepositoryProvider.overrideWithValue(historyRepository),
+        if (jobMatchingRepository != null)
+          jobMatchingRepositoryProvider.overrideWithValue(
+            jobMatchingRepository,
+          ),
         subscriptionServiceProvider.overrideWithValue(
           subscriptionService ?? _FakeSubscriptionService(),
         ),
@@ -732,6 +754,28 @@ void main() {
     seniority: 'Senior',
     education: 'B.A. in Visual Communication Design',
   );
+  const matchedJobs = <JobListing>[
+    JobListing(
+      id: 'job-1',
+      title: 'Senior Product Designer',
+      company: 'Northstar Labs',
+      location: 'Istanbul, Turkey',
+      source: 'LinkedIn',
+      url: 'https://jobs.example.com/northstar-labs/senior-product-designer',
+      jobDescription:
+          'Northstar Labs is hiring a Senior Product Designer to lead product design work across a growing B2B SaaS platform.',
+    ),
+    JobListing(
+      id: 'job-2',
+      title: 'Product Designer, Growth',
+      company: 'Orbit Commerce',
+      location: 'Istanbul, Turkey',
+      source: 'Indeed',
+      url: 'https://jobs.example.com/orbit-commerce/product-designer-growth',
+      jobDescription:
+          'Orbit Commerce is hiring a Product Designer, Growth to improve acquisition and activation funnels.',
+    ),
+  ];
 
   testWidgets('shows splash screen while auth bootstrap is in progress', (
     WidgetTester tester,
@@ -927,6 +971,111 @@ void main() {
 
     expect(find.text('ATS-friendly resume generation'), findsOneWidget);
     expect(find.text('Generate resume'), findsOneWidget);
+  });
+
+  testWidgets(
+    'shows matching jobs from the candidate profile and lets the user select one',
+    (WidgetTester tester) async {
+      final jobMatchingRepository = _FakeJobMatchingRepository(
+        results: matchedJobs,
+      );
+
+      await _pumpApp(
+        tester,
+        authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+        onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+        profileImportRepository: _FakeProfileImportRepository(
+          response: parsedCandidateProfile,
+          latestProfile: parsedCandidateProfile,
+        ),
+        jobMatchingRepository: jobMatchingRepository,
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Find jobs'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Find jobs that fit your profile'), findsOneWidget);
+      expect(find.text('Northstar Labs'), findsOneWidget);
+      expect(find.text('LinkedIn'), findsOneWidget);
+      expect(jobMatchingRepository.lastRequest, isNotNull);
+      expect(jobMatchingRepository.lastRequest!.role, 'Product Designer');
+      expect(jobMatchingRepository.lastRequest!.location, 'Istanbul, Turkey');
+      expect(jobMatchingRepository.lastRequest!.yearsExperience, 5);
+
+      await tester.scrollUntilVisible(
+        find.text('Select job').first,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Select job').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Selected job'), findsOneWidget);
+      expect(
+        find.text('Senior Product Designer at Northstar Labs'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('uses the selected job to prefill the cover letter form', (
+    WidgetTester tester,
+  ) async {
+    final jobMatchingRepository = _FakeJobMatchingRepository(
+      results: matchedJobs,
+    );
+
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      profileImportRepository: _FakeProfileImportRepository(
+        response: parsedCandidateProfile,
+        latestProfile: parsedCandidateProfile,
+      ),
+      jobMatchingRepository: jobMatchingRepository,
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Find jobs'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Use in cover letter').first,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Use in cover letter').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cover Letter Generator'), findsOneWidget);
+    expect(
+      find.textContaining('Selected job details from Northstar Labs'),
+      findsOneWidget,
+    );
+
+    final fields = find.byType(TextFormField);
+    expect(
+      tester.widget<TextFormField>(fields.at(0)).controller!.text,
+      'Northstar Labs',
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(1)).controller!.text,
+      'Senior Product Designer',
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(2)).controller!.text,
+      matchedJobs.first.jobDescription,
+    );
   });
 
   testWidgets('prefills the resume form from the saved candidate profile', (

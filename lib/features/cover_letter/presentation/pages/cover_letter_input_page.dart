@@ -11,6 +11,8 @@ import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../job_matching/application/selected_job_controller.dart';
+import '../../../job_matching/domain/entities/job_listing.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
 import '../../../paywall/application/premium_access_controller.dart';
 import '../../../profile_import/application/candidate_profile_controller.dart';
@@ -43,6 +45,7 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   final _userBackgroundController = TextEditingController();
   String _tone = _toneOptions.first;
   String? _appliedProfileSignature;
+  String? _appliedJobSignature;
   bool _isSubmitting = false;
 
   @override
@@ -92,6 +95,32 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
       profile.industries.join('|'),
       profile.education,
     ].join('::');
+  }
+
+  void _scheduleSelectedJobPrefill(JobListing? job) {
+    if (job == null) {
+      return;
+    }
+
+    final signature = _jobSignature(job);
+    if (_appliedJobSignature == signature) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _appliedJobSignature == signature) {
+        return;
+      }
+
+      _companyNameController.text = job.company;
+      _roleTitleController.text = job.title;
+      _jobDescriptionController.text = job.jobDescription;
+      _appliedJobSignature = signature;
+    });
+  }
+
+  String _jobSignature(JobListing job) {
+    return [job.id, job.title, job.company, job.location, job.url].join('::');
   }
 
   Future<void> _submit() async {
@@ -185,10 +214,12 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(coverLetterControllerProvider);
     final candidateProfile = ref.watch(candidateProfileControllerProvider);
+    final selectedJob = ref.watch(selectedJobControllerProvider);
     final theme = Theme.of(context);
     final profile = candidateProfile.asData?.value;
 
     _scheduleProfilePrefill(profile);
+    _scheduleSelectedJobPrefill(selectedJob);
 
     return Scaffold(
       appBar: AppBar(
@@ -244,6 +275,13 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
                             const CandidateProfilePrefillBanner(
                               message:
                                   'Your imported candidate profile prefilled the role and background fields. Adjust them as needed for this company.',
+                            ),
+                          ],
+                          if (selectedJob != null) ...[
+                            const SizedBox(height: AppSpacing.section),
+                            CandidateProfilePrefillBanner(
+                              message:
+                                  'Selected job details from ${selectedJob.company} were applied to the company, role and job description fields.',
                             ),
                           ],
                         ],
