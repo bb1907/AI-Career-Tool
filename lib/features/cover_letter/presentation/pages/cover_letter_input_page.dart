@@ -216,6 +216,11 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
           return;
         }
 
+        AppFeedback.showSuccess(
+          context,
+          'Pro is now active. You can continue without generation limits.',
+        );
+
         final refreshedDecision = await ref
             .read(premiumAccessControllerProvider.notifier)
             .requestAccess(PremiumAccessFeature.coverLetterGenerate);

@@ -184,6 +184,11 @@ class _VideoIntroductionInputPageState
           return;
         }
 
+        AppFeedback.showSuccess(
+          context,
+          'Pro is now active. You can continue without generation limits.',
+        );
+
         final refreshedDecision = await ref
             .read(premiumAccessControllerProvider.notifier)
             .requestAccess(PremiumAccessFeature.videoIntroductionGenerate);
@@ -279,6 +284,13 @@ class _VideoIntroductionInputPageState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video Introduction'),
+        leading: context.canPop()
+            ? IconButton(
+                tooltip: 'Back',
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
         actions: [
           IconButton(
             tooltip: 'Back to Home',
@@ -289,6 +301,10 @@ class _VideoIntroductionInputPageState
       ),
       body: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.page,
             AppSpacing.compact,

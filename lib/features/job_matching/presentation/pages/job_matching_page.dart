@@ -142,12 +142,12 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
 
   void _useJobForCoverLetter(JobListing job) {
     _selectJob(job);
-    context.go(AppRoutes.coverLetter);
+    context.push(AppRoutes.coverLetter);
   }
 
   void _useJobForVideoIntro(JobListing job) {
     _selectJob(job);
-    context.go(AppRoutes.videoIntroduction);
+    context.push(AppRoutes.videoIntroduction);
   }
 
   @override
@@ -164,6 +164,13 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Job Matches'),
+        leading: context.canPop()
+            ? IconButton(
+                tooltip: 'Back',
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
         actions: [
           IconButton(
             tooltip: 'Back to Home',
@@ -174,6 +181,10 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
       ),
       body: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.page,
             AppSpacing.compact,
@@ -225,9 +236,9 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
                                   .read(selectedJobControllerProvider.notifier)
                                   .clear(),
                               onContinueToCoverLetter: () =>
-                                  context.go(AppRoutes.coverLetter),
+                                  context.push(AppRoutes.coverLetter),
                               onContinueToVideoIntro: () =>
-                                  context.go(AppRoutes.videoIntroduction),
+                                  context.push(AppRoutes.videoIntroduction),
                             ),
                           ],
                         ],

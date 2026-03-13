@@ -132,6 +132,11 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
           return;
         }
 
+        AppFeedback.showSuccess(
+          context,
+          'Pro is now active. You can continue without generation limits.',
+        );
+
         final refreshedDecision = await ref
             .read(premiumAccessControllerProvider.notifier)
             .requestAccess(PremiumAccessFeature.cvParse);
@@ -188,6 +193,10 @@ class _ProfileImportPageState extends ConsumerState<ProfileImportPage> {
       ),
       body: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.page,
             AppSpacing.compact,
