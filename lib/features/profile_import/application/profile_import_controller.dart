@@ -99,17 +99,25 @@ class ProfileImportController extends Notifier<ProfileImportState> {
         profile: profile,
       );
     } on AppException catch (error) {
+      await _releasePendingUsage();
       state = state.copyWith(
         isImporting: false,
         processingLabel: null,
         errorMessage: error.message,
       );
     } catch (_) {
+      await _releasePendingUsage();
       state = state.copyWith(
         isImporting: false,
         processingLabel: null,
         errorMessage: 'CV import failed. Try again.',
       );
     }
+  }
+
+  Future<void> _releasePendingUsage() {
+    return ref
+        .read(premiumAccessControllerProvider.notifier)
+        .releasePendingUse(PremiumAccessFeature.cvParse);
   }
 }

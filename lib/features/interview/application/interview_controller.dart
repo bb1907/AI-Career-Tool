@@ -63,12 +63,14 @@ class InterviewController extends Notifier<InterviewState> {
         clearError: true,
       );
     } on AppException catch (error) {
+      await _releasePendingUsage();
       state = state.copyWith(
         isGenerating: false,
         errorMessage: error.message,
         clearResult: true,
       );
     } catch (_) {
+      await _releasePendingUsage();
       state = state.copyWith(
         isGenerating: false,
         errorMessage:
@@ -98,5 +100,11 @@ class InterviewController extends Notifier<InterviewState> {
       state = state.copyWith(isSaving: false);
       rethrow;
     }
+  }
+
+  Future<void> _releasePendingUsage() {
+    return ref
+        .read(premiumAccessControllerProvider.notifier)
+        .releasePendingUse(PremiumAccessFeature.interviewGenerate);
   }
 }

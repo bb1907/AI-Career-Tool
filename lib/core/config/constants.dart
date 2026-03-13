@@ -14,5 +14,10 @@ abstract final class AppConstants {
   static const revenueCatEntitlementId = 'premium';
   static const subscriptionsTable = 'subscriptions';
   static const freeGenerationsLimit = 3;
-  static const freeGenerationUsageStorageKeyPrefix = 'free_generation_usage_';
+  static const usageEventsTable = 'usage_events';
+  static const getUsageSnapshotRpc = 'get_usage_snapshot';
+  static const reserveUsageEventRpc = 'reserve_usage_event';
+  static const finalizeUsageEventRpc = 'finalize_usage_event';
+  static const releaseUsageEventRpc = 'release_usage_event';
+  static const usageReservationTtl = Duration(minutes: 10);
 }

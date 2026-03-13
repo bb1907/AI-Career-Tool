@@ -146,16 +146,22 @@ class _FakeResumeRepository implements ResumeRepository {
     required this.response,
     this.delay = Duration.zero,
     List<ResumeResult> initialHistory = const [],
+    this.generateError,
   }) : _history = List<ResumeResult>.from(initialHistory);
 
   final ResumeResult response;
   final Duration delay;
   final List<ResumeResult> _history;
+  final Object? generateError;
 
   @override
   Future<ResumeResult> generateResume(ResumeRequest request) async {
     if (delay > Duration.zero) {
       await Future<void>.delayed(delay);
+    }
+
+    if (generateError != null) {
+      throw generateError!;
     }
 
     return response;
@@ -390,6 +396,17 @@ class _FakePremiumAccessService implements PremiumAccessService {
     : _usageByUserId = Map<String, int>.from(initialUsageByUserId);
 
   final Map<String, int> _usageByUserId;
+  final Map<String, String> _reservationOwners = <String, String>{};
+  int _nextReservationId = 0;
+
+  int committedUsageFor(String userId) => _usageByUserId[userId] ?? 0;
+
+  int _activeUsageFor(String userId) {
+    final pendingCount = _reservationOwners.values
+        .where((id) => id == userId)
+        .length;
+    return committedUsageFor(userId) + pendingCount;
+  }
 
   @override
   Future<PremiumAccessDecision> evaluateAccess({
@@ -397,13 +414,23 @@ class _FakePremiumAccessService implements PremiumAccessService {
     required bool isPremium,
     required PremiumAccessFeature feature,
   }) async {
+    final normalizedUserId = userId?.trim();
     final snapshot = await loadSnapshot(userId: userId, isPremium: isPremium);
 
     if (snapshot.isPremium || !snapshot.hasReachedLimit) {
+      final reservationId =
+          !isPremium && normalizedUserId != null && normalizedUserId.isNotEmpty
+          ? 'reservation-${_nextReservationId++}'
+          : null;
+      if (reservationId != null) {
+        _reservationOwners[reservationId] = normalizedUserId!;
+      }
+
       return PremiumAccessDecision(
         feature: feature,
         snapshot: snapshot,
         isAllowed: true,
+        reservationId: reservationId,
       );
     }
 
@@ -420,10 +447,14 @@ class _FakePremiumAccessService implements PremiumAccessService {
     required String? userId,
     required bool isPremium,
   }) async {
+    final normalizedUserId = userId?.trim();
+
     return PremiumAccessSnapshot(
       userId: userId,
       isPremium: isPremium,
-      usedFreeGenerations: userId == null ? 0 : (_usageByUserId[userId] ?? 0),
+      usedFreeGenerations: normalizedUserId == null || normalizedUserId.isEmpty
+          ? 0
+          : _activeUsageFor(normalizedUserId),
     );
   }
 
@@ -432,9 +463,33 @@ class _FakePremiumAccessService implements PremiumAccessService {
     required String? userId,
     required bool isPremium,
     required PremiumAccessFeature feature,
+    String? reservationId,
   }) async {
-    if (!isPremium && userId != null) {
-      _usageByUserId[userId] = (_usageByUserId[userId] ?? 0) + 1;
+    final normalizedUserId = userId?.trim();
+    final owner = reservationId == null
+        ? null
+        : _reservationOwners.remove(reservationId);
+
+    if (!isPremium &&
+        normalizedUserId != null &&
+        normalizedUserId.isNotEmpty &&
+        owner == normalizedUserId) {
+      _usageByUserId[normalizedUserId] =
+          (_usageByUserId[normalizedUserId] ?? 0) + 1;
+    }
+
+    return loadSnapshot(userId: userId, isPremium: isPremium);
+  }
+
+  @override
+  Future<PremiumAccessSnapshot> releasePendingUse({
+    required String? userId,
+    required bool isPremium,
+    required PremiumAccessFeature feature,
+    String? reservationId,
+  }) async {
+    if (reservationId != null) {
+      _reservationOwners.remove(reservationId);
     }
 
     return loadSnapshot(userId: userId, isPremium: isPremium);
@@ -819,10 +874,13 @@ void main() {
   testWidgets('submits the resume form and opens the result page', (
     WidgetTester tester,
   ) async {
+    final accessService = _FakePremiumAccessService();
+
     await _pumpApp(
       tester,
       authRepository: _FakeAuthRepository(restoredSession: restoredSession),
       onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
       resumeRepository: _FakeResumeRepository(
         response: generatedResume,
         delay: const Duration(milliseconds: 300),
@@ -855,6 +913,43 @@ void main() {
     expect(find.text(generatedResume.summary), findsOneWidget);
     expect(find.text('Experience bullets'), findsOneWidget);
     expect(find.text('Skills'), findsOneWidget);
+    expect(accessService.committedUsageFor(restoredSession.userId), 1);
+  });
+
+  testWidgets('does not count failed resume generations against usage', (
+    WidgetTester tester,
+  ) async {
+    final accessService = _FakePremiumAccessService();
+
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
+      resumeRepository: _FakeResumeRepository(
+        response: generatedResume,
+        generateError: const AppException('Resume generation failed.'),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Resume Builder').first);
+    await tester.pumpAndSettle();
+    await _fillResumeForm(tester);
+
+    await tester.scrollUntilVisible(
+      find.text('Generate resume'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate resume'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Resume generation failed.'), findsOneWidget);
+    expect(accessService.committedUsageFor(restoredSession.userId), 0);
   });
 
   testWidgets('shows paywall when a free user reaches the generation limit', (
@@ -986,10 +1081,13 @@ void main() {
   testWidgets('submits the cover letter form and opens the result page', (
     WidgetTester tester,
   ) async {
+    final accessService = _FakePremiumAccessService();
+
     await _pumpApp(
       tester,
       authRepository: _FakeAuthRepository(restoredSession: restoredSession),
       onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
       coverLetterRepository: _FakeCoverLetterRepository(
         response: generatedCoverLetter,
         delay: const Duration(milliseconds: 300),
@@ -1040,15 +1138,19 @@ void main() {
     expect(find.text('Editable draft'), findsOneWidget);
     expect(find.text('Regenerate'), findsOneWidget);
     expect(find.textContaining('Dear Hiring Team'), findsOneWidget);
+    expect(accessService.committedUsageFor(restoredSession.userId), 1);
   });
 
   testWidgets('submits the interview form and opens the result page', (
     WidgetTester tester,
   ) async {
+    final accessService = _FakePremiumAccessService();
+
     await _pumpApp(
       tester,
       authRepository: _FakeAuthRepository(restoredSession: restoredSession),
       onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
       interviewRepository: _FakeInterviewRepository(
         response: generatedInterviewResult,
         delay: const Duration(milliseconds: 300),
@@ -1101,6 +1203,7 @@ void main() {
       find.text(generatedInterviewResult.behavioralQuestions.first.question),
       findsOneWidget,
     );
+    expect(accessService.committedUsageFor(restoredSession.userId), 1);
   });
 
   testWidgets('shows grouped history sections for saved content', (

@@ -15,6 +15,12 @@ class DatabaseService {
 
   SupabaseQueryBuilder from(String table) => _client.from(table);
 
+  PostgrestFilterBuilder<T> rpc<T>(
+    String functionName, {
+    Map<String, dynamic>? params,
+    bool get = false,
+  }) => _client.rpc<T>(functionName, params: params, get: get);
+
   String requireCurrentUserId() {
     final userId = _client.auth.currentUser?.id;
 

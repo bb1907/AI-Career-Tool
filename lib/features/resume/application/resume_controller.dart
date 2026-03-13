@@ -60,12 +60,14 @@ class ResumeController extends Notifier<ResumeState> {
         clearError: true,
       );
     } on AppException catch (error) {
+      await _releasePendingUsage();
       state = state.copyWith(
         isGenerating: false,
         errorMessage: error.message,
         clearResponse: true,
       );
     } catch (_) {
+      await _releasePendingUsage();
       state = state.copyWith(
         isGenerating: false,
         errorMessage: 'We could not generate the resume right now. Try again.',
@@ -94,5 +96,11 @@ class ResumeController extends Notifier<ResumeState> {
       state = state.copyWith(isSaving: false);
       rethrow;
     }
+  }
+
+  Future<void> _releasePendingUsage() {
+    return ref
+        .read(premiumAccessControllerProvider.notifier)
+        .releasePendingUse(PremiumAccessFeature.resumeGenerate);
   }
 }

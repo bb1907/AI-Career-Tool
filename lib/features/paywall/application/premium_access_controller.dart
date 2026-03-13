@@ -13,6 +13,7 @@ final premiumAccessControllerProvider =
 
 class PremiumAccessController extends Notifier<PremiumAccessState> {
   int _revision = 0;
+  final Map<PremiumAccessFeature, List<String>> _pendingReservations = {};
 
   @override
   PremiumAccessState build() {
@@ -24,6 +25,7 @@ class PremiumAccessController extends Notifier<PremiumAccessState> {
         return;
       }
 
+      _clearPendingReservations();
       Future<void>.microtask(_reloadSnapshot);
     });
 
@@ -33,6 +35,7 @@ class PremiumAccessController extends Notifier<PremiumAccessState> {
         return;
       }
 
+      _clearPendingReservations();
       Future<void>.microtask(_reloadSnapshot);
     });
 
@@ -53,6 +56,8 @@ class PremiumAccessController extends Notifier<PremiumAccessState> {
       feature: feature,
     );
 
+    _storeReservation(decision.feature, decision.reservationId);
+
     if (ref.mounted) {
       state = state.copyWith(snapshot: decision.snapshot, clearError: true);
     }
@@ -64,11 +69,13 @@ class PremiumAccessController extends Notifier<PremiumAccessState> {
     final service = ref.read(premiumAccessServiceProvider);
     final subscriptionState = ref.read(subscriptionControllerProvider);
     final userId = ref.read(authControllerProvider).session?.userId;
+    final reservationId = _takeReservation(feature);
 
     final snapshot = await service.recordSuccessfulUse(
       userId: userId,
       isPremium: subscriptionState.isPremium,
       feature: feature,
+      reservationId: reservationId,
     );
 
     if (!ref.mounted) {
@@ -76,6 +83,34 @@ class PremiumAccessController extends Notifier<PremiumAccessState> {
     }
 
     state = state.copyWith(snapshot: snapshot, clearError: true);
+  }
+
+  Future<void> releasePendingUse(PremiumAccessFeature feature) async {
+    final service = ref.read(premiumAccessServiceProvider);
+    final subscriptionState = ref.read(subscriptionControllerProvider);
+    final userId = ref.read(authControllerProvider).session?.userId;
+    final reservationId = _takeReservation(feature);
+
+    if (reservationId == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await service.releasePendingUse(
+        userId: userId,
+        isPremium: subscriptionState.isPremium,
+        feature: feature,
+        reservationId: reservationId,
+      );
+
+      if (!ref.mounted) {
+        return;
+      }
+
+      state = state.copyWith(snapshot: snapshot, clearError: true);
+    } catch (_) {
+      // Usage cleanup should not replace the original generation error.
+    }
   }
 
   Future<void> refresh() => _reloadSnapshot();
@@ -113,5 +148,34 @@ class PremiumAccessController extends Notifier<PremiumAccessState> {
         errorMessage: 'Usage limits could not be refreshed right now.',
       );
     }
+  }
+
+  void _storeReservation(PremiumAccessFeature feature, String? reservationId) {
+    if (reservationId == null) {
+      return;
+    }
+
+    _pendingReservations
+        .putIfAbsent(feature, () => <String>[])
+        .add(reservationId);
+  }
+
+  String? _takeReservation(PremiumAccessFeature feature) {
+    final reservations = _pendingReservations[feature];
+
+    if (reservations == null || reservations.isEmpty) {
+      return null;
+    }
+
+    final reservationId = reservations.removeLast();
+    if (reservations.isEmpty) {
+      _pendingReservations.remove(feature);
+    }
+
+    return reservationId;
+  }
+
+  void _clearPendingReservations() {
+    _pendingReservations.clear();
   }
 }
