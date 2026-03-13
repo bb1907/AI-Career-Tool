@@ -25,6 +25,7 @@ import '../features/video_introduction/presentation/pages/video_introduction_inp
 import '../features/video_introduction/presentation/pages/video_introduction_result_page.dart';
 import '../features/video_introduction/presentation/pages/video_introduction_teleprompter_page.dart';
 import '../features/video_introduction/domain/entities/video_introduction_result.dart';
+import '../ui/components/app_shell_scaffold.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
@@ -32,6 +33,7 @@ abstract final class AppRoutes {
   static const register = '/register';
   static const onboarding = '/onboarding';
   static const home = '/';
+  static const profile = '/profile';
   static const resume = '/resume';
   static const resumeResult = '/resume/result';
   static const coverLetter = '/cover-letter';
@@ -46,7 +48,7 @@ abstract final class AppRoutes {
   static const history = '/history';
   static const jobMatching = '/job-matching';
   static const paywall = '/premium';
-  static const settings = '/settings';
+  static const settings = profile;
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -83,9 +85,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             OnboardingPage(redirectTo: state.uri.queryParameters['from']),
       ),
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShellScaffold(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => const HomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.history,
+                builder: (context, state) => const HistoryPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const SettingsPage(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.resume,
@@ -132,10 +160,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: AppRoutes.history,
-        builder: (context, state) => const HistoryPage(),
-      ),
-      GoRoute(
         path: AppRoutes.jobMatching,
         builder: (context, state) => const JobMatchingPage(),
       ),
@@ -146,10 +170,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           sourceFeature: state.uri.queryParameters['feature'],
           reason: state.uri.queryParameters['reason'],
         ),
-      ),
-      GoRoute(
-        path: AppRoutes.settings,
-        builder: (context, state) => const SettingsPage(),
       ),
     ],
     redirect: (context, state) {

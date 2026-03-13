@@ -7,14 +7,15 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_feedback.dart';
-import '../../../../core/utils/app_spacing.dart';
-import '../../../../core/widgets/error_view.dart';
-import '../../../../core/widgets/loading_view.dart';
 import '../../../../services/analytics/analytics_events.dart';
 import '../../../../services/analytics/analytics_service.dart';
 import '../../../../services/subscription/subscription_package.dart';
 import '../../../../services/subscription/subscription_plan.dart';
 import '../../../../services/subscription/subscription_status.dart';
+import '../../../../ui/components/ai_button.dart';
+import '../../../../ui/components/app_card.dart';
+import '../../../../ui/components/assistant_orb.dart';
+import '../../../../ui/components/section_header.dart';
 import '../../application/premium_access_controller.dart';
 import '../../application/subscription_controller.dart';
 
@@ -67,72 +68,87 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
         (widget.reason == 'usage_limit' || accessState.hasReachedLimit);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Premium')),
+      appBar: AppBar(title: const Text('Upgrade to Pro')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            AppSpacing.compact,
-            AppSpacing.page,
-            AppSpacing.page,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
           children: [
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                color: const Color(0xFF111827),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF111827), Color(0xFF1F2937)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.12),
+                    blurRadius: 30,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    subscriptionState.isPremium ? 'Premium active' : 'Premium',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: const Color(0xFFFDE68A),
-                      fontWeight: FontWeight.w700,
-                    ),
+                  const Row(
+                    children: [
+                      AssistantOrb(size: 44),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          'AI Career Copilot Pro',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.compact),
+                  const SizedBox(height: 16),
                   Text(
                     subscriptionState.isPremium
-                        ? '${subscriptionState.status.plan.label} access is unlocked'
-                        : 'Upgrade for deeper career tools',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.compact),
-                  Text(
-                    subscriptionState.isPremium
-                        ? 'Your account can use premium resume guidance, cover letter generation and richer interview prep flows.'
-                        : 'Choose a plan to unlock richer ATS feedback, more tailored cover letters and stronger interview prep.',
+                        ? '${subscriptionState.status.plan.label} is active on this account.'
+                        : 'Unlimited AI career tools, smart cover letters and advanced interview prep.',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.84),
-                      height: 1.5,
+                      color: Colors.white.withValues(alpha: 0.82),
+                      height: 1.55,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: const [
+                      _BenefitPill(label: 'Unlimited generations'),
+                      _BenefitPill(label: 'Smart cover letters'),
+                      _BenefitPill(label: 'Advanced interview prep'),
+                    ],
                   ),
                   if (subscriptionState.status.expiresAt != null) ...[
-                    const SizedBox(height: AppSpacing.compact),
+                    const SizedBox(height: 16),
                     Text(
                       subscriptionState.status.willRenew
                           ? 'Renews automatically after ${_formatDate(subscriptionState.status.expiresAt!)}.'
-                          : 'Access remains active until ${_formatDate(subscriptionState.status.expiresAt!)}.',
+                          : 'Active until ${_formatDate(subscriptionState.status.expiresAt!)}.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.78),
+                        color: Colors.white.withValues(alpha: 0.72),
                       ),
                     ),
                   ],
                   if (shouldShowLimitMessage) ...[
-                    const SizedBox(height: AppSpacing.section),
+                    const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
                         color: Colors.white.withValues(alpha: 0.08),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: Colors.white.withValues(alpha: 0.14),
                         ),
                       ),
                       child: Column(
@@ -145,11 +161,11 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.compact),
+                          const SizedBox(height: 8),
                           Text(
-                            'You have used ${accessState.usedFreeGenerations} of ${accessState.freeGenerationLimit} free generations${widget.sourceFeature == null ? '' : ' for ${_formatSourceFeature(widget.sourceFeature!)}'}. Upgrade to continue from this flow without limits.',
+                            'You have used ${accessState.usedFreeGenerations} of ${accessState.freeGenerationLimit} free generations${widget.sourceFeature == null ? '' : ' for ${_formatSourceFeature(widget.sourceFeature!)}'}. Upgrade to continue without limits.',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.84),
+                              color: Colors.white.withValues(alpha: 0.82),
                               height: 1.45,
                             ),
                           ),
@@ -160,74 +176,77 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.page),
-            Text(
-              'Available plans',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            const SizedBox(height: 24),
+            const SectionHeader(
+              title: 'Available plans',
+              subtitle:
+                  'Weekly for quick momentum, monthly for active job search, annual for consistent long-term use.',
             ),
             if (subscriptionState.isLoading &&
                 subscriptionState.hasPackages) ...[
-              const SizedBox(height: AppSpacing.compact),
+              const SizedBox(height: 16),
               const LinearProgressIndicator(),
             ],
-            const SizedBox(height: AppSpacing.compact),
+            const SizedBox(height: 16),
             if (subscriptionState.isLoading && !subscriptionState.hasPackages)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.section),
-                  child: LoadingView(label: 'Loading premium plans...'),
+              const AppCard(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
               )
             else if (!subscriptionState.hasPackages &&
                 subscriptionState.errorMessage != null)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.section),
-                  child: ErrorView(
-                    message: subscriptionState.errorMessage!,
-                    onRetry: () {
-                      ref
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Plans are unavailable right now',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      subscriptionState.errorMessage!,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    AIButton(
+                      label: 'Reload plans',
+                      expanded: false,
+                      onPressed: () => ref
                           .read(subscriptionControllerProvider.notifier)
-                          .refresh();
-                    },
-                  ),
+                          .refresh(),
+                    ),
+                  ],
                 ),
               )
             else if (!subscriptionState.hasPackages)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.section),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'No plans available yet',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No plans available yet',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                      const SizedBox(height: AppSpacing.compact),
-                      Text(
-                        'Configure the current RevenueCat offering to show weekly, monthly or annual plans here.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          height: 1.45,
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Configure the current RevenueCat offering to show weekly, monthly and annual plans here.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
-                      const SizedBox(height: AppSpacing.section),
-                      FilledButton.tonalIcon(
-                        onPressed: () {
-                          ref
-                              .read(subscriptionControllerProvider.notifier)
-                              .refresh();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reload plans'),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               )
             else
@@ -255,58 +274,51 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
                             ),
                     ),
                     if (index != subscriptionState.packages.length - 1)
-                      const SizedBox(height: AppSpacing.section),
+                      const SizedBox(height: 16),
                   ],
                 ],
               ),
-            const SizedBox(height: AppSpacing.page),
-            Card(
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.section),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            const SizedBox(height: 24),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionHeader(
+                    title: 'Restore purchases',
+                    subtitle:
+                        'Already subscribed on this Apple account? Restore and continue without buying twice.',
+                  ),
+                  if (subscriptionState.errorMessage != null &&
+                      subscriptionState.hasPackages) ...[
+                    const SizedBox(height: 12),
                     Text(
-                      'Need to restore a purchase?',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.compact),
-                    Text(
-                      'Use restore if you already bought premium on this Apple account.',
+                      subscriptionState.errorMessage!,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.45,
+                        color: colorScheme.error,
                       ),
-                    ),
-                    if (subscriptionState.errorMessage != null &&
-                        subscriptionState.hasPackages) ...[
-                      const SizedBox(height: AppSpacing.compact),
-                      Text(
-                        subscriptionState.errorMessage!,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.error,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.section),
-                    FilledButton.tonalIcon(
-                      onPressed: subscriptionState.isRestoring
-                          ? null
-                          : () => _restorePurchases(context),
-                      icon: subscriptionState.isRestoring
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.restore),
-                      label: const Text('Restore purchases'),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 16),
+                  AIButton(
+                    label: subscriptionState.isRestoring
+                        ? 'Restoring purchases...'
+                        : 'Restore purchases',
+                    variant: AIButtonVariant.secondary,
+                    icon: const Icon(Icons.restore_rounded),
+                    isLoading: subscriptionState.isRestoring,
+                    onPressed: subscriptionState.isRestoring
+                        ? null
+                        : () => _restorePurchases(context),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Subscriptions automatically renew unless canceled in your Apple account settings at least 24 hours before renewal.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -424,6 +436,31 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
   }
 }
 
+class _BenefitPill extends StatelessWidget {
+  const _BenefitPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withValues(alpha: 0.08),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.white.withValues(alpha: 0.9),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class _SubscriptionPackageCard extends StatelessWidget {
   const _SubscriptionPackageCard({
     required this.package,
@@ -443,87 +480,81 @@ class _SubscriptionPackageCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isHighlighted = package.plan == SubscriptionPlan.annual;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.section),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
+    return AppCard(
+      backgroundColor: isHighlighted
+          ? colorScheme.primary.withValues(alpha: 0.08)
+          : colorScheme.surface,
+      borderColor: isHighlighted
+          ? colorScheme.primary.withValues(alpha: 0.18)
+          : colorScheme.outlineVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   package.plan.label,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (isHighlighted) ...[
-                  const SizedBox(width: AppSpacing.compact),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'Best value',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+              ),
+              if (isHighlighted)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-                ],
-                const Spacer(),
-                Text(
-                  package.priceLabel,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  decoration: BoxDecoration(
                     color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Best value',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.compact),
-            Text(
-              package.description.isEmpty
-                  ? package.plan.shortDescription
-                  : package.description,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.45,
-              ),
-            ),
-            if (package.billingLabel != null) ...[
-              const SizedBox(height: AppSpacing.compact),
-              Text(
-                package.billingLabel!,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
             ],
-            const SizedBox(height: AppSpacing.section),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: isCurrentPlan ? null : onPressed,
-                child: isPurchasing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(isCurrentPlan ? 'Current plan' : 'Choose plan'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            package.priceLabel,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            package.description.isEmpty
+                ? package.plan.shortDescription
+                : package.description,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.45,
+            ),
+          ),
+          if (package.billingLabel != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              package.billingLabel!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
-        ),
+          const SizedBox(height: 18),
+          AIButton(
+            label: isCurrentPlan ? 'Current plan' : 'Choose plan',
+            icon: const Icon(Icons.auto_awesome_rounded),
+            isLoading: isPurchasing,
+            onPressed: isCurrentPlan ? null : onPressed,
+          ),
+        ],
       ),
     );
   }

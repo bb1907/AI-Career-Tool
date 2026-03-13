@@ -7,13 +7,15 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_feedback.dart';
-import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
+import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../../ui/components/ai_button.dart';
+import '../../../../ui/components/app_card.dart';
+import '../../../../ui/components/app_input_field.dart';
+import '../../../../ui/components/assistant_orb.dart';
+import '../../../../ui/components/section_header.dart';
 import '../../../job_matching/application/selected_job_controller.dart';
 import '../../../job_matching/domain/entities/job_listing.dart';
-import '../../../../services/subscription/premium_access_feature.dart';
 import '../../../paywall/application/premium_access_controller.dart';
 import '../../../profile_import/application/candidate_profile_controller.dart';
 import '../../../profile_import/application/candidate_profile_prefill.dart';
@@ -72,7 +74,16 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
       return;
     }
 
-    final signature = _profileSignature(profile);
+    final signature = [
+      profile.id ?? '',
+      profile.uploadedCvId ?? '',
+      profile.name,
+      profile.roles.join('|'),
+      profile.skills.join('|'),
+      profile.industries.join('|'),
+      profile.education,
+    ].join('::');
+
     if (_appliedProfileSignature == signature) {
       return;
     }
@@ -89,30 +100,19 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
     });
   }
 
-  void _fillIfEmpty(TextEditingController controller, String value) {
-    if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
-      controller.text = value.trim();
-    }
-  }
-
-  String _profileSignature(CandidateProfile profile) {
-    return [
-      profile.id ?? '',
-      profile.uploadedCvId ?? '',
-      profile.name,
-      profile.roles.join('|'),
-      profile.skills.join('|'),
-      profile.industries.join('|'),
-      profile.education,
-    ].join('::');
-  }
-
   void _scheduleSelectedJobPrefill(JobListing? job) {
     if (job == null) {
       return;
     }
 
-    final signature = _jobSignature(job);
+    final signature = [
+      job.id,
+      job.title,
+      job.company,
+      job.location,
+      job.url,
+    ].join('::');
+
     if (_appliedJobSignature == signature) {
       return;
     }
@@ -129,8 +129,10 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
     });
   }
 
-  String _jobSignature(JobListing job) {
-    return [job.id, job.title, job.company, job.location, job.url].join('::');
+  void _fillIfEmpty(TextEditingController controller, String value) {
+    if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
+      controller.text = value.trim();
+    }
   }
 
   CoverLetterCandidateContext? _buildCandidateContext(
@@ -222,11 +224,6 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
         }
       }
 
-      if (!mounted) {
-        return;
-      }
-
-      FocusScope.of(context).unfocus();
       final candidateProfile = ref
           .read(candidateProfileControllerProvider)
           .asData
@@ -253,6 +250,7 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
         return;
       }
 
+      FocusScope.of(context).unfocus();
       context.push(AppRoutes.coverLetterResult);
     } on AppException catch (error) {
       if (mounted) {
@@ -276,266 +274,231 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(coverLetterControllerProvider);
-    final candidateProfile = ref.watch(candidateProfileControllerProvider);
-    final selectedJob = ref.watch(selectedJobControllerProvider);
     final theme = Theme.of(context);
-    final profile = candidateProfile.asData?.value;
+    final colorScheme = theme.colorScheme;
+    final state = ref.watch(coverLetterControllerProvider);
+    final profile = ref.watch(candidateProfileControllerProvider).asData?.value;
+    final selectedJob = ref.watch(selectedJobControllerProvider);
 
     _scheduleProfilePrefill(profile);
     _scheduleSelectedJobPrefill(selectedJob);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cover Letter Generator'),
-        actions: [
-          IconButton(
-            tooltip: 'Back to Home',
-            onPressed: () => context.go(AppRoutes.home),
-            icon: const Icon(Icons.home_outlined),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Cover Letter Generator')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            AppSpacing.compact,
-            AppSpacing.page,
-            AppSpacing.page,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
           children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
+            AppCard(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+              borderColor: colorScheme.primary.withValues(alpha: 0.18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Role-specific cover letters',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.compact),
-                          Text(
-                            'Share the company, role and job description alongside your background. The generator will return a tailored cover letter draft you can edit before sending.',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              height: 1.5,
-                            ),
-                          ),
-                          if (profile != null) ...[
-                            const SizedBox(height: AppSpacing.section),
-                            const CandidateProfilePrefillBanner(
-                              message:
-                                  'Your imported candidate profile prefilled the role and background fields. Adjust them as needed for this company.',
-                            ),
-                          ],
-                          if (selectedJob != null) ...[
-                            const SizedBox(height: AppSpacing.section),
-                            _SelectedJobBanner(
-                              job: selectedJob,
-                              onChange: () => context.go(AppRoutes.jobMatching),
-                              onClear: () => ref
-                                  .read(selectedJobControllerProvider.notifier)
-                                  .clear(),
-                            ),
-                          ],
-                        ],
+                  const Row(
+                    children: [
+                      AssistantOrb(size: 42),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text('Generate a job-aware cover letter'),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Turn your profile and the selected role into a tailored, concise draft that sounds credible and specific.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.page),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                  if (selectedJob != null) ...[
+                    const SizedBox(height: 16),
+                    _ContextCallout(
+                      icon: Icons.work_outline_rounded,
+                      label: 'Selected job context',
+                      value:
+                          '${selectedJob.title} at ${selectedJob.company} • ${selectedJob.location}',
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: AppTextField(
-                                    controller: _companyNameController,
-                                    labelText: 'Company name',
-                                    hintText: 'Acme Labs',
-                                    textInputAction: TextInputAction.next,
-                                    validator: (value) =>
-                                        Validators.requiredField(
-                                          value,
-                                          fieldName: 'Company name',
-                                        ),
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.section),
-                                Expanded(
-                                  child: AppTextField(
-                                    controller: _roleTitleController,
-                                    labelText: 'Role title',
-                                    hintText: 'Senior Product Designer',
-                                    textInputAction: TextInputAction.next,
-                                    validator: (value) =>
-                                        Validators.requiredField(
-                                          value,
-                                          fieldName: 'Role title',
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            AppTextField(
-                              controller: _jobDescriptionController,
-                              labelText: 'Job description',
-                              hintText:
-                                  'Paste the most relevant parts of the job description.',
-                              helperText:
-                                  'Responsibilities, requirements and company context help produce a better draft.',
-                              minLines: 6,
-                              maxLines: 10,
-                              textInputAction: TextInputAction.newline,
-                              validator: (value) => Validators.requiredField(
-                                value,
-                                fieldName: 'Job description',
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            AppTextField(
-                              controller: _userBackgroundController,
-                              labelText: 'User background',
-                              hintText:
-                                  'Summarize your experience, strengths and relevant achievements.',
-                              minLines: 5,
-                              maxLines: 8,
-                              textInputAction: TextInputAction.newline,
-                              validator: (value) => Validators.requiredField(
-                                value,
-                                fieldName: 'User background',
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            Card(
-                              elevation: 0,
-                              color: theme.colorScheme.surfaceContainerLowest,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SwitchListTile.adaptive(
-                                      contentPadding: EdgeInsets.zero,
-                                      value: _showClarifyingDetails,
-                                      title: const Text(
-                                        'Add optional clarifying details',
-                                      ),
-                                      subtitle: const Text(
-                                        'Use this when you want the letter to lean into a specific motivation, achievement or angle.',
-                                      ),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _showClarifyingDetails = value;
-                                        });
-                                      },
-                                    ),
-                                    if (_showClarifyingDetails) ...[
-                                      const SizedBox(
-                                        height: AppSpacing.compact,
-                                      ),
-                                      AppTextField(
-                                        controller: _whyCompanyController,
-                                        labelText: 'Why this company?',
-                                        hintText:
-                                            'Why does this team, mission or product stand out to you?',
-                                        minLines: 2,
-                                        maxLines: 4,
-                                      ),
-                                      const SizedBox(
-                                        height: AppSpacing.section,
-                                      ),
-                                      AppTextField(
-                                        controller: _achievementController,
-                                        labelText: 'Most relevant achievement',
-                                        hintText:
-                                            'Which outcome or project should this letter highlight most?',
-                                        minLines: 2,
-                                        maxLines: 4,
-                                      ),
-                                      const SizedBox(
-                                        height: AppSpacing.section,
-                                      ),
-                                      AppTextField(
-                                        controller: _emphasisController,
-                                        labelText:
-                                            'Anything else to emphasize?',
-                                        hintText:
-                                            'Add any extra context, strengths or signals you want reflected in the draft.',
-                                        minLines: 2,
-                                        maxLines: 4,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            DropdownButtonFormField<String>(
-                              initialValue: _tone,
-                              decoration: const InputDecoration(
-                                labelText: 'Tone',
-                              ),
-                              items: _toneOptions
-                                  .map(
-                                    (tone) => DropdownMenuItem<String>(
-                                      value: tone,
-                                      child: Text(tone),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                              onChanged: (value) {
-                                if (value == null) {
-                                  return;
-                                }
-
-                                setState(() {
-                                  _tone = value;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: AppSpacing.page),
-                            AppButton(
-                              label: state.isGenerating || _isSubmitting
-                                  ? 'Generating cover letter...'
-                                  : 'Generate cover letter',
-                              isLoading: state.isGenerating || _isSubmitting,
-                              onPressed: state.isGenerating || _isSubmitting
-                                  ? null
-                                  : _submit,
-                              icon: const Icon(Icons.auto_awesome),
-                            ),
-                          ],
-                        ),
-                      ),
+                  ],
+                  if (profile != null) ...[
+                    const SizedBox(height: 16),
+                    const CandidateProfilePrefillBanner(
+                      message:
+                          'We prefilled the role and background fields from your imported candidate profile. You can still edit every field.',
                     ),
-                  ),
+                  ],
                 ],
               ),
+            ),
+            const SizedBox(height: 24),
+            AppCard(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionHeader(
+                      title: 'Letter brief',
+                      subtitle:
+                          'Keep the prompt practical. A good company, role and job description already give the model strong direction.',
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: AppInputField(
+                            controller: _companyNameController,
+                            label: 'Company Name',
+                            hint: 'Shopify',
+                            prefixIcon: const Icon(Icons.apartment_rounded),
+                            textInputAction: TextInputAction.next,
+                            validator: (value) => Validators.requiredField(
+                              value,
+                              fieldName: 'Company name',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: AppInputField(
+                            controller: _roleTitleController,
+                            label: 'Role Title',
+                            hint: 'Product Manager',
+                            prefixIcon: const Icon(Icons.badge_outlined),
+                            textInputAction: TextInputAction.next,
+                            validator: (value) => Validators.requiredField(
+                              value,
+                              fieldName: 'Role title',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    AppInputField(
+                      controller: _jobDescriptionController,
+                      label: 'Job Description',
+                      hint:
+                          'Paste the most important responsibilities, requirements and keywords from the posting.',
+                      helper:
+                          'Include the role goals, experience requirements and any tools or industry context.',
+                      minLines: 6,
+                      maxLines: 9,
+                      textInputAction: TextInputAction.newline,
+                      validator: (value) => Validators.requiredField(
+                        value,
+                        fieldName: 'Job description',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AppInputField(
+                      controller: _userBackgroundController,
+                      label: 'Your Background',
+                      hint:
+                          'Summarize the experience, achievements and strengths that make you relevant for this role.',
+                      helper:
+                          'This can be short. Focus on the strongest evidence you want the letter to emphasize.',
+                      minLines: 5,
+                      maxLines: 7,
+                      textInputAction: TextInputAction.newline,
+                      validator: (value) => Validators.requiredField(
+                        value,
+                        fieldName: 'User background',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _tone,
+                      decoration: const InputDecoration(labelText: 'Tone'),
+                      items: _toneOptions
+                          .map(
+                            (option) => DropdownMenuItem<String>(
+                              value: option,
+                              child: Text(option),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+
+                        setState(() {
+                          _tone = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHeader(
+                    title: 'Clarifying details',
+                    subtitle:
+                        'Optional details that help the draft sound less generic and more specific to this application.',
+                    action: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _showClarifyingDetails = !_showClarifyingDetails;
+                        });
+                      },
+                      child: Text(
+                        _showClarifyingDetails
+                            ? 'Hide optional clarifying details'
+                            : 'Add optional clarifying details',
+                      ),
+                    ),
+                  ),
+                  if (_showClarifyingDetails) ...[
+                    const SizedBox(height: 20),
+                    AppInputField(
+                      controller: _whyCompanyController,
+                      label: 'Why this company?',
+                      hint:
+                          'Mention the mission, product, stage or team context that genuinely stands out.',
+                      minLines: 3,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.newline,
+                    ),
+                    const SizedBox(height: 16),
+                    AppInputField(
+                      controller: _achievementController,
+                      label: 'Most relevant achievement',
+                      hint:
+                          'Example: Led a redesign that improved onboarding conversion by 18%.',
+                      minLines: 3,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.newline,
+                    ),
+                    const SizedBox(height: 16),
+                    AppInputField(
+                      controller: _emphasisController,
+                      label: 'Anything else to emphasize?',
+                      hint:
+                          'Leadership scope, technical depth, domain knowledge, relocation, portfolio link, etc.',
+                      minLines: 3,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.newline,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            AIButton(
+              label: state.isGenerating || _isSubmitting
+                  ? 'Generating cover letter...'
+                  : 'Generate cover letter',
+              icon: const Icon(Icons.auto_awesome_rounded),
+              isLoading: state.isGenerating || _isSubmitting,
+              onPressed: state.isGenerating || _isSubmitting ? null : _submit,
             ),
           ],
         ),
@@ -544,16 +507,16 @@ class _CoverLetterInputPageState extends ConsumerState<CoverLetterInputPage> {
   }
 }
 
-class _SelectedJobBanner extends StatelessWidget {
-  const _SelectedJobBanner({
-    required this.job,
-    required this.onChange,
-    required this.onClear,
+class _ContextCallout extends StatelessWidget {
+  const _ContextCallout({
+    required this.icon,
+    required this.label,
+    required this.value,
   });
 
-  final JobListing job;
-  final VoidCallback onChange;
-  final VoidCallback onClear;
+  final IconData icon;
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
@@ -561,53 +524,37 @@ class _SelectedJobBanner extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: colorScheme.primaryContainer,
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Selected job context',
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w700,
+          Icon(icon, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${job.title} at ${job.company}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Company, role and description fields were filled from this listing. You can still edit them before generating.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onPrimaryContainer,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.section),
-          Wrap(
-            spacing: AppSpacing.compact,
-            runSpacing: AppSpacing.compact,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed: onChange,
-                icon: const Icon(Icons.travel_explore_outlined),
-                label: const Text('Choose different job'),
-              ),
-              OutlinedButton(
-                onPressed: onClear,
-                child: const Text('Clear selected job'),
-              ),
-            ],
           ),
         ],
       ),

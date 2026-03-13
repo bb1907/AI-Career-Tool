@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
-import '../../../../core/utils/app_spacing.dart';
-import '../../../../core/widgets/app_placeholder_scaffold.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../ui/components/ai_button.dart';
+import '../../../../ui/components/app_card.dart';
+import '../../../../ui/components/assistant_orb.dart';
+import '../../../../ui/components/section_header.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../../paywall/application/subscription_controller.dart';
 
@@ -17,204 +20,174 @@ class SettingsPage extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
     final subscriptionState = ref.watch(subscriptionControllerProvider);
     final session = authState.session;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return AppPlaceholderScaffold(
-      eyebrow: 'Account',
-      title: 'Profile & Settings',
-      description:
-          'Quick access to your account details and essential app actions.',
-      actions: [
-        SizedBox(
-          width: 180,
-          child: OutlinedButton(
-            onPressed: () => context.go(AppRoutes.home),
-            child: const Text('Back to Home'),
-          ),
-        ),
-        SizedBox(
-          width: 180,
-          child: ElevatedButton(
-            onPressed: authState.isSubmitting
-                ? null
-                : () async {
-                    final messenger = ScaffoldMessenger.of(context);
+    Future<void> signOut() async {
+      try {
+        await ref.read(authControllerProvider.notifier).signOut();
+      } on AppException catch (error) {
+        if (!context.mounted) {
+          return;
+        }
+        AppFeedback.showError(context, error.message);
+      }
+    }
 
-                    try {
-                      await ref.read(authControllerProvider.notifier).signOut();
-                    } on AppException catch (error) {
-                      if (!context.mounted) {
-                        return;
-                      }
+    Future<void> restore() async {
+      try {
+        await ref
+            .read(subscriptionControllerProvider.notifier)
+            .restorePurchases();
+        if (!context.mounted) {
+          return;
+        }
+        AppFeedback.showSuccess(context, 'Purchases restored successfully.');
+      } on AppException catch (error) {
+        if (!context.mounted) {
+          return;
+        }
+        AppFeedback.showError(context, error.message);
+      }
+    }
 
-                      messenger
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          SnackBar(
-                            content: Text(error.message),
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.error,
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          children: [
+            AppCard(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+              borderColor: colorScheme.primary.withValues(alpha: 0.18),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AssistantOrb(size: 52),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          session?.fullName ??
+                              session?.email ??
+                              'AI Career Copilot',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
-                        );
-                    }
-                  },
-            child: authState.isSubmitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Sign out'),
-          ),
-        ),
-      ],
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.section),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  session?.fullName ?? session?.email ?? 'Signed in user',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.compact),
-                Text(session?.email ?? ''),
-                const SizedBox(height: AppSpacing.compact),
-                Text(session?.targetRole ?? 'Target role not set'),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.page),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.section),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Subscription',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.compact),
-                Text(
-                  subscriptionState.isPremium
-                      ? '${subscriptionState.status.plan.label} premium is active.'
-                      : 'Free plan active.',
-                ),
-                const SizedBox(height: AppSpacing.compact),
-                Text(
-                  subscriptionState.isPremium
-                      ? 'Premium access is managed through the App Store and RevenueCat entitlements.'
-                      : 'Upgrade to unlock premium resume, cover letter and interview experiences.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.45,
-                  ),
-                ),
-                if (subscriptionState.status.managementUrl != null) ...[
-                  const SizedBox(height: AppSpacing.compact),
-                  Text(
-                    'Manage renewals from your App Store subscription settings.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          session?.email ?? 'Signed in user',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          session?.targetRole ?? 'Target role not set yet',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
                   ),
                 ],
-                if (subscriptionState.errorMessage != null) ...[
-                  const SizedBox(height: AppSpacing.compact),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const SectionHeader(
+              title: 'Account',
+              subtitle: 'Keep subscription and session settings in one place.',
+            ),
+            const SizedBox(height: 16),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    subscriptionState.errorMessage!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
+                    'Subscription',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
-                const SizedBox(height: AppSpacing.section),
-                Wrap(
-                  spacing: AppSpacing.compact,
-                  runSpacing: AppSpacing.compact,
-                  children: [
-                    FilledButton.tonalIcon(
-                      onPressed: subscriptionState.isRestoring
-                          ? null
-                          : () async {
-                              final messenger = ScaffoldMessenger.of(context);
-
-                              try {
-                                await ref
-                                    .read(
-                                      subscriptionControllerProvider.notifier,
-                                    )
-                                    .restorePurchases();
-                                if (!context.mounted) {
-                                  return;
-                                }
-
-                                messenger
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Purchases restored successfully.',
-                                      ),
-                                    ),
-                                  );
-                              } on AppException catch (error) {
-                                if (!context.mounted) {
-                                  return;
-                                }
-
-                                messenger
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    SnackBar(
-                                      content: Text(error.message),
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
-                                    ),
-                                  );
-                              }
-                            },
-                      icon: subscriptionState.isRestoring
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.restore),
-                      label: const Text('Restore purchases'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => context.go(AppRoutes.paywall),
-                      icon: const Icon(Icons.workspace_premium_outlined),
-                      label: Text(
-                        subscriptionState.isPremium
-                            ? 'Manage premium'
-                            : 'View plans',
+                  const SizedBox(height: 8),
+                  Text(
+                    subscriptionState.isPremium
+                        ? '${subscriptionState.status.plan.label} plan is active.'
+                        : 'Free plan active.',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    subscriptionState.isPremium
+                        ? 'Unlimited AI generations are available for your account.'
+                        : 'Upgrade to unlock unlimited AI tools and advanced career support.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  if (subscriptionState.errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      subscriptionState.errorMessage!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.error,
                       ),
                     ),
                   ],
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      AIButton(
+                        label: 'View plans',
+                        expanded: false,
+                        icon: const Icon(Icons.workspace_premium_outlined),
+                        onPressed: () => context.go(AppRoutes.paywall),
+                      ),
+                      AIButton(
+                        label: 'Restore purchases',
+                        expanded: false,
+                        variant: AIButtonVariant.secondary,
+                        icon: const Icon(Icons.restore_rounded),
+                        isLoading: subscriptionState.isRestoring,
+                        onPressed: subscriptionState.isRestoring
+                            ? null
+                            : restore,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Session',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Signed in as ${session?.email ?? 'unknown user'}.',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  AIButton(
+                    label: 'Sign out',
+                    icon: const Icon(Icons.logout_rounded),
+                    isLoading: authState.isSubmitting,
+                    onPressed: authState.isSubmitting ? null : signOut,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

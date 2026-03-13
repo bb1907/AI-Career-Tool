@@ -7,12 +7,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/utils/app_feedback.dart';
-import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../../ui/components/ai_button.dart';
+import '../../../../ui/components/app_card.dart';
+import '../../../../ui/components/app_input_field.dart';
+import '../../../../ui/components/assistant_orb.dart';
+import '../../../../ui/components/section_header.dart';
 import '../../../paywall/application/premium_access_controller.dart';
 import '../../../profile_import/application/candidate_profile_controller.dart';
 import '../../../profile_import/application/candidate_profile_prefill.dart';
@@ -94,9 +96,7 @@ class _InterviewInputPageState extends ConsumerState<InterviewInputPage> {
     });
   }
 
-  bool _isSupportedSeniority(String value) {
-    return _seniorityOptions.contains(value);
-  }
+  bool _isSupportedSeniority(String value) => _seniorityOptions.contains(value);
 
   void _fillIfEmpty(TextEditingController controller, String value) {
     if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
@@ -202,211 +202,187 @@ class _InterviewInputPageState extends ConsumerState<InterviewInputPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(interviewControllerProvider);
-    final candidateProfile = ref.watch(candidateProfileControllerProvider);
     final theme = Theme.of(context);
-    final profile = candidateProfile.asData?.value;
+    final colorScheme = theme.colorScheme;
+    final state = ref.watch(interviewControllerProvider);
+    final profile = ref.watch(candidateProfileControllerProvider).asData?.value;
 
     _scheduleProfilePrefill(profile);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Interview Prep'),
-        actions: [
-          IconButton(
-            tooltip: 'Back to Home',
-            onPressed: () => context.go(AppRoutes.home),
-            icon: const Icon(Icons.home_outlined),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Interview Prep')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            AppSpacing.compact,
-            AppSpacing.page,
-            AppSpacing.page,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
           children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
+            AppCard(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+              borderColor: colorScheme.primary.withValues(alpha: 0.18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Technical and behavioral prep',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.compact),
-                          Text(
-                            'Choose the target role, seniority and interview context. The generator will produce separate technical and behavioral questions with sample answers.',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              height: 1.5,
-                            ),
-                          ),
-                          if (profile != null) ...[
-                            const SizedBox(height: AppSpacing.section),
-                            const CandidateProfilePrefillBanner(
-                              message:
-                                  'Role, seniority and focus areas were prefilled from your imported candidate profile. Tweak them for each interview loop.',
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.page),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AppTextField(
-                              controller: _roleNameController,
-                              labelText: 'Role name',
-                              hintText: 'Senior Product Designer',
-                              textInputAction: TextInputAction.next,
-                              validator: (value) => Validators.requiredField(
-                                value,
-                                fieldName: 'Role name',
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: _seniority,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Seniority',
-                                    ),
-                                    items: _seniorityOptions
-                                        .map(
-                                          (value) => DropdownMenuItem<String>(
-                                            value: value,
-                                            child: Text(value),
-                                          ),
-                                        )
-                                        .toList(growable: false),
-                                    onChanged: (value) {
-                                      if (value == null) {
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        _seniority = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.section),
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: _companyType,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Company type',
-                                    ),
-                                    items: _companyTypeOptions
-                                        .map(
-                                          (value) => DropdownMenuItem<String>(
-                                            value: value,
-                                            child: Text(value),
-                                          ),
-                                        )
-                                        .toList(growable: false),
-                                    onChanged: (value) {
-                                      if (value == null) {
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        _companyType = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            DropdownButtonFormField<String>(
-                              initialValue: _interviewType,
-                              decoration: const InputDecoration(
-                                labelText: 'Interview type',
-                              ),
-                              items: _interviewTypeOptions
-                                  .map(
-                                    (value) => DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                              onChanged: (value) {
-                                if (value == null) {
-                                  return;
-                                }
-
-                                setState(() {
-                                  _interviewType = value;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: AppSpacing.section),
-                            AppTextField(
-                              controller: _focusAreasController,
-                              labelText: 'Focus areas',
-                              hintText:
-                                  'System design, stakeholder management, analytics, product sense',
-                              helperText:
-                                  'Use commas or new lines to separate focus areas.',
-                              minLines: 4,
-                              maxLines: 6,
-                              textInputAction: TextInputAction.newline,
-                              validator: (value) => Validators.requiredField(
-                                value,
-                                fieldName: 'Focus areas',
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.page),
-                            AppButton(
-                              label: state.isGenerating || _isSubmitting
-                                  ? 'Generating interview prep...'
-                                  : 'Generate interview prep',
-                              isLoading: state.isGenerating || _isSubmitting,
-                              onPressed: state.isGenerating || _isSubmitting
-                                  ? null
-                                  : _submit,
-                              icon: const Icon(Icons.auto_awesome),
-                            ),
-                          ],
+                  const Row(
+                    children: [
+                      AssistantOrb(size: 42),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          'Practice technical and behavioral answers',
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Set the interview context once and generate a structured question set with sample answers you can actually rehearse.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
+                  if (profile != null) ...[
+                    const SizedBox(height: 16),
+                    const CandidateProfilePrefillBanner(
+                      message:
+                          'Role, seniority and focus areas were prefilled from your imported candidate profile. Adjust them for each interview loop.',
+                    ),
+                  ],
                 ],
               ),
+            ),
+            const SizedBox(height: 24),
+            AppCard(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionHeader(
+                      title: 'Interview setup',
+                      subtitle:
+                          'Tell the assistant which loop you are preparing for so the question mix and sample answers stay relevant.',
+                    ),
+                    const SizedBox(height: 20),
+                    AppInputField(
+                      controller: _roleNameController,
+                      label: 'Role Name',
+                      hint: 'Senior Product Designer',
+                      prefixIcon: const Icon(Icons.badge_outlined),
+                      textInputAction: TextInputAction.next,
+                      validator: (value) => Validators.requiredField(
+                        value,
+                        fieldName: 'Role name',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _seniority,
+                            decoration: const InputDecoration(
+                              labelText: 'Seniority',
+                            ),
+                            items: _seniorityOptions
+                                .map(
+                                  (value) => DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(growable: false),
+                            onChanged: (value) {
+                              if (value == null) {
+                                return;
+                              }
+
+                              setState(() {
+                                _seniority = value;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _companyType,
+                            decoration: const InputDecoration(
+                              labelText: 'Company Type',
+                            ),
+                            items: _companyTypeOptions
+                                .map(
+                                  (value) => DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(growable: false),
+                            onChanged: (value) {
+                              if (value == null) {
+                                return;
+                              }
+
+                              setState(() {
+                                _companyType = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _interviewType,
+                      decoration: const InputDecoration(
+                        labelText: 'Interview Type',
+                      ),
+                      items: _interviewTypeOptions
+                          .map(
+                            (value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+
+                        setState(() {
+                          _interviewType = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    AppInputField(
+                      controller: _focusAreasController,
+                      label: 'Focus Areas',
+                      hint:
+                          'System design, stakeholder management, analytics, product sense',
+                      helper:
+                          'Use commas or new lines to separate the areas you want to practice.',
+                      minLines: 4,
+                      maxLines: 6,
+                      textInputAction: TextInputAction.newline,
+                      validator: (value) => Validators.requiredField(
+                        value,
+                        fieldName: 'Focus areas',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            AIButton(
+              label: state.isGenerating || _isSubmitting
+                  ? 'Generating interview prep...'
+                  : 'Generate interview prep',
+              icon: const Icon(Icons.auto_awesome_rounded),
+              isLoading: state.isGenerating || _isSubmitting,
+              onPressed: state.isGenerating || _isSubmitting ? null : _submit,
             ),
           ],
         ),

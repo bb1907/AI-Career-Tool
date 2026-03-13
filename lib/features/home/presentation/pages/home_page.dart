@@ -4,40 +4,36 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
 import '../../../../core/config/constants.dart';
-import '../../../../core/utils/app_spacing.dart';
-import '../../../../core/widgets/error_view.dart';
-import '../../../../core/widgets/loading_view.dart';
-import '../../../auth/presentation/providers/auth_controller.dart';
-import '../../../paywall/application/subscription_controller.dart';
+import '../../../../features/auth/presentation/providers/auth_controller.dart';
+import '../../../../features/paywall/application/subscription_controller.dart';
+import '../../../../ui/components/ai_button.dart';
+import '../../../../ui/components/app_card.dart';
+import '../../../../ui/components/assistant_orb.dart';
+import '../../../../ui/components/feature_card.dart';
+import '../../../../ui/components/section_header.dart';
 import '../providers/recent_documents_provider.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
-  static const _featureCards = <_FeatureCardData>[
-    _FeatureCardData(
+  static const _primaryFeatures = <_FeatureMeta>[
+    _FeatureMeta(
       title: 'Resume Builder',
-      description:
-          'Create focused resumes for each role with cleaner structure and faster edits.',
+      description: 'Create a professional AI resume',
       route: AppRoutes.resume,
-      icon: Icons.description_outlined,
-      accent: Color(0xFF0F766E),
+      icon: Icons.article_outlined,
     ),
-    _FeatureCardData(
+    _FeatureMeta(
       title: 'Cover Letter Generator',
-      description:
-          'Draft tailored letters with role-aware messaging and a sharper value proposition.',
+      description: 'Generate tailored cover letters',
       route: AppRoutes.coverLetter,
-      icon: Icons.edit_note_outlined,
-      accent: Color(0xFF2563EB),
+      icon: Icons.draw_outlined,
     ),
-    _FeatureCardData(
+    _FeatureMeta(
       title: 'Interview Prep',
-      description:
-          'Practice likely questions and tighten your answers before the real interview.',
+      description: 'Practice with AI interview questions',
       route: AppRoutes.interview,
       icon: Icons.record_voice_over_outlined,
-      accent: Color(0xFFEA580C),
     ),
   ];
 
@@ -45,25 +41,245 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final userId = ref.watch(
-      authControllerProvider.select((authState) => authState.session?.userId),
-    );
+    final authState = ref.watch(authControllerProvider);
     final subscriptionState = ref.watch(subscriptionControllerProvider);
+    final session = authState.session;
+    final firstName =
+        session?.fullName?.trim().split(' ').firstOrNull ??
+        session?.email.split('@').first ??
+        'there';
+    final userId = session?.userId;
     final recentDocuments = userId == null
         ? const AsyncData(RecentDocumentsState())
         : ref.watch(recentDocumentsProvider(userId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: const Row(
           children: [
-            Text(
-              'Workspace',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
+            AssistantOrb(size: 34),
+            SizedBox(width: 12),
+            Text('AI Career Copilot'),
+          ],
+        ),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          children: [
+            AppCard(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+              borderColor: colorScheme.primary.withValues(alpha: 0.18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome back, $firstName',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Let\'s advance your career today',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      AIButton(
+                        label: 'Import CV',
+                        variant: AIButtonVariant.tonal,
+                        expanded: false,
+                        icon: const Icon(Icons.upload_file_rounded),
+                        onPressed: () => context.go(AppRoutes.profileImport),
+                      ),
+                      AIButton(
+                        label: 'Find jobs',
+                        variant: AIButtonVariant.secondary,
+                        expanded: false,
+                        icon: const Icon(Icons.work_outline_rounded),
+                        onPressed: () => context.go(AppRoutes.jobMatching),
+                      ),
+                      AIButton(
+                        label: 'Video intro',
+                        variant: AIButtonVariant.secondary,
+                        expanded: false,
+                        icon: const Icon(Icons.videocam_outlined),
+                        onPressed: () =>
+                            context.go(AppRoutes.videoIntroduction),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 24),
+            const SectionHeader(
+              title: 'Workspace',
+              subtitle:
+                  'Use one focused action at a time and keep each output aligned to your target role.',
+            ),
+            const SizedBox(height: 16),
+            for (final feature in _primaryFeatures) ...[
+              FeatureCard(
+                title: feature.title,
+                description: feature.description,
+                icon: feature.icon,
+                badgeLabel: feature.title == 'Resume Builder' ? 'Core' : null,
+                onTap: () => context.go(feature.route),
+              ),
+              if (feature != _primaryFeatures.last) const SizedBox(height: 16),
+            ],
+            const SizedBox(height: 24),
+            SectionHeader(
+              title: 'Recently saved',
+              subtitle:
+                  'Jump back into the latest career assets you generated.',
+              action: TextButton(
+                onPressed: () => context.go(AppRoutes.history),
+                child: const Text('Open full history'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            AppCard(
+              child: recentDocuments.when(
+                data: (state) {
+                  if (state.isEmpty) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No saved work yet',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Generate your first resume, cover letter or interview set and it will appear here.',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        AIButton(
+                          label: 'Open history',
+                          expanded: false,
+                          variant: AIButtonVariant.tonal,
+                          icon: const Icon(Icons.history_rounded),
+                          onPressed: () => context.go(AppRoutes.history),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      for (var i = 0; i < state.items.length; i++) ...[
+                        _RecentDocumentTile(item: state.items[i]),
+                        if (i != state.items.length - 1)
+                          Divider(color: colorScheme.outlineVariant),
+                      ],
+                      if (state.hasSectionErrors) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Some history sources are temporarily unavailable, but your latest available items are shown below.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.error,
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
+                loading: () => const _LoadingCardContent(
+                  lines: [
+                    'Analyzing your experience...',
+                    'Matching skills with job requirements...',
+                    'Crafting your professional summary...',
+                  ],
+                ),
+                error: (_, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Recent activity is unavailable right now',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'You can still open full history while we retry the recent feed.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AIButton(
+                      label: 'Open history',
+                      expanded: false,
+                      variant: AIButtonVariant.tonal,
+                      icon: const Icon(Icons.history_rounded),
+                      onPressed: () => context.go(AppRoutes.history),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            AppCard(
+              backgroundColor: subscriptionState.isPremium
+                  ? colorScheme.secondaryContainer
+                  : colorScheme.surface,
+              borderColor: subscriptionState.isPremium
+                  ? colorScheme.secondary.withValues(alpha: 0.22)
+                  : colorScheme.outlineVariant,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subscriptionState.isPremium
+                        ? 'Pro active'
+                        : 'Upgrade to Pro',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    subscriptionState.isPremium
+                        ? 'Unlimited AI generations are available on your account.'
+                        : 'Unlimited AI career tools, smart cover letters and advanced interview prep.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  AIButton(
+                    label: subscriptionState.isPremium
+                        ? 'Manage plan'
+                        : 'Start Pro',
+                    expanded: false,
+                    icon: Icon(
+                      subscriptionState.isPremium
+                          ? Icons.workspace_premium_outlined
+                          : Icons.auto_awesome_rounded,
+                    ),
+                    onPressed: () => context.go(AppRoutes.paywall),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
               AppConstants.homeHeadline,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -72,207 +288,23 @@ class HomePage extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'History',
-            onPressed: () => context.go(AppRoutes.history),
-            icon: const Icon(Icons.history_outlined),
-          ),
-          IconButton(
-            tooltip: 'Profile & Settings',
-            onPressed: () => context.go(AppRoutes.settings),
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            AppSpacing.compact,
-            AppSpacing.page,
-            AppSpacing.page,
-          ),
-          children: [
-            _HeroSummaryCard(
-              onSettingsPressed: () => context.go(AppRoutes.settings),
-              onImportCvPressed: () => context.go(AppRoutes.profileImport),
-              onJobMatchingPressed: () => context.go(AppRoutes.jobMatching),
-              onVideoIntroPressed: () =>
-                  context.go(AppRoutes.videoIntroduction),
-            ),
-            const SizedBox(height: AppSpacing.page),
-            Text(
-              'Core tools',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.compact),
-            Column(
-              children: [
-                for (var index = 0; index < _featureCards.length; index++) ...[
-                  _FeatureCard(
-                    data: _featureCards[index],
-                    onTap: () => context.go(_featureCards[index].route),
-                  ),
-                  if (index != _featureCards.length - 1)
-                    const SizedBox(height: AppSpacing.section),
-                ],
-              ],
-            ),
-            const SizedBox(height: AppSpacing.page),
-            Text(
-              'Recent',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.compact),
-            _RecentDocumentsCard(
-              recentDocuments: recentDocuments,
-              onRetry: userId == null
-                  ? null
-                  : () => ref.invalidate(recentDocumentsProvider(userId)),
-              onHistoryPressed: () => context.go(AppRoutes.history),
-            ),
-            const SizedBox(height: AppSpacing.page),
-            _PremiumUpsellCard(
-              isPremium: subscriptionState.isPremium,
-              isLoading: subscriptionState.isLoading,
-              planLabel: subscriptionState.status.plan.label,
-              hasError: subscriptionState.errorMessage != null,
-              onPressed: () => context.go(AppRoutes.paywall),
-            ),
-          ],
-        ),
       ),
     );
   }
 }
 
-class _RecentDocumentsCard extends StatelessWidget {
-  const _RecentDocumentsCard({
-    required this.recentDocuments,
-    required this.onRetry,
-    required this.onHistoryPressed,
+class _FeatureMeta {
+  const _FeatureMeta({
+    required this.title,
+    required this.description,
+    required this.route,
+    required this.icon,
   });
 
-  final AsyncValue<RecentDocumentsState> recentDocuments;
-  final VoidCallback? onRetry;
-  final VoidCallback onHistoryPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.section),
-        child: recentDocuments.when(
-          data: (state) {
-            if (state.isEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'No saved work yet',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.compact),
-                  Text(
-                    'Generate and save a resume, cover letter or interview set to see it here first.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.section),
-                  FilledButton.tonalIcon(
-                    onPressed: onHistoryPressed,
-                    icon: const Icon(Icons.history_outlined),
-                    label: const Text('Open history'),
-                  ),
-                ],
-              );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Recently saved',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.compact),
-                Text(
-                  'Jump back into your latest saved outputs without opening the full history screen.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-                if (state.hasSectionErrors) ...[
-                  const SizedBox(height: AppSpacing.compact),
-                  Text(
-                    'Some saved sources are temporarily unavailable.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.error,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.section),
-                for (var index = 0; index < state.items.length; index++) ...[
-                  _RecentDocumentTile(item: state.items[index]),
-                  if (index != state.items.length - 1)
-                    const Divider(height: AppSpacing.page),
-                ],
-                const SizedBox(height: AppSpacing.section),
-                FilledButton.tonalIcon(
-                  onPressed: onHistoryPressed,
-                  icon: const Icon(Icons.history_outlined),
-                  label: const Text('Open full history'),
-                ),
-              ],
-            );
-          },
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.section),
-            child: LoadingView(label: 'Loading recent work...'),
-          ),
-          error: (_, _) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Recent activity unavailable',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.compact),
-              ErrorView(
-                message: 'Recent saved work could not be loaded right now.',
-                onRetry: onRetry,
-              ),
-              const SizedBox(height: AppSpacing.section),
-              FilledButton.tonalIcon(
-                onPressed: onHistoryPressed,
-                icon: const Icon(Icons.history_outlined),
-                label: const Text('Open history'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  final String title;
+  final String description;
+  final String route;
+  final IconData icon;
 }
 
 class _RecentDocumentTile extends StatelessWidget {
@@ -291,17 +323,15 @@ class _RecentDocumentTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
+                color: colorScheme.primaryContainer,
               ),
-              alignment: Alignment.center,
-              child: Icon(item.icon, size: 22),
+              child: Icon(item.icon, color: colorScheme.primary),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -310,33 +340,33 @@ class _RecentDocumentTile extends StatelessWidget {
                 children: [
                   Text(
                     item.typeLabel,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.primary,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     item.title,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 2),
                   Text(
                     item.subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
             Icon(
-              Icons.chevron_right_rounded,
+              Icons.arrow_forward_rounded,
               color: colorScheme.onSurfaceVariant,
             ),
           ],
@@ -346,298 +376,36 @@ class _RecentDocumentTile extends StatelessWidget {
   }
 }
 
-class _HeroSummaryCard extends StatelessWidget {
-  const _HeroSummaryCard({
-    required this.onSettingsPressed,
-    required this.onImportCvPressed,
-    required this.onJobMatchingPressed,
-    required this.onVideoIntroPressed,
-  });
+class _LoadingCardContent extends StatelessWidget {
+  const _LoadingCardContent({required this.lines});
 
-  final VoidCallback onSettingsPressed;
-  final VoidCallback onImportCvPressed;
-  final VoidCallback onJobMatchingPressed;
-  final VoidCallback onVideoIntroPressed;
+  final List<String> lines;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primary,
-            colorScheme.primary.withValues(alpha: 0.72),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                alignment: Alignment.center,
-                child: const Icon(Icons.auto_awesome, color: Colors.white),
-              ),
-              const Spacer(),
-              FilledButton.tonalIcon(
-                onPressed: onSettingsPressed,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.16),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.person_outline),
-                label: const Text('Profile'),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.page),
-          Text(
-            'Everything you need for the next application sprint.',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            const SizedBox(height: 4),
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: Theme.of(context).colorScheme.primary,
             ),
-          ),
-          const SizedBox(height: AppSpacing.compact),
-          Text(
-            'Move between resume drafting, cover letters and interview prep without losing your recent work.',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.page),
-          Wrap(
-            spacing: AppSpacing.compact,
-            runSpacing: AppSpacing.compact,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed: onImportCvPressed,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.16),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Import CV'),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: onJobMatchingPressed,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.16),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.travel_explore_outlined),
-                label: const Text('Find jobs'),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: onVideoIntroPressed,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.16),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.videocam_outlined),
-                label: const Text('Video intro'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
-  const _FeatureCard({required this.data, required this.onTap});
-
-  final _FeatureCardData data;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: data.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                alignment: Alignment.center,
-                child: Icon(data.icon, color: data.accent),
-              ),
-              const SizedBox(height: AppSpacing.page),
-              Text(
-                data.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.compact),
-              Text(
-                data.description,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.section),
-              Row(
-                children: [
-                  Text(
-                    'Open tool',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: data.accent,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.arrow_forward, color: data.accent),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PremiumUpsellCard extends StatelessWidget {
-  const _PremiumUpsellCard({
-    required this.isPremium,
-    required this.isLoading,
-    required this.planLabel,
-    required this.hasError,
-    required this.onPressed,
-  });
-
-  final bool isPremium;
-  final bool isLoading;
-  final String planLabel;
-  final bool hasError;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final label = isPremium ? 'Premium active' : 'Premium';
-    final headline = isPremium
-        ? '$planLabel plan enabled'
-        : 'Unlock richer feedback and faster drafts.';
-    final description = switch ((isPremium, isLoading)) {
-      (true, _) =>
-        'Your account already has premium access for deeper resume feedback, stronger cover letters and more advanced interview prep.',
-      (false, true) => 'Checking your latest subscription status...',
-      _ =>
-        'Get deeper ATS suggestions, sharper cover letter personalization and more advanced interview prep flows.',
-    };
-    final buttonLabel = isPremium ? 'Manage subscription' : 'Explore Premium';
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        color: const Color(0xFF111827),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: const Color(0xFFFDE68A),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.compact),
-          Text(
-            headline,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.compact),
-          Text(
-            description,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.82),
-              height: 1.45,
-            ),
-          ),
-          if (isLoading) ...[
-            const SizedBox(height: AppSpacing.section),
-            const LinearProgressIndicator(
-              minHeight: 4,
-              borderRadius: BorderRadius.all(Radius.circular(999)),
-            ),
-          ],
-          if (hasError && !isPremium) ...[
-            const SizedBox(height: AppSpacing.compact),
+            const SizedBox(height: 12),
             Text(
-              'Subscription details are temporarily unavailable.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.78),
-              ),
+              lines.first,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],
-          const SizedBox(height: AppSpacing.page),
-          SizedBox(
-            width: 220,
-            child: ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF111827),
-              ),
-              child: Text(buttonLabel),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _FeatureCardData {
-  const _FeatureCardData({
-    required this.title,
-    required this.description,
-    required this.route,
-    required this.icon,
-    required this.accent,
-  });
-
-  final String title;
-  final String description;
-  final String route;
-  final IconData icon;
-  final Color accent;
+extension on List<String> {
+  String? get firstOrNull => isEmpty ? null : first;
 }

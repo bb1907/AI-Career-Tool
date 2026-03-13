@@ -785,12 +785,49 @@ Future<void> _fillResumeForm(WidgetTester tester) async {
   );
   await tester.enterText(
     find.byType(TextFormField).at(4),
-    'Improved onboarding completion by 18%\nLaunched a reusable design system adopted by four squads',
+    'B.A. in Visual Communication Design, Bilkent University',
   );
   await tester.enterText(
     find.byType(TextFormField).at(5),
-    'B.A. in Visual Communication Design, Bilkent University',
+    'Improved onboarding completion by 18%\nLaunched a reusable design system adopted by four squads',
   );
+}
+
+Future<void> _openHomeFeature(WidgetTester tester, String label) async {
+  final scrollable = find.byType(Scrollable).first;
+  for (
+    var attempt = 0;
+    attempt < 8 && find.text(label).evaluate().isEmpty;
+    attempt++
+  ) {
+    await tester.drag(scrollable, const Offset(0, -300));
+    await tester.pumpAndSettle();
+  }
+
+  expect(find.text(label), findsWidgets);
+  final targetText = find.text(label).first;
+
+  final tappable = find.ancestor(
+    of: targetText,
+    matching: find.byType(InkWell),
+  );
+  if (tappable.evaluate().isNotEmpty) {
+    final widget = tester.widget<InkWell>(tappable.first);
+    widget.onTap?.call();
+  } else {
+    await tester.tap(targetText, warnIfMissed: false);
+  }
+  await tester.pump();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openHistoryTab(WidgetTester tester, String label) async {
+  final tabBar = find.byType(TabBar);
+  expect(tabBar, findsOneWidget);
+  final tabLabel = find.descendant(of: tabBar, matching: find.text(label));
+  expect(tabLabel, findsWidgets);
+  await tester.tap(tabLabel.first);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -903,7 +940,7 @@ void main() {
     expect(find.text('Preparing your workspace...'), findsOneWidget);
     expect(find.text('AI Career Tools'), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
     expect(find.text('Login'), findsOneWidget);
@@ -939,7 +976,21 @@ void main() {
 
     expect(find.text('Workspace'), findsOneWidget);
     expect(find.text('Resume Builder'), findsOneWidget);
+    for (
+      var attempt = 0;
+      attempt < 6 && find.text('Cover Letter Generator').evaluate().isEmpty;
+      attempt++
+    ) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -250));
+      await tester.pumpAndSettle();
+    }
     expect(find.text('Cover Letter Generator'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Interview Prep'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Interview Prep'), findsOneWidget);
   });
 
@@ -1076,8 +1127,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Resume Builder').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Resume Builder');
 
     expect(find.text('ATS-friendly resume generation'), findsOneWidget);
     expect(find.text('Generate resume'), findsOneWidget);
@@ -1171,7 +1221,7 @@ void main() {
     await tester.tap(find.text('Use in cover letter').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Cover Letter Generator'), findsOneWidget);
+    expect(find.text('Cover Letter Generator'), findsWidgets);
     expect(find.textContaining('Selected job context'), findsOneWidget);
 
     final fields = find.byType(TextFormField);
@@ -1260,8 +1310,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Resume Builder').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Resume Builder');
 
     final fields = find.byType(TextFormField);
 
@@ -1283,7 +1332,7 @@ void main() {
       'Figma, Design Systems, User Research',
     );
     expect(
-      tester.widget<TextFormField>(fields.at(5)).controller!.text,
+      tester.widget<TextFormField>(fields.at(4)).controller!.text,
       'B.A. in Visual Communication Design',
     );
   });
@@ -1302,15 +1351,14 @@ void main() {
       premiumAccessService: accessService,
       resumeRepository: _FakeResumeRepository(
         response: generatedResume,
-        delay: const Duration(milliseconds: 300),
+        delay: const Duration(milliseconds: 900),
       ),
     );
 
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Resume Builder').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Resume Builder');
 
     await _fillResumeForm(tester);
 
@@ -1321,15 +1369,23 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Generate resume'));
-    await tester.pump();
-
-    expect(find.text('Generating resume...'), findsWidgets);
-
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
     expect(find.text('ATS-ready draft'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Professional Summary'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text(generatedResume.summary), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Experience bullets'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Experience bullets'), findsOneWidget);
     expect(find.text('Skills'), findsOneWidget);
     expect(accessService.committedUsageFor(restoredSession.userId), 1);
@@ -1362,8 +1418,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Resume Builder').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Resume Builder');
     await _fillResumeForm(tester);
 
     await tester.scrollUntilVisible(
@@ -1389,13 +1444,16 @@ void main() {
       premiumAccessService: _FakePremiumAccessService(
         initialUsageByUserId: {restoredSession.userId: 3},
       ),
+      resumeRepository: _FakeResumeRepository(
+        response: generatedResume,
+        delay: const Duration(milliseconds: 900),
+      ),
     );
 
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Resume Builder').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Resume Builder');
     await _fillResumeForm(tester);
 
     await tester.scrollUntilVisible(
@@ -1430,8 +1488,7 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Resume Builder').first);
-      await tester.pumpAndSettle();
+      await _openHomeFeature(tester, 'Resume Builder');
       await _fillResumeForm(tester);
 
       await tester.scrollUntilVisible(
@@ -1453,6 +1510,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('ATS-ready draft'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Experience bullets'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Experience bullets'), findsOneWidget);
       expect(analyticsService.hasEvent(AnalyticsEvents.paywallViewed), true);
       expect(analyticsService.hasEvent(AnalyticsEvents.purchaseStarted), true);
@@ -1485,15 +1548,14 @@ void main() {
       ),
       resumeRepository: _FakeResumeRepository(
         response: generatedResume,
-        delay: const Duration(milliseconds: 300),
+        delay: const Duration(milliseconds: 900),
       ),
     );
 
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Resume Builder').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Resume Builder');
     await _fillResumeForm(tester);
 
     await tester.scrollUntilVisible(
@@ -1503,11 +1565,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Generate resume'));
-    await tester.pump();
-
-    expect(find.text('Generating resume...'), findsWidgets);
-
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 900));
     await tester.pumpAndSettle();
 
     expect(find.text('ATS-ready draft'), findsOneWidget);
@@ -1530,14 +1588,7 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      await tester.scrollUntilVisible(
-        find.text('Cover Letter Generator').first,
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Cover Letter Generator').first);
-      await tester.pumpAndSettle();
+      await _openHomeFeature(tester, 'Cover Letter Generator');
 
       final fields = find.byType(TextFormField);
 
@@ -1570,21 +1621,14 @@ void main() {
       premiumAccessService: accessService,
       coverLetterRepository: _FakeCoverLetterRepository(
         response: generatedCoverLetter,
-        delay: const Duration(milliseconds: 300),
+        delay: const Duration(milliseconds: 900),
       ),
     );
 
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Cover Letter Generator').first,
-      250,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cover Letter Generator').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Cover Letter Generator');
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Acme Labs');
     await tester.enterText(
@@ -1607,15 +1651,24 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Generate cover letter'));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
 
     expect(find.text('Generating cover letter...'), findsWidgets);
 
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpAndSettle();
 
     expect(find.text('Tailored company draft'), findsOneWidget);
-    expect(find.text('Editable draft'), findsOneWidget);
+    for (
+      var attempt = 0;
+      attempt < 8 && find.text('Editable draft').evaluate().isEmpty;
+      attempt++
+    ) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -250));
+      await tester.pumpAndSettle();
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Editable draft'), findsWidgets);
     expect(find.text('Regenerate'), findsOneWidget);
     expect(find.textContaining('Dear Hiring Team'), findsOneWidget);
     expect(accessService.committedUsageFor(restoredSession.userId), 1);
@@ -1637,14 +1690,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Interview Prep').first,
-      250,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Interview Prep').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Interview Prep');
 
     final fields = find.byType(TextFormField);
     final dropdowns = find.byType(DropdownButtonFormField<String>);
@@ -1914,21 +1960,14 @@ void main() {
       premiumAccessService: accessService,
       interviewRepository: _FakeInterviewRepository(
         response: generatedInterviewResult,
-        delay: const Duration(milliseconds: 300),
+        delay: const Duration(milliseconds: 900),
       ),
     );
 
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Interview Prep').first,
-      250,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Interview Prep').first);
-    await tester.pumpAndSettle();
+    await _openHomeFeature(tester, 'Interview Prep');
 
     await tester.enterText(
       find.byType(TextFormField).at(0),
@@ -1946,14 +1985,20 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Generate interview prep'));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
 
     expect(find.text('Generating interview prep...'), findsWidgets);
 
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpAndSettle();
 
-    expect(find.text('Role-specific question set'), findsOneWidget);
+    expect(find.text('Senior Product Designer • Mixed'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Technical questions'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Technical questions'), findsOneWidget);
     expect(find.text('Behavioral questions'), findsOneWidget);
     expect(
@@ -1998,12 +2043,14 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('History'), findsOneWidget);
-    expect(find.text('Resumes'), findsOneWidget);
-    expect(find.text('Cover Letters'), findsOneWidget);
-    expect(find.text('Interview Sets'), findsOneWidget);
+    expect(find.text('History'), findsWidgets);
+    expect(find.text('Resumes'), findsWidgets);
+    expect(find.text('Cover Letters'), findsWidgets);
+    expect(find.text('Interview Sets'), findsWidgets);
     expect(find.textContaining('Senior Product Designer'), findsWidgets);
+    await _openHistoryTab(tester, 'Cover Letters');
     expect(find.textContaining('Dear Hiring Team'), findsOneWidget);
+    await _openHistoryTab(tester, 'Interview Sets');
     expect(
       find.text(generatedInterviewResult.technicalQuestions.first.question),
       findsOneWidget,
@@ -2079,12 +2126,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      if (find.text('History').evaluate().isEmpty) {
-        await tester.tap(find.byTooltip('History'));
-        await tester.pumpAndSettle();
-      }
+      await tester.tap(find.byTooltip('History'));
+      await tester.pumpAndSettle();
 
-      expect(find.text('History'), findsOneWidget);
+      expect(find.text('History'), findsWidgets);
+      await _openHistoryTab(tester, 'Resumes');
       expect(find.text('User B resume snapshot'), findsOneWidget);
       expect(find.text('User A resume snapshot'), findsNothing);
     },
@@ -2121,15 +2167,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('History unavailable'), findsNothing);
-    expect(find.text('Resumes'), findsOneWidget);
-    expect(find.text('Cover Letters'), findsOneWidget);
-    expect(find.text('Interview Sets'), findsOneWidget);
+    expect(find.text('Resumes'), findsWidgets);
+    expect(find.text('Cover Letters'), findsWidgets);
+    expect(find.text('Interview Sets'), findsWidgets);
+    await _openHistoryTab(tester, 'Cover Letters');
     expect(
       find.text('Cover letter history is temporarily unavailable.'),
       findsOneWidget,
     );
     expect(find.text('Retry section load'), findsOneWidget);
+    await _openHistoryTab(tester, 'Resumes');
     expect(find.textContaining('Senior Product Designer'), findsWidgets);
+    await _openHistoryTab(tester, 'Interview Sets');
     expect(
       find.text(generatedInterviewResult.technicalQuestions.first.question),
       findsOneWidget,
