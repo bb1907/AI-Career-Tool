@@ -1,0 +1,8 @@
+{
+  "APP_ENV": "prod",
+  "SUPABASE_URL": "https://your-project.supabase.co",
+  "SUPABASE_ANON_KEY": "your_supabase_anon_key",
+  "AI_BACKEND_URL": "https://api.your-domain.com",
+  "REVENUECAT_APPLE_API_KEY": "appl_your_revenuecat_public_sdk_key",
+  "REVENUECAT_ENTITLEMENT_ID": "premium"
+}

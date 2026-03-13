@@ -1,7 +1,10 @@
 import '../errors/app_exception.dart';
 import 'constants.dart';
 
+enum AppEnvironment { development, production }
+
 abstract final class Env {
+  static const appEnv = String.fromEnvironment('APP_ENV', defaultValue: 'dev');
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const aiBackendUrl = String.fromEnvironment('AI_BACKEND_URL');
@@ -17,11 +20,37 @@ abstract final class Env {
   static const localSupabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
-  static String get resolvedSupabaseUrl =>
-      supabaseUrl.isNotEmpty ? supabaseUrl : localSupabaseUrl;
+  static AppEnvironment get environment {
+    switch (appEnv.trim().toLowerCase()) {
+      case 'prod':
+      case 'production':
+        return AppEnvironment.production;
+      default:
+        return AppEnvironment.development;
+    }
+  }
 
-  static String get resolvedSupabaseAnonKey =>
-      supabaseAnonKey.isNotEmpty ? supabaseAnonKey : localSupabaseAnonKey;
+  static bool get isProduction => environment == AppEnvironment.production;
+  static bool get isDevelopment => !isProduction;
+
+  static bool get hasHostedSupabaseConfig =>
+      supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
+
+  static bool get hasAiBackendConfig => aiBackendUrl.trim().isNotEmpty;
+  static bool get hasRevenueCatConfig =>
+      revenueCatAppleApiKey.trim().isNotEmpty;
+
+  static String get resolvedSupabaseUrl => hasHostedSupabaseConfig
+      ? supabaseUrl.trim()
+      : isDevelopment
+      ? localSupabaseUrl
+      : '';
+
+  static String get resolvedSupabaseAnonKey => hasHostedSupabaseConfig
+      ? supabaseAnonKey.trim()
+      : isDevelopment
+      ? localSupabaseAnonKey
+      : '';
 
   static String get resolvedAiBackendUrl => aiBackendUrl.trim();
   static String get resolvedRevenueCatAppleApiKey =>
@@ -35,8 +64,10 @@ abstract final class Env {
 
   static void validateSupabase() {
     if (resolvedSupabaseUrl.isEmpty || resolvedSupabaseAnonKey.isEmpty) {
-      throw const AppException(
-        'Supabase config is missing. Start the local Supabase stack or pass SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.',
+      throw AppException(
+        isProduction
+            ? 'Supabase config is missing for production. Pass SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.'
+            : 'Supabase config is missing. Start the local Supabase stack or pass SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.',
       );
     }
   }
@@ -59,5 +90,23 @@ abstract final class Env {
     }
 
     return resolvedRevenueCatAppleApiKey;
+  }
+
+  static List<String> get missingProductionVariables {
+    final missing = <String>[];
+
+    if (!hasHostedSupabaseConfig) {
+      missing.addAll(const ['SUPABASE_URL', 'SUPABASE_ANON_KEY']);
+    }
+
+    if (!hasAiBackendConfig) {
+      missing.add('AI_BACKEND_URL');
+    }
+
+    if (!hasRevenueCatConfig) {
+      missing.add('REVENUECAT_APPLE_API_KEY');
+    }
+
+    return missing;
   }
 }
