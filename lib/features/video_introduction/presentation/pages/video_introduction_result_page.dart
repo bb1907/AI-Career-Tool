@@ -151,6 +151,18 @@ class VideoIntroductionResultPage extends ConsumerWidget {
                                           .startGeneration(state.request!),
                               ),
                               AppButton(
+                                label: 'Open teleprompter',
+                                expanded: false,
+                                variant: AppButtonVariant.tonal,
+                                icon: const Icon(
+                                  Icons.video_camera_front_outlined,
+                                ),
+                                onPressed: () => context.push(
+                                  AppRoutes.videoIntroductionTeleprompter,
+                                  extra: result,
+                                ),
+                              ),
+                              AppButton(
                                 label: 'Back to form',
                                 expanded: false,
                                 variant: AppButtonVariant.secondary,

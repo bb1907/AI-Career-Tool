@@ -40,6 +40,8 @@ import 'package:ai_career_tools/features/resume/domain/entities/resume_request.d
 import 'package:ai_career_tools/features/resume/domain/entities/resume_result.dart';
 import 'package:ai_career_tools/features/resume/domain/repositories/resume_repository.dart';
 import 'package:ai_career_tools/features/video_introduction/application/video_introduction_controller.dart';
+import 'package:ai_career_tools/features/video_introduction/application/teleprompter_controller.dart';
+import 'package:ai_career_tools/features/video_introduction/data/services/video_recording_service.dart';
 import 'package:ai_career_tools/features/video_introduction/domain/entities/video_introduction_request.dart';
 import 'package:ai_career_tools/features/video_introduction/domain/entities/video_introduction_result.dart';
 import 'package:ai_career_tools/features/video_introduction/domain/repositories/video_introduction_repository.dart';
@@ -282,6 +284,65 @@ class _FakeVideoIntroductionRepository implements VideoIntroductionRepository {
     }
 
     return response;
+  }
+}
+
+class _FakeVideoRecordingService implements VideoRecordingService {
+  bool _isInitialized = false;
+  bool _isRecording = false;
+  bool _isUsingFrontCamera = true;
+  String? _lastRecordingPath;
+
+  @override
+  bool get canSwitchCamera => true;
+
+  @override
+  bool get hasPreview => _isInitialized;
+
+  @override
+  bool get isInitialized => _isInitialized;
+
+  @override
+  bool get isRecording => _isRecording;
+
+  @override
+  bool get isUsingFrontCamera => _isUsingFrontCamera;
+
+  @override
+  String? get unavailableMessage => null;
+
+  @override
+  Widget buildPreview() {
+    return Container(
+      key: const Key('fake-camera-preview'),
+      color: Colors.black,
+    );
+  }
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<void> initialize({bool preferFrontCamera = true}) async {
+    _isInitialized = true;
+    _isUsingFrontCamera = preferFrontCamera;
+  }
+
+  @override
+  Future<void> startRecording() async {
+    _isRecording = true;
+  }
+
+  @override
+  Future<String> stopRecording() async {
+    _isRecording = false;
+    _lastRecordingPath = '/tmp/fake-recording.mov';
+    return _lastRecordingPath!;
+  }
+
+  @override
+  Future<void> switchCamera() async {
+    _isUsingFrontCamera = !_isUsingFrontCamera;
   }
 }
 
@@ -604,6 +665,7 @@ Future<void> _pumpApp(
   CoverLetterRepository? coverLetterRepository,
   InterviewRepository? interviewRepository,
   VideoIntroductionRepository? videoIntroductionRepository,
+  VideoRecordingService? videoRecordingService,
   ProfileImportRepository? profileImportRepository,
   HistoryRepository? historyRepository,
   JobMatchingRepository? jobMatchingRepository,
@@ -663,6 +725,9 @@ Future<void> _pumpApp(
                   duration: '60 sec',
                 ),
               ),
+        ),
+        videoRecordingServiceProvider.overrideWithValue(
+          videoRecordingService ?? _FakeVideoRecordingService(),
         ),
         profileImportRepositoryProvider.overrideWithValue(
           profileImportRepository ??
@@ -1705,6 +1770,71 @@ void main() {
     expect(find.text('Regenerate'), findsOneWidget);
     expect(find.textContaining('senior product designer'), findsOneWidget);
     expect(accessService.committedUsageFor(restoredSession.userId), 1);
+  });
+
+  testWidgets('opens teleprompter mode and can start recording', (
+    WidgetTester tester,
+  ) async {
+    final accessService = _FakePremiumAccessService();
+    final recordingService = _FakeVideoRecordingService();
+
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
+      videoRecordingService: recordingService,
+      videoIntroductionRepository: _FakeVideoIntroductionRepository(
+        response: generatedVideoIntroduction,
+        delay: const Duration(milliseconds: 300),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Video intro').first,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Video intro').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Senior Product Designer');
+    await tester.enterText(fields.at(1), 'Acme Labs');
+    await tester.enterText(fields.at(2), 'Recruiter or hiring manager');
+    await tester.enterText(
+      fields.at(3),
+      'Product strategy\nDesign systems\nStakeholder communication',
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Generate script'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate script'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Open teleprompter'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Teleprompter & Recording'), findsOneWidget);
+    expect(find.byKey(const Key('fake-camera-preview')), findsOneWidget);
+    expect(find.text('Auto scroll'), findsOneWidget);
+    expect(find.text('Start recording'), findsOneWidget);
+
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stop recording'), findsOneWidget);
   });
 
   testWidgets('submits the interview form and opens the result page', (

@@ -23,6 +23,8 @@ import '../features/resume/presentation/pages/resume_result_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/video_introduction/presentation/pages/video_introduction_input_page.dart';
 import '../features/video_introduction/presentation/pages/video_introduction_result_page.dart';
+import '../features/video_introduction/presentation/pages/video_introduction_teleprompter_page.dart';
+import '../features/video_introduction/domain/entities/video_introduction_result.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
@@ -39,6 +41,8 @@ abstract final class AppRoutes {
   static const profileImport = '/profile-import';
   static const videoIntroduction = '/video-introduction';
   static const videoIntroductionResult = '/video-introduction/result';
+  static const videoIntroductionTeleprompter =
+      '/video-introduction/teleprompter';
   static const history = '/history';
   static const jobMatching = '/job-matching';
   static const paywall = '/premium';
@@ -118,6 +122,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.videoIntroductionResult,
         builder: (context, state) => const VideoIntroductionResultPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.videoIntroductionTeleprompter,
+        builder: (context, state) => VideoIntroductionTeleprompterPage(
+          result: state.extra is VideoIntroductionResult
+              ? state.extra as VideoIntroductionResult
+              : null,
+        ),
       ),
       GoRoute(
         path: AppRoutes.history,
