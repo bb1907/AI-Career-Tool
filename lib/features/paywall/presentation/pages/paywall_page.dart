@@ -418,6 +418,7 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
       'interviewGenerate' => 'Interview Prep',
       'cvParse' => 'CV Parser',
       'voiceResume' => 'Voice Resume',
+      'videoIntroductionGenerate' => 'Video Introduction',
       _ => 'this feature',
     };
   }

@@ -4,6 +4,7 @@ enum AiTaskType {
   interviewGenerate,
   cvParse,
   jobMatch,
+  videoIntroductionGenerate,
 }
 
 extension AiTaskTypeX on AiTaskType {
@@ -13,6 +14,7 @@ extension AiTaskTypeX on AiTaskType {
     AiTaskType.interviewGenerate => 'interview_generate',
     AiTaskType.cvParse => 'cv_parse',
     AiTaskType.jobMatch => 'job_match',
+    AiTaskType.videoIntroductionGenerate => 'video_introduction_generate',
   };
 
   static AiTaskType fromValue(String value) {
@@ -22,6 +24,7 @@ extension AiTaskTypeX on AiTaskType {
       'interview_generate' => AiTaskType.interviewGenerate,
       'cv_parse' => AiTaskType.cvParse,
       'job_match' => AiTaskType.jobMatch,
+      'video_introduction_generate' => AiTaskType.videoIntroductionGenerate,
       _ => throw FormatException('Unsupported AI task type: $value'),
     };
   }

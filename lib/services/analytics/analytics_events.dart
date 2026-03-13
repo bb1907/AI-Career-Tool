@@ -12,6 +12,10 @@ abstract final class AnalyticsEvents {
   static const interviewGenerationCompleted = 'interview_generation_completed';
   static const cvImportStarted = 'cv_import_started';
   static const cvImportCompleted = 'cv_import_completed';
+  static const videoIntroductionGenerationStarted =
+      'video_introduction_generation_started';
+  static const videoIntroductionGenerationCompleted =
+      'video_introduction_generation_completed';
   static const paywallViewed = 'paywall_viewed';
   static const purchaseStarted = 'purchase_started';
   static const purchaseCompleted = 'purchase_completed';

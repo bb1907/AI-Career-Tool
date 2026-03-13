@@ -100,6 +100,7 @@ class _FakeAiService implements AiService {
       case AiTaskType.resumeGenerate:
       case AiTaskType.interviewGenerate:
       case AiTaskType.cvParse:
+      case AiTaskType.videoIntroductionGenerate:
         throw UnimplementedError();
     }
   }

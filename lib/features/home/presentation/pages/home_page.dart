@@ -98,6 +98,8 @@ class HomePage extends ConsumerWidget {
               onSettingsPressed: () => context.go(AppRoutes.settings),
               onImportCvPressed: () => context.go(AppRoutes.profileImport),
               onJobMatchingPressed: () => context.go(AppRoutes.jobMatching),
+              onVideoIntroPressed: () =>
+                  context.go(AppRoutes.videoIntroduction),
             ),
             const SizedBox(height: AppSpacing.page),
             Text(
@@ -349,11 +351,13 @@ class _HeroSummaryCard extends StatelessWidget {
     required this.onSettingsPressed,
     required this.onImportCvPressed,
     required this.onJobMatchingPressed,
+    required this.onVideoIntroPressed,
   });
 
   final VoidCallback onSettingsPressed;
   final VoidCallback onImportCvPressed;
   final VoidCallback onJobMatchingPressed;
+  final VoidCallback onVideoIntroPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -438,6 +442,15 @@ class _HeroSummaryCard extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.travel_explore_outlined),
                 label: const Text('Find jobs'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onVideoIntroPressed,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.16),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.videocam_outlined),
+                label: const Text('Video intro'),
               ),
             ],
           ),

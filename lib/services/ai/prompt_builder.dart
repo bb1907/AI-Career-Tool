@@ -16,6 +16,8 @@ abstract final class PromptBuilder {
         'You extract structured candidate data from CV text and return valid JSON only.',
       AiTaskType.jobMatch =>
         'You compare a candidate profile to a target job and return structured fit analysis in valid JSON.',
+      AiTaskType.videoIntroductionGenerate =>
+        'You are a speaking coach that writes concise, confident video introduction scripts for job applications. Return valid JSON only.',
     };
   }
 
@@ -117,6 +119,30 @@ Selected job url: ${selectedJob?['url'] ?? ''}
 Job description:
 ${selectedJob?['job_description'] ?? request.input['job_description'] ?? ''}
 Return valid JSON with match_score, missing_skills, strengths, and positioning_summary.
+'''
+          .trim();
+    }
+
+    if (request.type == AiTaskType.videoIntroductionGenerate) {
+      final candidateProfile =
+          request.input['candidate_profile'] as Map<String, dynamic>?;
+
+      return '''
+Duration: ${request.input['duration'] ?? ''}
+Target role: ${request.input['target_role'] ?? ''}
+Target company: ${request.input['target_company'] ?? ''}
+Audience: ${request.input['audience'] ?? ''}
+Speaking tone: ${request.input['tone'] ?? ''}
+Key points: ${_joinList(request.input['key_points'])}
+Candidate name: ${candidateProfile?['name'] ?? ''}
+Candidate location: ${candidateProfile?['location'] ?? ''}
+Candidate years of experience: ${candidateProfile?['years_experience'] ?? ''}
+Candidate roles: ${_joinList(candidateProfile?['roles'])}
+Candidate skills: ${_joinList(candidateProfile?['skills'])}
+Candidate industries: ${_joinList(candidateProfile?['industries'])}
+Candidate seniority: ${candidateProfile?['seniority'] ?? ''}
+Candidate education: ${candidateProfile?['education'] ?? ''}
+Write a natural first-person script that fits the selected duration and sounds ready to record on camera.
 '''
           .trim();
     }

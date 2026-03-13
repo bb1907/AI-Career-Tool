@@ -76,4 +76,21 @@ void main() {
       contains('mobile platform ownership'),
     );
   });
+
+  test('parses a valid video introduction response envelope', () {
+    final response = JsonParser.parseAiTaskResponse('''
+      {
+        "request_id": "req_video_123",
+        "task": "video_introduction_generate",
+        "output": {
+          "script": "Hi, I am Annie. I am a senior Flutter engineer with six years of experience building reliable mobile products.",
+          "duration": "60 sec"
+        }
+      }
+      ''', expectedType: AiTaskType.videoIntroductionGenerate);
+
+    expect(response.type, AiTaskType.videoIntroductionGenerate);
+    expect(response.output['duration'], '60 sec');
+    expect(response.output['script'], contains('senior Flutter engineer'));
+  });
 }

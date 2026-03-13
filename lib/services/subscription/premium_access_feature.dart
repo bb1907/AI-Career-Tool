@@ -3,7 +3,8 @@ enum PremiumAccessFeature {
   coverLetterGenerate,
   interviewGenerate,
   cvParse,
-  voiceResume;
+  voiceResume,
+  videoIntroductionGenerate;
 
   String get label => switch (this) {
     PremiumAccessFeature.resumeGenerate => 'Resume Builder',
@@ -11,5 +12,6 @@ enum PremiumAccessFeature {
     PremiumAccessFeature.interviewGenerate => 'Interview Prep',
     PremiumAccessFeature.cvParse => 'CV Parser',
     PremiumAccessFeature.voiceResume => 'Voice Resume',
+    PremiumAccessFeature.videoIntroductionGenerate => 'Video Introduction',
   };
 }

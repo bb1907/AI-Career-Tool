@@ -21,6 +21,8 @@ import '../features/profile_import/presentation/pages/profile_import_page.dart';
 import '../features/resume/presentation/pages/resume_input_page.dart';
 import '../features/resume/presentation/pages/resume_result_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
+import '../features/video_introduction/presentation/pages/video_introduction_input_page.dart';
+import '../features/video_introduction/presentation/pages/video_introduction_result_page.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
@@ -35,6 +37,8 @@ abstract final class AppRoutes {
   static const interview = '/interview';
   static const interviewResult = '/interview/result';
   static const profileImport = '/profile-import';
+  static const videoIntroduction = '/video-introduction';
+  static const videoIntroductionResult = '/video-introduction/result';
   static const history = '/history';
   static const jobMatching = '/job-matching';
   static const paywall = '/premium';
@@ -106,6 +110,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profileImport,
         builder: (context, state) => const ProfileImportPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.videoIntroduction,
+        builder: (context, state) => const VideoIntroductionInputPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.videoIntroductionResult,
+        builder: (context, state) => const VideoIntroductionResultPage(),
       ),
       GoRoute(
         path: AppRoutes.history,

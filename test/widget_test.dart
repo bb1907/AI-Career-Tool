@@ -39,6 +39,10 @@ import 'package:ai_career_tools/features/resume/application/resume_controller.da
 import 'package:ai_career_tools/features/resume/domain/entities/resume_request.dart';
 import 'package:ai_career_tools/features/resume/domain/entities/resume_result.dart';
 import 'package:ai_career_tools/features/resume/domain/repositories/resume_repository.dart';
+import 'package:ai_career_tools/features/video_introduction/application/video_introduction_controller.dart';
+import 'package:ai_career_tools/features/video_introduction/domain/entities/video_introduction_request.dart';
+import 'package:ai_career_tools/features/video_introduction/domain/entities/video_introduction_result.dart';
+import 'package:ai_career_tools/features/video_introduction/domain/repositories/video_introduction_repository.dart';
 import 'package:ai_career_tools/services/analytics/analytics_events.dart';
 import 'package:ai_career_tools/services/analytics/analytics_service.dart';
 import 'package:ai_career_tools/services/subscription/premium_access_feature.dart';
@@ -255,6 +259,29 @@ class _FakeInterviewRepository implements InterviewRepository {
   @override
   Future<List<InterviewResult>> fetchHistory() async {
     return List<InterviewResult>.unmodifiable(_history);
+  }
+}
+
+class _FakeVideoIntroductionRepository implements VideoIntroductionRepository {
+  _FakeVideoIntroductionRepository({
+    required this.response,
+    this.delay = Duration.zero,
+  });
+
+  final VideoIntroductionResult response;
+  final Duration delay;
+  VideoIntroductionRequest? lastRequest;
+
+  @override
+  Future<VideoIntroductionResult> generateScript(
+    VideoIntroductionRequest request,
+  ) async {
+    lastRequest = request;
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+
+    return response;
   }
 }
 
@@ -576,6 +603,7 @@ Future<void> _pumpApp(
   ResumeRepository? resumeRepository,
   CoverLetterRepository? coverLetterRepository,
   InterviewRepository? interviewRepository,
+  VideoIntroductionRepository? videoIntroductionRepository,
   ProfileImportRepository? profileImportRepository,
   HistoryRepository? historyRepository,
   JobMatchingRepository? jobMatchingRepository,
@@ -623,6 +651,16 @@ Future<void> _pumpApp(
                       sampleAnswer: 'Generated behavioral answer',
                     ),
                   ],
+                ),
+              ),
+        ),
+        videoIntroductionRepositoryProvider.overrideWithValue(
+          videoIntroductionRepository ??
+              _FakeVideoIntroductionRepository(
+                response: const VideoIntroductionResult(
+                  script:
+                      'Hi, I am Jane. I am a senior product designer with five years of experience creating better onboarding and retention experiences.',
+                  duration: '60 sec',
                 ),
               ),
         ),
@@ -744,6 +782,11 @@ void main() {
             'I reduced ambiguity by clarifying assumptions, defining decision checkpoints and keeping the team aligned on what we needed to learn next.',
       ),
     ],
+  );
+  const generatedVideoIntroduction = VideoIntroductionResult(
+    script:
+        'Hi, I am Jane Doe. I am a senior product designer with five years of experience building clearer product journeys across SaaS teams.',
+    duration: '60 sec',
   );
   const parsedCandidateProfile = CandidateProfile(
     name: 'Jane Doe',
@@ -1559,6 +1602,109 @@ void main() {
           .initialValue,
       'Senior',
     );
+  });
+
+  testWidgets(
+    'prefills the video intro form from the saved candidate profile',
+    (WidgetTester tester) async {
+      await _pumpApp(
+        tester,
+        authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+        onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+        profileImportRepository: _FakeProfileImportRepository(
+          response: parsedCandidateProfile,
+          latestProfile: parsedCandidateProfile,
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Video intro').first,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Video intro').first);
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextFormField);
+
+      expect(
+        find.textContaining('prefilled the role and key talking points'),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<TextFormField>(fields.at(0)).controller!.text,
+        'Product Designer',
+      );
+      expect(
+        tester.widget<TextFormField>(fields.at(2)).controller!.text,
+        'Recruiter or hiring manager',
+      );
+      expect(
+        tester.widget<TextFormField>(fields.at(3)).controller!.text,
+        contains('Strengths: Figma, Design Systems, User Research'),
+      );
+    },
+  );
+
+  testWidgets('submits the video intro form and opens the result page', (
+    WidgetTester tester,
+  ) async {
+    final accessService = _FakePremiumAccessService();
+
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
+      videoIntroductionRepository: _FakeVideoIntroductionRepository(
+        response: generatedVideoIntroduction,
+        delay: const Duration(milliseconds: 300),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Video intro').first,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Video intro').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Senior Product Designer');
+    await tester.enterText(fields.at(1), 'Acme Labs');
+    await tester.enterText(fields.at(2), 'Recruiter or hiring manager');
+    await tester.enterText(
+      fields.at(3),
+      'Product strategy\nDesign systems\nStakeholder communication',
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Generate script'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate script'));
+    await tester.pump();
+
+    expect(find.text('Generating script...'), findsWidgets);
+
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('60 sec camera-ready script'), findsOneWidget);
+    expect(find.text('Regenerate'), findsOneWidget);
+    expect(find.textContaining('senior product designer'), findsOneWidget);
+    expect(accessService.committedUsageFor(restoredSession.userId), 1);
   });
 
   testWidgets('submits the interview form and opens the result page', (

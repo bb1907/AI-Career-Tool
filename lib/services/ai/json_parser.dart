@@ -118,6 +118,14 @@ abstract final class JsonParser {
           allowEmpty: true,
           required: false,
         );
+      case AiTaskType.videoIntroductionGenerate:
+        validateStringField(output, 'script');
+        validateStringField(
+          output,
+          'duration',
+          allowEmpty: true,
+          required: false,
+        );
     }
   }
 
