@@ -1,4 +1,5 @@
 import '../../domain/entities/video_introduction_candidate_context.dart';
+import '../../domain/entities/video_introduction_job_context.dart';
 import '../../domain/entities/video_introduction_request.dart';
 
 class VideoIntroductionRequestModel {
@@ -10,6 +11,7 @@ class VideoIntroductionRequestModel {
     required this.tone,
     required this.keyPoints,
     this.candidateContext,
+    this.jobContext,
   });
 
   final String duration;
@@ -19,6 +21,7 @@ class VideoIntroductionRequestModel {
   final String tone;
   final List<String> keyPoints;
   final VideoIntroductionCandidateContext? candidateContext;
+  final VideoIntroductionJobContext? jobContext;
 
   factory VideoIntroductionRequestModel.fromEntity(
     VideoIntroductionRequest request,
@@ -31,6 +34,7 @@ class VideoIntroductionRequestModel {
       tone: request.tone,
       keyPoints: request.keyPoints,
       candidateContext: request.candidateContext,
+      jobContext: request.jobContext,
     );
   }
 
@@ -52,6 +56,16 @@ class VideoIntroductionRequestModel {
           'industries': candidateContext!.industries,
           'seniority': candidateContext!.seniority,
           'education': candidateContext!.education,
+        },
+      if (jobContext != null)
+        'selected_job': {
+          'job_id': jobContext!.jobId,
+          'title': jobContext!.title,
+          'company': jobContext!.company,
+          'location': jobContext!.location,
+          'source': jobContext!.source,
+          'url': jobContext!.url,
+          'job_description': jobContext!.jobDescription,
         },
     };
   }

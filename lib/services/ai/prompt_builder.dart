@@ -126,6 +126,8 @@ Return valid JSON with match_score, missing_skills, strengths, and positioning_s
     if (request.type == AiTaskType.videoIntroductionGenerate) {
       final candidateProfile =
           request.input['candidate_profile'] as Map<String, dynamic>?;
+      final selectedJob =
+          request.input['selected_job'] as Map<String, dynamic>?;
 
       return '''
 Duration: ${request.input['duration'] ?? ''}
@@ -142,6 +144,13 @@ Candidate skills: ${_joinList(candidateProfile?['skills'])}
 Candidate industries: ${_joinList(candidateProfile?['industries'])}
 Candidate seniority: ${candidateProfile?['seniority'] ?? ''}
 Candidate education: ${candidateProfile?['education'] ?? ''}
+Selected job title: ${selectedJob?['title'] ?? ''}
+Selected job company: ${selectedJob?['company'] ?? ''}
+Selected job location: ${selectedJob?['location'] ?? ''}
+Selected job source: ${selectedJob?['source'] ?? ''}
+Selected job url: ${selectedJob?['url'] ?? ''}
+Selected job description:
+${selectedJob?['job_description'] ?? ''}
 Write a natural first-person script that fits the selected duration and sounds ready to record on camera.
 '''
           .trim();

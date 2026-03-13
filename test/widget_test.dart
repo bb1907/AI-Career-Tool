@@ -1715,50 +1715,108 @@ void main() {
     },
   );
 
-  testWidgets('submits the video intro form and opens the result page', (
+  testWidgets('uses the selected job to prefill the video intro form', (
     WidgetTester tester,
   ) async {
-    final accessService = _FakePremiumAccessService();
-
     await _pumpApp(
       tester,
       authRepository: _FakeAuthRepository(restoredSession: restoredSession),
       onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
-      premiumAccessService: accessService,
-      videoIntroductionRepository: _FakeVideoIntroductionRepository(
-        response: generatedVideoIntroduction,
-        delay: const Duration(milliseconds: 300),
+      jobMatchingRepository: _FakeJobMatchingRepository(results: matchedJobs),
+      profileImportRepository: _FakeProfileImportRepository(
+        response: parsedCandidateProfile,
+        latestProfile: parsedCandidateProfile,
       ),
     );
 
     await tester.pump();
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Find jobs'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
     await tester.scrollUntilVisible(
-      find.text('Video intro').first,
+      find.text('Use in video intro').first,
       250,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Video intro').first);
+    await tester.tap(find.text('Use in video intro').first);
+    await tester.pump();
     await tester.pumpAndSettle();
 
     final fields = find.byType(TextFormField);
-    await tester.enterText(fields.at(0), 'Senior Product Designer');
-    await tester.enterText(fields.at(1), 'Acme Labs');
+
+    expect(
+      find.textContaining('Selected job detected: Senior Product Designer'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(0)).controller!.text,
+      matchedJobs.first.title,
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(1)).controller!.text,
+      matchedJobs.first.company,
+    );
+    expect(
+      tester.widget<TextFormField>(fields.at(3)).controller!.text,
+      contains(matchedJobs.first.jobDescription),
+    );
+  });
+
+  testWidgets('submits the video intro form and opens the result page', (
+    WidgetTester tester,
+  ) async {
+    final accessService = _FakePremiumAccessService();
+    final repository = _FakeVideoIntroductionRepository(
+      response: generatedVideoIntroduction,
+      delay: const Duration(milliseconds: 300),
+    );
+
+    await _pumpApp(
+      tester,
+      authRepository: _FakeAuthRepository(restoredSession: restoredSession),
+      onboardingStorage: _FakeOnboardingLocalStorage(isCompleted: true),
+      premiumAccessService: accessService,
+      jobMatchingRepository: _FakeJobMatchingRepository(results: matchedJobs),
+      profileImportRepository: _FakeProfileImportRepository(
+        response: parsedCandidateProfile,
+        latestProfile: parsedCandidateProfile,
+      ),
+      videoIntroductionRepository: repository,
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Find jobs'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Use in video intro').first,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use in video intro').first);
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(2), 'Recruiter or hiring manager');
     await tester.enterText(
       fields.at(3),
       'Product strategy\nDesign systems\nStakeholder communication',
     );
-
-    await tester.scrollUntilVisible(
-      find.text('Generate script'),
-      250,
-      scrollable: find.byType(Scrollable).first,
-    );
+    FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Generate script'));
+
+    final generateButton = find.widgetWithText(FilledButton, 'Generate script');
+    await tester.ensureVisible(generateButton);
+    await tester.pumpAndSettle();
+    tester.widget<FilledButton>(generateButton).onPressed!.call();
     await tester.pump();
 
     expect(find.text('Generating script...'), findsWidgets);
@@ -1770,6 +1828,13 @@ void main() {
     expect(find.text('Regenerate'), findsOneWidget);
     expect(find.textContaining('senior product designer'), findsOneWidget);
     expect(accessService.committedUsageFor(restoredSession.userId), 1);
+    expect(repository.lastRequest, isNotNull);
+    expect(repository.lastRequest!.jobContext?.title, matchedJobs.first.title);
+    expect(
+      repository.lastRequest!.jobContext?.jobDescription,
+      matchedJobs.first.jobDescription,
+    );
+    expect(repository.lastRequest!.candidateContext?.skills, contains('Figma'));
   });
 
   testWidgets('opens teleprompter mode and can start recording', (

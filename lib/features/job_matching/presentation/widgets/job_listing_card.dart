@@ -9,13 +9,15 @@ class JobListingCard extends StatelessWidget {
     required this.job,
     required this.isSelected,
     required this.onSelect,
-    required this.onContinue,
+    required this.onUseInCoverLetter,
+    required this.onUseInVideoIntro,
   });
 
   final JobListing job;
   final bool isSelected;
   final VoidCallback onSelect;
-  final VoidCallback onContinue;
+  final VoidCallback onUseInCoverLetter;
+  final VoidCallback onUseInVideoIntro;
 
   @override
   Widget build(BuildContext context) {
@@ -115,9 +117,14 @@ class JobListingCard extends StatelessWidget {
                   label: Text(isSelected ? 'Selected' : 'Select job'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: onContinue,
+                  onPressed: onUseInCoverLetter,
                   icon: const Icon(Icons.arrow_forward),
                   label: const Text('Use in cover letter'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onUseInVideoIntro,
+                  icon: const Icon(Icons.videocam_outlined),
+                  label: const Text('Use in video intro'),
                 ),
               ],
             ),

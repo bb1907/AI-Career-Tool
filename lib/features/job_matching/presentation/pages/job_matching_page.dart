@@ -145,6 +145,11 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
     context.go(AppRoutes.coverLetter);
   }
 
+  void _useJobForVideoIntro(JobListing job) {
+    _selectJob(job);
+    context.go(AppRoutes.videoIntroduction);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -219,8 +224,10 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
                               onClear: () => ref
                                   .read(selectedJobControllerProvider.notifier)
                                   .clear(),
-                              onContinue: () =>
+                              onContinueToCoverLetter: () =>
                                   context.go(AppRoutes.coverLetter),
+                              onContinueToVideoIntro: () =>
+                                  context.go(AppRoutes.videoIntroduction),
                             ),
                           ],
                         ],
@@ -372,7 +379,7 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
                         ),
                         const SizedBox(height: AppSpacing.compact),
                         Text(
-                          'Select one role to reuse its company, title and description in your next cover letter.',
+                          'Select one role to reuse its company, title and description in your next cover letter or video introduction.',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             height: 1.5,
@@ -388,8 +395,10 @@ class _JobMatchingPageState extends ConsumerState<JobMatchingPage> {
                             job: state.jobs[index],
                             isSelected: selectedJob?.id == state.jobs[index].id,
                             onSelect: () => _selectJob(state.jobs[index]),
-                            onContinue: () =>
+                            onUseInCoverLetter: () =>
                                 _useJobForCoverLetter(state.jobs[index]),
+                            onUseInVideoIntro: () =>
+                                _useJobForVideoIntro(state.jobs[index]),
                           ),
                           if (index != state.jobs.length - 1)
                             const SizedBox(height: AppSpacing.section),
@@ -410,12 +419,14 @@ class _SelectedJobSummary extends StatelessWidget {
   const _SelectedJobSummary({
     required this.job,
     required this.onClear,
-    required this.onContinue,
+    required this.onContinueToCoverLetter,
+    required this.onContinueToVideoIntro,
   });
 
   final JobListing job;
   final VoidCallback onClear;
-  final VoidCallback onContinue;
+  final VoidCallback onContinueToCoverLetter;
+  final VoidCallback onContinueToVideoIntro;
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +459,7 @@ class _SelectedJobSummary extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'This selection will prefill the company, role and job description in Cover Letter.',
+            'This selection will prefill the company, role and job description in downstream application tools.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onPrimaryContainer,
               height: 1.45,
@@ -460,9 +471,14 @@ class _SelectedJobSummary extends StatelessWidget {
             runSpacing: AppSpacing.compact,
             children: [
               FilledButton.tonalIcon(
-                onPressed: onContinue,
+                onPressed: onContinueToCoverLetter,
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Continue to cover letter'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: onContinueToVideoIntro,
+                icon: const Icon(Icons.videocam_outlined),
+                label: const Text('Continue to video intro'),
               ),
               OutlinedButton(
                 onPressed: onClear,

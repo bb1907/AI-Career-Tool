@@ -13,6 +13,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../services/subscription/premium_access_feature.dart';
+import '../../../job_matching/application/selected_job_controller.dart';
+import '../../../job_matching/domain/entities/job_listing.dart';
 import '../../../paywall/application/premium_access_controller.dart';
 import '../../../profile_import/application/candidate_profile_controller.dart';
 import '../../../profile_import/application/candidate_profile_prefill.dart';
@@ -21,6 +23,7 @@ import '../../../profile_import/presentation/widgets/candidate_profile_prefill_b
 import '../../application/video_introduction_controller.dart';
 import '../../domain/entities/video_introduction_candidate_context.dart';
 import '../../domain/entities/video_introduction_duration.dart';
+import '../../domain/entities/video_introduction_job_context.dart';
 import '../../domain/entities/video_introduction_request.dart';
 
 class VideoIntroductionInputPage extends ConsumerStatefulWidget {
@@ -43,6 +46,7 @@ class _VideoIntroductionInputPageState
   VideoIntroductionDuration _duration = VideoIntroductionDuration.seconds60;
   String _tone = _toneOptions.first;
   String? _appliedProfileSignature;
+  String? _appliedJobSignature;
   bool _isSubmitting = false;
 
   @override
@@ -107,6 +111,42 @@ class _VideoIntroductionInputPageState
     }
   }
 
+  void _scheduleJobPrefill(JobListing? job) {
+    if (job == null) {
+      return;
+    }
+
+    final signature = [
+      job.id,
+      job.title,
+      job.company,
+      job.location,
+      job.jobDescription,
+    ].join('::');
+    if (_appliedJobSignature == signature) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _appliedJobSignature == signature) {
+        return;
+      }
+
+      _targetRoleController.text = job.title.trim();
+      _targetCompanyController.text = job.company.trim();
+      _fillIfEmpty(_audienceController, 'Recruiter or hiring manager');
+      final selectedJobContext =
+          'Why this role fits: ${job.title} at ${job.company}\nKey requirement highlights: ${job.jobDescription}';
+      if (!_keyPointsController.text.contains(job.jobDescription)) {
+        final existing = _keyPointsController.text.trim();
+        _keyPointsController.text = existing.isEmpty
+            ? selectedJobContext
+            : '$selectedJobContext\n$existing';
+      }
+      _appliedJobSignature = signature;
+    });
+  }
+
   Future<void> _submit() async {
     final isGenerating = ref
         .read(videoIntroductionControllerProvider)
@@ -161,6 +201,7 @@ class _VideoIntroductionInputPageState
           .read(candidateProfileControllerProvider)
           .asData
           ?.value;
+      final selectedJob = ref.read(selectedJobControllerProvider);
       final request = VideoIntroductionRequest(
         duration: _duration,
         targetRole: _targetRoleController.text.trim(),
@@ -179,6 +220,17 @@ class _VideoIntroductionInputPageState
                 industries: profile.industries,
                 seniority: profile.seniority,
                 education: profile.education,
+              ),
+        jobContext: selectedJob == null
+            ? null
+            : VideoIntroductionJobContext(
+                jobId: selectedJob.id,
+                title: selectedJob.title,
+                company: selectedJob.company,
+                location: selectedJob.location,
+                source: selectedJob.source,
+                url: selectedJob.url,
+                jobDescription: selectedJob.jobDescription,
               ),
       );
 
@@ -217,10 +269,12 @@ class _VideoIntroductionInputPageState
   Widget build(BuildContext context) {
     final state = ref.watch(videoIntroductionControllerProvider);
     final candidateProfile = ref.watch(candidateProfileControllerProvider);
+    final selectedJob = ref.watch(selectedJobControllerProvider);
     final profile = candidateProfile.asData?.value;
     final theme = Theme.of(context);
 
     _scheduleProfilePrefill(profile);
+    _scheduleJobPrefill(selectedJob);
 
     return Scaffold(
       appBar: AppBar(
@@ -280,6 +334,19 @@ class _VideoIntroductionInputPageState
                     const CandidateProfilePrefillBanner(
                       message:
                           'We prefilled the role and key talking points from your imported candidate profile. You can adjust everything before generating.',
+                    ),
+                  ],
+                  if (selectedJob != null) ...[
+                    const SizedBox(height: AppSpacing.section),
+                    CandidateProfilePrefillBanner(
+                      message:
+                          'Selected job detected: ${selectedJob.title} at ${selectedJob.company}. We prefilled the target role and company so this script stays aligned to the application.',
+                    ),
+                  ] else ...[
+                    const SizedBox(height: AppSpacing.section),
+                    const CandidateProfilePrefillBanner(
+                      message:
+                          'For the strongest result, select a job first from Job Matches. You can still continue manually if needed.',
                     ),
                   ],
                   const SizedBox(height: AppSpacing.page),

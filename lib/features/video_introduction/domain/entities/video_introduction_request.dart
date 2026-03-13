@@ -1,5 +1,6 @@
 import 'video_introduction_candidate_context.dart';
 import 'video_introduction_duration.dart';
+import 'video_introduction_job_context.dart';
 
 class VideoIntroductionRequest {
   const VideoIntroductionRequest({
@@ -10,6 +11,7 @@ class VideoIntroductionRequest {
     required this.tone,
     required this.keyPoints,
     this.candidateContext,
+    this.jobContext,
   });
 
   final VideoIntroductionDuration duration;
@@ -19,4 +21,5 @@ class VideoIntroductionRequest {
   final String tone;
   final List<String> keyPoints;
   final VideoIntroductionCandidateContext? candidateContext;
+  final VideoIntroductionJobContext? jobContext;
 }
