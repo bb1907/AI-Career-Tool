@@ -1,155 +1,262 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../steps/step1_personal_info.dart';
-import '../steps/step2_summary.dart';
-import '../steps/step3_work_experience.dart';
-import '../steps/step4_education.dart';
-import '../steps/step5_skills.dart';
-import '../steps/step6_projects.dart';
+import '../providers/resume_provider.dart';
+import '../../../../services/privacy/consent_guard.dart';
+import '../../../../services/subscription/subscription_provider.dart';
+import '../../../../shared/widgets/ai_loading_dialog.dart';
+import '../widgets/step_personal_info.dart';
+import '../widgets/step_summary.dart';
+import '../widgets/step_work_experience.dart';
+import '../widgets/step_education.dart';
+import '../widgets/step_skills.dart';
+import '../widgets/step_projects.dart';
+import '../../../../app/theme/app_theme.dart';
+import '../../../../app/core/l10n_extension.dart';
 
 class ResumeWizardPage extends ConsumerStatefulWidget {
-  const ResumeWizardPage({super.key});
+  final String? resumeId;
+  final Map<String, dynamic>? prefill;
+
+  const ResumeWizardPage({super.key, this.resumeId, this.prefill});
 
   @override
   ConsumerState<ResumeWizardPage> createState() => _ResumeWizardPageState();
 }
 
 class _ResumeWizardPageState extends ConsumerState<ResumeWizardPage> {
-  final _pageController = PageController();
-  final _formKey = GlobalKey<FormState>();
-  int _currentStep = 0;
-  bool _isAnimating = false;
-
-  static const _titles = [
-    'Personal Info',
-    'Summary',
-    'Work Experience',
-    'Education',
-    'Skills',
-    'Projects',
-  ];
-
-  // Instance-level list — not static const — so Flutter creates fresh State on each mount.
-  final _steps = [
-    const Step1PersonalInfo(),
-    const Step2Summary(),
-    const Step3WorkExperience(),
-    const Step4Education(),
-    const Step5Skills(),
-    const Step6Projects(),
-  ];
-
-  void _next() {
-    if (_isAnimating) return;
-
-    if (_currentStep == 0) {
-      if (!(_formKey.currentState?.validate() ?? false)) return;
-    }
-
-    if (_currentStep < _steps.length - 1) {
-      setState(() {
-        _currentStep++;
-        _isAnimating = true;
-      });
-      _pageController
-          .nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          )
-          .then((_) => setState(() => _isAnimating = false));
-    } else {
-      context.go('/resume/preview');
-    }
-  }
-
-  void _back() {
-    if (_isAnimating || _currentStep <= 0) return;
-    setState(() {
-      _currentStep--;
-      _isAnimating = true;
-    });
-    _pageController
-        .previousPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        )
-        .then((_) => setState(() => _isAnimating = false));
-  }
+  bool _prefillTriggered = false;
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    final prefill = widget.prefill;
+    if (prefill != null && prefill.isNotEmpty && !_prefillTriggered) {
+      _prefillTriggered = true;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _runAiPrefill(prefill),
+      );
+    }
+  }
+
+  Future<void> _runAiPrefill(Map<String, dynamic> prefill) async {
+    if (!mounted) return;
+    if (!await ensureAiDataConsent(context, ref)) return;
+    final notifier = ref.read(resumeEditorProvider(widget.resumeId).notifier);
+    showAiLoading(
+      context,
+      messages: const [
+        'Reviewing your experience...',
+        'Identifying key skills...',
+        'Building your resume...',
+      ],
+    );
+    try {
+      await notifier.generateFromPrefill(prefill);
+    } finally {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+    if (!mounted) return;
+    final err = ref.read(resumeEditorProvider(widget.resumeId)).error;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not auto-generate resume: $err'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } else {
+      // Move directly to the Summary step so the user sees the AI output
+      ref.read(resumeEditorProvider(widget.resumeId).notifier).goToStep(1);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLast = _currentStep == _steps.length - 1;
+    final editorState = ref.watch(resumeEditorProvider(widget.resumeId));
+    final notifier = ref.read(resumeEditorProvider(widget.resumeId).notifier);
+    final resumeId = widget.resumeId;
+
+    final steps = [
+      context.l10n.resumeStepBasicInfo,
+      context.l10n.resumeStepSummary,
+      context.l10n.resumeStepExperience,
+      context.l10n.resumeStepEducation,
+      context.l10n.resumeStepSkills,
+      context.l10n.resumeStepProjects,
+    ];
+    final currentStep = editorState.currentStep;
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text(_titles[_currentStep]),
-        actions: [
-          TextButton(
-            onPressed: () => context.go('/resume/preview'),
-            child: const Text('Preview'),
-          )
-        ],
+        title: Text(
+          resumeId == null || resumeId == 'new'
+              ? context.l10n.resumeNew
+              : context.l10n.resumeWizardTitle,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => context.go('/resume'),
+        ),
       ),
       body: Column(
         children: [
-          // Step indicator
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: List.generate(_steps.length, (i) {
-                final isActive = i == _currentStep;
-                final isDone = i < _currentStep;
-                return Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDone || isActive
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(2),
+          // ── Step indicator (Linear-inspired)
+          Container(
+            color: AppTheme.surface,
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.md,
+              AppTheme.sm,
+              AppTheme.md,
+              AppTheme.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: List.generate(steps.length, (i) {
+                    final isActive = i == currentStep;
+                    final isDone = i < currentStep;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => notifier.goToStep(i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          height: 4,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(2),
+                            color: isDone
+                                ? AppTheme.primary
+                                : isActive
+                                ? AppTheme.primary
+                                : Colors.grey.shade200,
+                            gradient: (isDone || isActive)
+                                ? AppTheme.primaryGradient
+                                : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: AppTheme.sm),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      steps[currentStep],
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                );
-              }),
+                    Text(
+                      context.l10n.resumeWizardStepOf(
+                        currentStep + 1,
+                        steps.length,
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          Text(
-            'Step ${_currentStep + 1} of ${_steps.length}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 8),
-          // Page content
+
+          // ── Step content
           Expanded(
-            child: Form(
-              key: _formKey,
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: _steps,
-              ),
+            child: IndexedStack(
+              index: currentStep,
+              children: [
+                StepPersonalInfo(resumeId: resumeId),
+                StepSummary(resumeId: resumeId),
+                StepWorkExperience(resumeId: resumeId),
+                StepEducation(resumeId: resumeId),
+                StepSkills(resumeId: resumeId),
+                StepProjects(resumeId: resumeId),
+              ],
             ),
           ),
-          // Navigation
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+
+          // ── Navigation
+          Container(
+            padding: const EdgeInsets.all(AppTheme.md),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              border: Border(top: BorderSide(color: Colors.grey.shade100)),
+            ),
+            child: SafeArea(
+              top: false,
               child: Row(
                 children: [
-                  if (_currentStep > 0)
-                    OutlinedButton(
-                        onPressed: _back, child: const Text('Back')),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: _next,
-                    child: Text(isLast ? 'Finish' : 'Next'),
+                  if (currentStep > 0) ...[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: notifier.prevStep,
+                        child: Text(context.l10n.resumeWizardPrevious),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.md),
+                  ],
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: editorState.isSaving
+                          ? null
+                          : () async {
+                              if (currentStep < 5) {
+                                notifier.nextStep();
+                              } else {
+                                final isNew = resumeId == null;
+                                // Compute teaser BEFORE recordUsage
+                                final isTeaser = isNew
+                                    ? ref
+                                          .read(subscriptionProvider)
+                                          .shouldShowTeaser(FeatureType.resume)
+                                    : false;
+                                await notifier.save();
+                                if (isNew) {
+                                  await ref
+                                      .read(subscriptionProvider.notifier)
+                                      .recordUsage(FeatureType.resume);
+                                }
+                                if (context.mounted) {
+                                  if (isNew) {
+                                    // Navigate directly to preview for new resumes
+                                    final savedId = ref
+                                        .read(resumeEditorProvider(resumeId))
+                                        .resume
+                                        .id;
+                                    context.go(
+                                      '/resume/$savedId/preview',
+                                      extra: {'isTeaser': isTeaser},
+                                    );
+                                  } else {
+                                    context.go('/resume');
+                                  }
+                                }
+                              }
+                            },
+                      child: editorState.isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              currentStep < 5
+                                  ? context.l10n.resumeWizardContinue
+                                  : context.l10n.resumeWizardSave,
+                            ),
+                    ),
                   ),
                 ],
               ),

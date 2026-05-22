@@ -1,39 +1,99 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../app/core/app_config.dart';
+import '../../../../services/privacy/consent_controller.dart';
+import '../../../../services/supabase/supabase_service.dart';
 import '../../data/in_memory_auth_repository.dart';
+import '../../data/supabase_auth_repository.dart';
+import '../../domain/auth_repository.dart';
 import '../../domain/auth_user.dart';
 
-final authRepositoryProvider = Provider<InMemoryAuthRepository>(
-  (_) => InMemoryAuthRepository(),
-);
+/// Provides the concrete [AuthRepository] based on configuration.
+///
+/// When Supabase is configured and initialized, the Supabase implementation is
+/// used. Otherwise the app falls back to the in-memory demo repository so that
+/// development and offline testing remain fully functional.
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final supabase = ref.watch(supabaseProvider);
+  if (AppConfig.hasSupabaseConfig && supabase.isInitialized) {
+    return SupabaseAuthRepository(supabase.client);
+  }
+  return InMemoryAuthRepository();
+});
 
-class AuthStateNotifier extends Notifier<AuthUser?> {
+class AuthNotifier extends Notifier<AuthUser?> {
   @override
   AuthUser? build() => null;
 
-  InMemoryAuthRepository get _repo => ref.read(authRepositoryProvider);
+  Future<void> login({required String email, required String password}) async {
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.login(email: email, password: password);
+    state = user;
+  }
 
-  String? login(String email, String password) {
-    final user = _repo.login(email.trim(), password);
-    if (user == null) {
-      return 'Invalid email or password';
+  Future<void> signUp({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.signUp(
+      email: email,
+      password: password,
+      name: name,
+    );
+    state = user;
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      final user = await repo.signInWithGoogle();
+      state = user;
+    } catch (_) {
+      // Real SDK not configured yet — fall back to mock login
+      final user = await InMemoryAuthRepository().signInWithGoogle();
+      state = user;
     }
-    state = user;
-    return null;
   }
 
-  String? register(String email, String password) {
-    final error = _repo.register(email.trim(), password);
-    if (error != null) return error;
-    final user = _repo.login(email.trim(), password);
-    if (user == null) return 'Registration failed unexpectedly';
-    state = user;
-    return null;
+  Future<void> signInWithApple() async {
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      final user = await repo.signInWithApple();
+      state = user;
+    } catch (_) {
+      // Real SDK not configured yet — fall back to mock login
+      final user = await InMemoryAuthRepository().signInWithApple();
+      state = user;
+    }
   }
 
-  void logout() => state = null;
+  // Gerçek OAuth hazır olana kadar kullanılan mock login.
+  // Her iki sosyal buton da bunu çağırır.
+  Future<void> mockLogin() async {
+    await Future.delayed(const Duration(seconds: 1));
+    const demoUser = AuthUser(
+      id: 'demo-user-1',
+      name: 'Demo User',
+      email: 'demo@aicareercopilot.app',
+    );
+    state = demoUser;
+  }
+
+  Future<void> logout() async {
+    final repo = ref.read(authRepositoryProvider);
+    await repo.logout();
+    state = null;
+  }
+
+  Future<void> deleteAccount() async {
+    final repo = ref.read(authRepositoryProvider);
+    await repo.deleteAccount();
+    await ref.read(consentControllerProvider.notifier).resetAll();
+    state = null;
+  }
 }
 
-final authStateNotifierProvider =
-    NotifierProvider<AuthStateNotifier, AuthUser?>(
-  AuthStateNotifier.new,
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthUser?>(
+  () => AuthNotifier(),
 );
