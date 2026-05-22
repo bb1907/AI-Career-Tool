@@ -99,20 +99,7 @@ class AboutPage extends StatelessWidget {
             icon: Icons.auto_awesome_rounded,
             title: 'Google Gemini',
             description:
-                'Provides advanced reasoning and multi-modal capabilities for CV parsing and skill analysis.',
-          ),
-
-          const SizedBox(height: 10),
-
-          // DeepSeek
-          _AiCard(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF5B5FEF), Color(0xFF8B5CF6)],
-            ),
-            icon: Icons.hub_rounded,
-            title: 'DeepSeek',
-            description:
-                'High-quality content generation engine optimized for resume writing and structured document creation.',
+                'Primary engine for resume writing, cover letters, interview prep, and CV parsing — scales from Flash to Pro based on your plan.',
           ),
 
           const SizedBox(height: 10),

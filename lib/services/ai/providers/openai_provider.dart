@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../ai_provider.dart';
 
-/// OpenAI — premium last-resort fallback.
-/// Only used when Groq, DeepSeek, and Gemini all fail.
+/// OpenAI — last-resort fallback (gpt-4o-mini).
+/// Only used when Groq and Gemini both fail.
 class OpenAiProvider implements AiProvider {
   static const _baseUrl = 'https://api.openai.com/v1/chat/completions';
   static const _model = 'gpt-4o-mini';

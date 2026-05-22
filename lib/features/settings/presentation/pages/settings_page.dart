@@ -346,7 +346,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 trailing: Switch.adaptive(
                   value: _notificationsEnabled,
                   onChanged: (v) => setState(() => _notificationsEnabled = v),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
                 ),
               ),
               _Row(

@@ -3,7 +3,7 @@ import '../domain/uploaded_cv.dart';
 /// Helpers for converting AI router output into a [ParsedProfile].
 ///
 /// The actual parsing happens in the AI router (Gemini multimodal for files,
-/// DeepSeek/OpenAI text models for pasted text). This class only flattens the
+/// Gemini Flash-Lite / OpenAI text models for pasted text). This class only flattens the
 /// structured JSON the router returns into the simple [ParsedProfile] shape
 /// that the existing UI consumes.
 class CvParser {

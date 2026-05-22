@@ -11,16 +11,13 @@ class AppConfig {
 
   // ── API Keys ───────────────────────────────────────────────────────────────
 
-  /// Groq — fast inference (llama-3.3-70b-versatile)
+  /// Groq — fast inference for chat (llama-3.3-70b-versatile)
   static String get groqApiKey => _key('GROQ_API_KEY');
 
-  /// DeepSeek — primary generation engine (deepseek-chat)
-  static String get deepSeekApiKey => _key('DEEPSEEK_API_KEY');
-
-  /// Gemini — fallback + CV parsing (gemini-2.5-flash)
+  /// Gemini — primary content generation + CV parsing (Flash / Flash-Lite / Pro)
   static String get geminiApiKey => _key('GEMINI_API_KEY');
 
-  /// OpenAI — last-resort fallback (gpt-4o-mini)
+  /// OpenAI — fallback (gpt-4o-mini)
   static String get openAiApiKey => _key('OPENAI_API_KEY');
 
   /// FASHN — AI virtual try-on / outfit generation
@@ -38,7 +35,6 @@ class AppConfig {
   // ── Status helpers ─────────────────────────────────────────────────────────
 
   static bool get hasGroqKey => _valid(groqApiKey);
-  static bool get hasDeepSeekKey => _valid(deepSeekApiKey);
   static bool get hasGeminiKey => _valid(geminiApiKey);
   static bool get hasOpenAiKey => _valid(openAiApiKey);
   static bool get hasFashnKey => _valid(fashnApiKey);
@@ -46,7 +42,7 @@ class AppConfig {
       _valid(supabaseUrl) && _valid(supabaseAnonKey);
   static bool get hasRevenueCatKey => _valid(revenueCatApiKey);
   static bool get hasAnyAiKey =>
-      hasGroqKey || hasDeepSeekKey || hasGeminiKey || hasOpenAiKey;
+      hasGroqKey || hasGeminiKey || hasOpenAiKey;
 
   // ── Internals ──────────────────────────────────────────────────────────────
 
@@ -60,10 +56,6 @@ class AppConfig {
   // compile-time constants — each name must be listed individually
   static const _dartDefines = <String, String>{
     'GROQ_API_KEY': String.fromEnvironment('GROQ_API_KEY', defaultValue: ''),
-    'DEEPSEEK_API_KEY': String.fromEnvironment(
-      'DEEPSEEK_API_KEY',
-      defaultValue: '',
-    ),
     'GEMINI_API_KEY': String.fromEnvironment(
       'GEMINI_API_KEY',
       defaultValue: '',
@@ -93,8 +85,9 @@ class AppConfig {
     final lower = key.toLowerCase();
     if (lower == 'placeholder') return false;
     if (lower.startsWith('your-') || lower.startsWith('your_')) return false;
-    if (lower.contains('your-project') || lower.contains('your-anon'))
+    if (lower.contains('your-project') || lower.contains('your-anon')) {
       return false;
+    }
     if (lower.contains('xxx') || lower.contains('changeme')) return false;
     return true;
   }

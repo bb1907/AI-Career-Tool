@@ -17,7 +17,7 @@
 - Paket: ai_career_tools
 - Hedef pazar: ABD ve Kanada
 - Monetizasyon: Freemium (Pro $9.99/ay, Pro Max $19.99/ay)
-- AI Stack: Groq (chat) + DeepSeek (uretim) + Gemini (fallback) + OpenAI (son fallback)
+- AI Stack: Groq (chat) + Gemini Flash/Flash-Lite/Pro (uretim + parse) + OpenAI (fallback)
 - Auth: Supabase + Google/Apple sign-in
 - Subscription: RevenueCat
 - Diller: 45 dil destegi
@@ -77,7 +77,7 @@ AI Career Copilot is an AI-powered mobile application designed to help job seeke
 | State Management | Riverpod 3.x |
 | Routing | GoRouter 17.x |
 | Backend / Auth / DB | Supabase |
-| AI | OpenAI API (gpt-4o-mini) |
+| AI | Groq (chat) + Gemini Flash/Flash-Lite/Pro (generation) + OpenAI (fallback) |
 | Subscriptions | RevenueCat |
 | Analytics | Firebase Analytics or PostHog |
 | Crash Monitoring | Firebase Crashlytics |

@@ -33,9 +33,6 @@ Future<void> main() async {
     '[DEBUG] GROQ key present: ${dotenv.get('GROQ_API_KEY', fallback: '').isNotEmpty}',
   );
   debugPrint(
-    '[DEBUG] DEEPSEEK key present: ${dotenv.get('DEEPSEEK_API_KEY', fallback: '').isNotEmpty}',
-  );
-  debugPrint(
     '[DEBUG] GEMINI key present: ${dotenv.get('GEMINI_API_KEY', fallback: '').isNotEmpty}',
   );
   debugPrint(

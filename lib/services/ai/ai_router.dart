@@ -6,9 +6,9 @@ import '../../app/core/app_config.dart';
 import '../../features/interview_prep/domain/interview_question.dart';
 import '../../features/resume/domain/resume.dart';
 import '../../features/settings/providers/ai_language_provider.dart';
+import '../../services/subscription/subscription_provider.dart';
 import 'ai_provider.dart';
 import 'ai_task_type.dart';
-import 'providers/deepseek_provider.dart';
 import 'providers/gemini_provider.dart';
 import 'providers/groq_provider.dart';
 import 'providers/openai_provider.dart';
@@ -25,51 +25,48 @@ const _kAutoLangRule =
     'requests it.';
 
 // ─── Provider type ────────────────────────────────────────────────────────────
+//
+// gemini     → Gemini Flash (all tiers) or Gemini Pro (Pro Max tier)
+// geminiLite → Gemini Flash-Lite (always; light/parse tasks)
 
-enum _P { groq, deepseek, gemini, openai }
+enum _P { groq, gemini, geminiLite, openai }
 
 // ─── Fallback chains per task ─────────────────────────────────────────────────
 //
-// NOTE: DeepSeek is currently demoted to last-resort because the production key
-// returns "Insufficient Balance". The architecture still tries it as a last
-// fallback so the moment the balance is topped up, quality-track tasks will
-// pick it back up automatically — but it never blocks user-facing requests.
-//
-//   chatResponse / skillSuggestions → Groq   → Gemini → OpenAI   (speed)
-//   networkingMessage               → Groq   → Gemini → OpenAI   (speed)
-//   cvParsing                       → Gemini → OpenAI → DeepSeek (context)
+//   chatResponse / networkingMessage  → Groq → Gemini → OpenAI   (speed)
+//   skillSuggestions                  → Groq → Gemini Lite → OpenAI
+//   cvParsing                         → Gemini Lite → OpenAI      (parse)
 //   resumeGeneration / coverLetter /
-//     interviewQuestions / videoScript → Gemini → OpenAI → DeepSeek (quality)
+//     interviewQuestions / videoScript → Gemini → OpenAI          (quality)
 //   skillGapAnalysis / mockInterviewFeedback
-//                                   → Gemini → Groq → OpenAI → DeepSeek
-//   jobPlanAnalysis                 → Gemini → OpenAI → DeepSeek
+//                                     → Gemini → Groq → OpenAI
+//   jobPlanAnalysis                   → Gemini → OpenAI
+//
+// Pro Max tier: _P.gemini resolves to Gemini 2.5 Pro instead of Flash.
 
 const _routing = <AiTaskType, List<_P>>{
-  AiTaskType.chatResponse: [_P.groq, _P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.skillSuggestions: [_P.groq, _P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.networkingMessage: [_P.groq, _P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.cvParsing: [_P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.resumeGeneration: [_P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.coverLetter: [_P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.interviewQuestions: [_P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.videoScript: [_P.gemini, _P.openai, _P.deepseek],
-  AiTaskType.skillGapAnalysis: [_P.gemini, _P.groq, _P.openai, _P.deepseek],
-  AiTaskType.mockInterviewFeedback: [
-    _P.gemini,
-    _P.groq,
-    _P.openai,
-    _P.deepseek,
-  ],
-  AiTaskType.jobPlanAnalysis: [_P.gemini, _P.openai, _P.deepseek],
+  AiTaskType.chatResponse: [_P.groq, _P.gemini, _P.openai],
+  AiTaskType.networkingMessage: [_P.groq, _P.gemini, _P.openai],
+  AiTaskType.skillSuggestions: [_P.groq, _P.geminiLite, _P.openai],
+  AiTaskType.cvParsing: [_P.geminiLite, _P.openai],
+  AiTaskType.resumeGeneration: [_P.gemini, _P.openai],
+  AiTaskType.coverLetter: [_P.gemini, _P.openai],
+  AiTaskType.interviewQuestions: [_P.gemini, _P.openai],
+  AiTaskType.videoScript: [_P.gemini, _P.openai],
+  AiTaskType.skillGapAnalysis: [_P.gemini, _P.groq, _P.openai],
+  AiTaskType.mockInterviewFeedback: [_P.gemini, _P.groq, _P.openai],
+  AiTaskType.jobPlanAnalysis: [_P.gemini, _P.openai],
 };
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 class AiRouter {
   final GroqProvider _groq;
-  final DeepSeekProvider _deepseek;
-  final GeminiProvider _gemini;
+  final GeminiProvider _geminiFlash;
+  final GeminiProvider _geminiFlashLite;
+  final GeminiProvider _geminiPro;
   final OpenAiProvider _openai;
+  final PlanType _planType;
 
   /// 'auto' or null → auto-detect from user input.
   /// Any other BCP-47 code (e.g. 'en', 'tr') → always respond in that language.
@@ -77,19 +74,26 @@ class AiRouter {
 
   AiRouter({
     required GroqProvider groq,
-    required DeepSeekProvider deepseek,
-    required GeminiProvider gemini,
+    required GeminiProvider geminiFlash,
+    required GeminiProvider geminiFlashLite,
+    required GeminiProvider geminiPro,
     required OpenAiProvider openai,
+    required PlanType planType,
     this.outputLanguage,
   }) : _groq = groq,
-       _deepseek = deepseek,
-       _gemini = gemini,
-       _openai = openai;
+       _geminiFlash = geminiFlash,
+       _geminiFlashLite = geminiFlashLite,
+       _geminiPro = geminiPro,
+       _openai = openai,
+       _planType = planType;
 
+  /// Resolve _P to the concrete AiProvider.
+  /// _P.gemini uses Gemini Pro for proMax subscribers, Flash for everyone else.
   AiProvider _provider(_P type) => switch (type) {
     _P.groq => _groq,
-    _P.deepseek => _deepseek,
-    _P.gemini => _gemini,
+    _P.gemini =>
+      _planType == PlanType.proMax ? _geminiPro : _geminiFlash,
+    _P.geminiLite => _geminiFlashLite,
     _P.openai => _openai,
   };
 
@@ -138,24 +142,23 @@ class AiRouter {
     final chain = _routing[task] ?? [_P.openai];
     final errors = <AiProviderException>[];
 
-    dev.log('[DEBUG] _run called for task: ${task.name}', name: 'AiRouter');
     dev.log(
-      '[DEBUG] Provider availability: ${providerStatus}',
+      '[AiRouter] task=${task.name} plan=${_planType.name}',
       name: 'AiRouter',
     );
     dev.log(
-      '[DEBUG] Chain: ${chain.map((p) => p.name).toList()}',
+      '[AiRouter] chain: ${chain.map((p) => _provider(p).name).toList()}',
       name: 'AiRouter',
     );
 
     for (final pType in chain) {
       final p = _provider(pType);
       if (!p.isAvailable) {
-        dev.log('[DEBUG] ${p.name} skipped — no key', name: 'AiRouter');
+        dev.log('[AiRouter] ${p.name} skipped — no key', name: 'AiRouter');
         continue;
       }
       try {
-        dev.log('[DEBUG] ${task.name} → trying ${p.name}...', name: 'AiRouter');
+        dev.log('[AiRouter] ${task.name} → ${p.name}...', name: 'AiRouter');
         final result = await p.generateText(
           systemPrompt: fullSystem,
           userPrompt: userPrompt,
@@ -163,19 +166,19 @@ class AiRouter {
           temperature: temperature,
         );
         dev.log(
-          '[DEBUG] ${p.name} SUCCESS — ${result.length} chars',
+          '[AiRouter] ${p.name} OK — ${result.length} chars',
           name: 'AiRouter',
         );
         return result;
       } on AiProviderException catch (e) {
-        dev.log('[DEBUG] ${p.name} FAILED: $e', name: 'AiRouter');
+        dev.log('[AiRouter] ${p.name} FAILED: $e', name: 'AiRouter');
         errors.add(e);
       } catch (e) {
         final wrapped = AiProviderException(
           provider: p.name,
           message: e.toString(),
         );
-        dev.log('[DEBUG] ${p.name} UNEXPECTED ERROR: $e', name: 'AiRouter');
+        dev.log('[AiRouter] ${p.name} UNEXPECTED: $e', name: 'AiRouter');
         errors.add(wrapped);
       }
     }
@@ -208,30 +211,33 @@ class AiRouter {
     final chain = _routing[task] ?? [_P.openai];
     final errors = <AiProviderException>[];
 
-    dev.log('[DEBUG] _runChat called for task: ${task.name}', name: 'AiRouter');
+    dev.log(
+      '[AiRouter] chat task=${task.name} plan=${_planType.name}',
+      name: 'AiRouter',
+    );
 
     for (final pType in chain) {
       final p = _provider(pType);
       if (!p.isAvailable) {
-        dev.log('[DEBUG] Chat: ${p.name} skipped — no key', name: 'AiRouter');
+        dev.log('[AiRouter] chat: ${p.name} skipped — no key', name: 'AiRouter');
         continue;
       }
       try {
-        dev.log('[DEBUG] Chat: trying ${p.name}...', name: 'AiRouter');
+        dev.log('[AiRouter] chat: trying ${p.name}...', name: 'AiRouter');
         final result = await p.generateChat(
           messages: fullMessages,
           temperature: temperature,
         );
         dev.log(
-          '[DEBUG] Chat: ${p.name} SUCCESS — ${result.length} chars',
+          '[AiRouter] chat: ${p.name} OK — ${result.length} chars',
           name: 'AiRouter',
         );
         return result;
       } on AiProviderException catch (e) {
-        dev.log('[DEBUG] Chat: ${p.name} FAILED: $e', name: 'AiRouter');
+        dev.log('[AiRouter] chat: ${p.name} FAILED: $e', name: 'AiRouter');
         errors.add(e);
       } catch (e) {
-        dev.log('[DEBUG] Chat: ${p.name} UNEXPECTED: $e', name: 'AiRouter');
+        dev.log('[AiRouter] chat: ${p.name} UNEXPECTED: $e', name: 'AiRouter');
         errors.add(
           AiProviderException(provider: p.name, message: e.toString()),
         );
@@ -503,10 +509,10 @@ Return JSON with this exact structure:
         '  ]\n'
         '}';
 
-    // 1. Try Gemini multimodal (best quality, supports PDF natively)
-    if (_gemini.isAvailable) {
+    // 1. Try Gemini Flash multimodal (best quality, supports PDF natively)
+    if (_geminiFlash.isAvailable) {
       try {
-        final raw = await _gemini.generateFromBytes(
+        final raw = await _geminiFlash.generateFromBytes(
           systemPrompt: '$system\n\n${_langInstruction()}',
           userPrompt: userPrompt,
           bytes: bytes,
@@ -685,16 +691,16 @@ $cvText''';
   // ── Provider status ───────────────────────────────────────────────────────
 
   Map<String, bool> get providerStatus => {
-    _groq.name: _groq.isAvailable,
-    _deepseek.name: _deepseek.isAvailable,
-    _gemini.name: _gemini.isAvailable,
-    _openai.name: _openai.isAvailable,
+    'Groq': _groq.isAvailable,
+    'Gemini Flash': _geminiFlash.isAvailable,
+    'Gemini Flash-Lite': _geminiFlashLite.isAvailable,
+    'Gemini Pro': _geminiPro.isAvailable,
+    'OpenAI': _openai.isAvailable,
   };
 
   bool get hasAnyProvider =>
       _groq.isAvailable ||
-      _deepseek.isAvailable ||
-      _gemini.isAvailable ||
+      _geminiFlash.isAvailable ||
       _openai.isAvailable;
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -721,7 +727,7 @@ $cvText''';
       return (jsonDecode(s) as Map<String, dynamic>);
     } catch (e) {
       dev.log(
-        '[DEBUG] JSON parse failed for: ${s.substring(0, s.length.clamp(0, 200))}',
+        '[AiRouter] JSON parse failed: ${s.substring(0, s.length.clamp(0, 200))}',
         name: 'AiRouter',
       );
       rethrow;
@@ -739,11 +745,23 @@ $cvText''';
 
 final aiRouterProvider = Provider<AiRouter>((ref) {
   final aiLang = ref.watch(aiLanguageProvider);
+  final subState = ref.watch(subscriptionProvider);
   return AiRouter(
     groq: GroqProvider(AppConfig.groqApiKey),
-    deepseek: DeepSeekProvider(AppConfig.deepSeekApiKey),
-    gemini: GeminiProvider(AppConfig.geminiApiKey),
+    geminiFlash: GeminiProvider(
+      AppConfig.geminiApiKey,
+      model: 'gemini-2.5-flash',
+    ),
+    geminiFlashLite: GeminiProvider(
+      AppConfig.geminiApiKey,
+      model: 'gemini-2.5-flash-lite',
+    ),
+    geminiPro: GeminiProvider(
+      AppConfig.geminiApiKey,
+      model: 'gemini-2.5-pro',
+    ),
     openai: OpenAiProvider(AppConfig.openAiApiKey),
+    planType: subState.plan,
     outputLanguage: aiLang,
   );
 });
