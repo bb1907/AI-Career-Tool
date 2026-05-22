@@ -1,0 +1,17 @@
+Welcome to AI Career Copilot v1.0.0!
+
+We are thrilled to launch the first version of your AI-powered career assistant. Here is what is included:
+
+- AI Resume Builder: Create ATS-optimized resumes with a guided 6-step wizard. Export to PDF.
+- Smart Cover Letters: Generate tailored cover letters from your profile and any job description.
+- Interview Prep: Get role-specific technical and behavioral questions with sample answers.
+- Video Scripts & Teleprompter: Write 30/60/90-second video intros and record with a built-in teleprompter.
+- CV Import: Upload your existing resume and let AI extract your profile.
+- Job Matching: See how your skills align with job requirements.
+- History & Documents: All your resumes, cover letters, and scripts saved in one place.
+- 45 language support.
+- Dark mode.
+
+Free to start. Upgrade to Pro for unlimited AI generations and PDF exports.
+
+We would love to hear your feedback -- reach out anytime at support@aicareercopilot.com.

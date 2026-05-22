@@ -1,3 +1,10 @@
+# Claude Code session data (auto-generated, contains personal data)
+.claude/
+
+# Stray empty files created by IDE/OS
+Components.
+Settings
+
 # Miscellaneous
 *.class
 *.log
@@ -22,6 +29,11 @@ migrate_working_dir/
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
 #.vscode/
+
+# Environment files (API keys)
+.env
+.env.*
+!.env.example
 
 # Flutter/Dart/Pub related
 **/doc/api/

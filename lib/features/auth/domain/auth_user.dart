@@ -1,11 +1,7 @@
 class AuthUser {
   final String id;
   final String email;
-  final String password;
+  final String name;
 
-  const AuthUser({
-    required this.id,
-    required this.email,
-    required this.password,
-  });
+  const AuthUser({required this.id, required this.email, required this.name});
 }

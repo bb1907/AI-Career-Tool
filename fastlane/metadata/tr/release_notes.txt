@@ -1,0 +1,17 @@
+AI Career Copilot v1.0.0'a hos geldiniz!
+
+Yapay zeka destekli kariyer asistaninin ilk suerueuemueuenue yayinlamaktan heyecan duyuyoruz. Icerdekiler:
+
+- Yapay Zeka Ozgecmis Olusturucu: 6 adimli rehberli sihirbaz ile ATS uyumlu ozgecmisler olusturun. PDF olarak disari aktarin.
+- Akilli On Yazilar: Profilinize ve is taninima gore kisisellestirilmis on yazilar olusturun.
+- Muelakat Hazirligi: Oernek cevaplarla pozisyona oezel teknik ve davranissal sorular alin.
+- Video Senaryolari ve Prompter: 30/60/90 saniyelik video tanitimlarinizi yazin ve yerlesik prompter ile kaydedin.
+- CV Iceri Aktarma: Mevcut oezgecmisinizi yuekleyin, yapay zeka profilinizi cikartsin.
+- Is Eslestirme: Becerilerinizin is gereksinimleriyle ne kadar uyumlu oldugunu goeruen.
+- Gecmis ve Belgeler: Tuem oezgecmisleriniz, oen yazilariniz ve senaryolariniz tek bir yerde.
+- 45 dil destegi.
+- Karanlik mod.
+
+Baslamak uecretsiz. Sinirsiz yapay zeka ueretimi ve PDF disari aktarimi icin Pro'ya yuekseltin.
+
+Geri bildirimlerinizi duymak isteriz -- bize istediginiz zaman support@aicareercopilot.com adresinden ulasin.

@@ -1,0 +1,14 @@
+{
+  "@@locale": "lt",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "loading": "Loading...",
+  "error": "Error",
+  "success": "Success",
+  "homeTitle": "AI Career Copilot",
+  "navHome": "Home",
+  "navHistory": "History",
+  "navProfile": "Profile"
+}
