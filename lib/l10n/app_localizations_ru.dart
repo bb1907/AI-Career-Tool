@@ -1995,4 +1995,109 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'Заявки';
+
+  @override
+  String get applicationsTitle => 'Мои Заявки';
+
+  @override
+  String get applicationsEmpty => 'Заявок пока нет';
+
+  @override
+  String get applicationsEmptySubtitle =>
+      'Отслеживайте заявки на работу в одном месте';
+
+  @override
+  String get applicationAddNew => 'Новая Заявка';
+
+  @override
+  String get applicationStatusWishlist => 'Желаемое';
+
+  @override
+  String get applicationStatusApplied => 'Подано';
+
+  @override
+  String get applicationStatusPhoneScreen => 'Телефонное интервью';
+
+  @override
+  String get applicationStatusInterview => 'Собеседование';
+
+  @override
+  String get applicationStatusOffer => 'Оффер';
+
+  @override
+  String get applicationStatusRejected => 'Отказ';
+
+  @override
+  String get applicationStatusWithdrawn => 'Отозвано';
+
+  @override
+  String get applicationFormTitle => 'Новая Заявка';
+
+  @override
+  String get applicationFormEditTitle => 'Редактировать Заявку';
+
+  @override
+  String get applicationFormCompany => 'Компания';
+
+  @override
+  String get applicationFormRole => 'Должность / Роль';
+
+  @override
+  String get applicationFormJobDescription =>
+      'Описание вакансии (необязательно)';
+
+  @override
+  String get applicationFormNotes => 'Заметки';
+
+  @override
+  String get applicationFormSource => 'Источник (LinkedIn, Рекомендация…)';
+
+  @override
+  String get applicationFormStatus => 'Статус';
+
+  @override
+  String get applicationFormFollowUp => 'Напоминание';
+
+  @override
+  String get applicationFormFollowUpHint => 'Установить дату напоминания';
+
+  @override
+  String get applicationFormSave => 'Сохранить Заявку';
+
+  @override
+  String get applicationDetailStatus => 'Статус';
+
+  @override
+  String get applicationDetailNotes => 'Заметки';
+
+  @override
+  String get applicationDetailTimeline => 'Хронология';
+
+  @override
+  String get applicationDetailMatchScore => 'Соответствие';
+
+  @override
+  String get applicationDetailFollowUp => 'Отслеживание';
+
+  @override
+  String get applicationDeleteConfirm => 'Удалить Заявку';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'Вы уверены, что хотите удалить эту заявку? Это действие необратимо.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'Удалить';
+
+  @override
+  String get applicationTrackFromPlan => 'Отслеживать Заявку';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => 'Сохранить в трекер заявок';
+
+  @override
+  String get applicationImportedFromPlan => 'Импортировано из Плана Работы';
 }

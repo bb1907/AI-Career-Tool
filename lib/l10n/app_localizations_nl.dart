@@ -1995,4 +1995,108 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'Sollicitaties';
+
+  @override
+  String get applicationsTitle => 'Mijn Sollicitaties';
+
+  @override
+  String get applicationsEmpty => 'Nog geen sollicitaties';
+
+  @override
+  String get applicationsEmptySubtitle => 'Volg je sollicitaties op één plek';
+
+  @override
+  String get applicationAddNew => 'Nieuwe Sollicitatie';
+
+  @override
+  String get applicationStatusWishlist => 'Verlanglijst';
+
+  @override
+  String get applicationStatusApplied => 'Gesolliciteerd';
+
+  @override
+  String get applicationStatusPhoneScreen => 'Telefonische screening';
+
+  @override
+  String get applicationStatusInterview => 'Sollicitatiegesprek';
+
+  @override
+  String get applicationStatusOffer => 'Aanbod';
+
+  @override
+  String get applicationStatusRejected => 'Afgewezen';
+
+  @override
+  String get applicationStatusWithdrawn => 'Ingetrokken';
+
+  @override
+  String get applicationFormTitle => 'Nieuwe Sollicitatie';
+
+  @override
+  String get applicationFormEditTitle => 'Sollicitatie bewerken';
+
+  @override
+  String get applicationFormCompany => 'Bedrijf';
+
+  @override
+  String get applicationFormRole => 'Functie / Rol';
+
+  @override
+  String get applicationFormJobDescription => 'Functieomschrijving (optioneel)';
+
+  @override
+  String get applicationFormNotes => 'Notities';
+
+  @override
+  String get applicationFormSource => 'Bron (LinkedIn, Referentie…)';
+
+  @override
+  String get applicationFormStatus => 'Status';
+
+  @override
+  String get applicationFormFollowUp => 'Herinneringsnotitie';
+
+  @override
+  String get applicationFormFollowUpHint => 'Stel een herinneringsdatum in';
+
+  @override
+  String get applicationFormSave => 'Sollicitatie opslaan';
+
+  @override
+  String get applicationDetailStatus => 'Status';
+
+  @override
+  String get applicationDetailNotes => 'Notities';
+
+  @override
+  String get applicationDetailTimeline => 'Tijdlijn';
+
+  @override
+  String get applicationDetailMatchScore => 'Overeenkomstscore';
+
+  @override
+  String get applicationDetailFollowUp => 'Opvolging';
+
+  @override
+  String get applicationDeleteConfirm => 'Sollicitatie verwijderen';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'Weet je zeker dat je deze sollicitatie wilt verwijderen? Dit kan niet ongedaan worden gemaakt.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'Verwijderen';
+
+  @override
+  String get applicationTrackFromPlan => 'Sollicitatie volgen';
+
+  @override
+  String get applicationTrackFromPlanSubtitle =>
+      'Opslaan in je sollicitatietracker';
+
+  @override
+  String get applicationImportedFromPlan => 'Geïmporteerd uit Jobplan';
 }

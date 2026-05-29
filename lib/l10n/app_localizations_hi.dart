@@ -1995,4 +1995,108 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'आवेदन';
+
+  @override
+  String get applicationsTitle => 'मेरे आवेदन';
+
+  @override
+  String get applicationsEmpty => 'अभी तक कोई आवेदन नहीं';
+
+  @override
+  String get applicationsEmptySubtitle =>
+      'एक जगह से अपने आवेदनों को ट्रैक करें';
+
+  @override
+  String get applicationAddNew => 'नया आवेदन';
+
+  @override
+  String get applicationStatusWishlist => 'विशलिस्ट';
+
+  @override
+  String get applicationStatusApplied => 'आवेदित';
+
+  @override
+  String get applicationStatusPhoneScreen => 'फोन स्क्रीनिंग';
+
+  @override
+  String get applicationStatusInterview => 'साक्षात्कार';
+
+  @override
+  String get applicationStatusOffer => 'ऑफर';
+
+  @override
+  String get applicationStatusRejected => 'अस्वीकृत';
+
+  @override
+  String get applicationStatusWithdrawn => 'वापस लिया';
+
+  @override
+  String get applicationFormTitle => 'नया आवेदन';
+
+  @override
+  String get applicationFormEditTitle => 'आवेदन संपादित करें';
+
+  @override
+  String get applicationFormCompany => 'कंपनी';
+
+  @override
+  String get applicationFormRole => 'पद / भूमिका';
+
+  @override
+  String get applicationFormJobDescription => 'नौकरी विवरण (वैकल्पिक)';
+
+  @override
+  String get applicationFormNotes => 'नोट्स';
+
+  @override
+  String get applicationFormSource => 'स्रोत (LinkedIn, रेफरल…)';
+
+  @override
+  String get applicationFormStatus => 'स्थिति';
+
+  @override
+  String get applicationFormFollowUp => 'फॉलो-अप अनुस्मारक';
+
+  @override
+  String get applicationFormFollowUpHint => 'अनुस्मारक तिथि सेट करें';
+
+  @override
+  String get applicationFormSave => 'आवेदन सहेजें';
+
+  @override
+  String get applicationDetailStatus => 'स्थिति';
+
+  @override
+  String get applicationDetailNotes => 'नोट्स';
+
+  @override
+  String get applicationDetailTimeline => 'टाइमलाइन';
+
+  @override
+  String get applicationDetailMatchScore => 'मिलान स्कोर';
+
+  @override
+  String get applicationDetailFollowUp => 'फॉलो-अप';
+
+  @override
+  String get applicationDeleteConfirm => 'आवेदन हटाएं';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'क्या आप वाकई इस आवेदन को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।';
+
+  @override
+  String get applicationDeleteConfirmOk => 'हटाएं';
+
+  @override
+  String get applicationTrackFromPlan => 'इस आवेदन को ट्रैक करें';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => 'ट्रैकर में सहेजें';
+
+  @override
+  String get applicationImportedFromPlan => 'जॉब प्लान से आयात किया गया';
 }

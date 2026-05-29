@@ -20,17 +20,17 @@ class InMemoryApplicationRepository implements ApplicationRepository {
     final appsJson = prefs.getString(_appsKey);
     if (appsJson != null) {
       final list = jsonDecode(appsJson) as List<dynamic>;
-      _apps.addAll(list.map(
-        (e) => Application.fromJson(e as Map<String, dynamic>),
-      ));
+      _apps.addAll(
+        list.map((e) => Application.fromJson(e as Map<String, dynamic>)),
+      );
     }
 
     final eventsJson = prefs.getString(_eventsKey);
     if (eventsJson != null) {
       final list = jsonDecode(eventsJson) as List<dynamic>;
-      _events.addAll(list.map(
-        (e) => ApplicationEvent.fromJson(e as Map<String, dynamic>),
-      ));
+      _events.addAll(
+        list.map((e) => ApplicationEvent.fromJson(e as Map<String, dynamic>)),
+      );
     }
   }
 
@@ -103,9 +103,7 @@ class InMemoryApplicationRepository implements ApplicationRepository {
   @override
   Future<List<ApplicationEvent>> getEvents(String applicationId) async {
     await _ensureLoaded();
-    return _events
-        .where((e) => e.applicationId == applicationId)
-        .toList()
+    return _events.where((e) => e.applicationId == applicationId).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 }

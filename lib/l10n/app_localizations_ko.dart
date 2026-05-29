@@ -1995,4 +1995,107 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => '지원 관리';
+
+  @override
+  String get applicationsTitle => '내 지원 현황';
+
+  @override
+  String get applicationsEmpty => '아직 지원 내역이 없습니다';
+
+  @override
+  String get applicationsEmptySubtitle => '한 곳에서 취업 지원을 추적하세요';
+
+  @override
+  String get applicationAddNew => '새 지원';
+
+  @override
+  String get applicationStatusWishlist => '관심 목록';
+
+  @override
+  String get applicationStatusApplied => '지원 완료';
+
+  @override
+  String get applicationStatusPhoneScreen => '전화 면접';
+
+  @override
+  String get applicationStatusInterview => '면접';
+
+  @override
+  String get applicationStatusOffer => '합격';
+
+  @override
+  String get applicationStatusRejected => '불합격';
+
+  @override
+  String get applicationStatusWithdrawn => '취소';
+
+  @override
+  String get applicationFormTitle => '새 지원';
+
+  @override
+  String get applicationFormEditTitle => '지원 수정';
+
+  @override
+  String get applicationFormCompany => '회사';
+
+  @override
+  String get applicationFormRole => '직무 / 역할';
+
+  @override
+  String get applicationFormJobDescription => '채용 공고 (선택)';
+
+  @override
+  String get applicationFormNotes => '메모';
+
+  @override
+  String get applicationFormSource => '출처 (LinkedIn, 추천…)';
+
+  @override
+  String get applicationFormStatus => '상태';
+
+  @override
+  String get applicationFormFollowUp => '팔로업 알림';
+
+  @override
+  String get applicationFormFollowUpHint => '알림 날짜 설정';
+
+  @override
+  String get applicationFormSave => '지원 저장';
+
+  @override
+  String get applicationDetailStatus => '상태';
+
+  @override
+  String get applicationDetailNotes => '메모';
+
+  @override
+  String get applicationDetailTimeline => '타임라인';
+
+  @override
+  String get applicationDetailMatchScore => '매칭 점수';
+
+  @override
+  String get applicationDetailFollowUp => '팔로업';
+
+  @override
+  String get applicationDeleteConfirm => '지원 삭제';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      '이 지원을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.';
+
+  @override
+  String get applicationDeleteConfirmOk => '삭제';
+
+  @override
+  String get applicationTrackFromPlan => '이 지원 추적';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => '지원 트래커에 저장';
+
+  @override
+  String get applicationImportedFromPlan => '취업 계획에서 가져옴';
 }

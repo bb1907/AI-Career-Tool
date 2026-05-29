@@ -3907,6 +3907,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.'**
   String get consentBiometricBody;
+
+  /// No description provided for @navApplications.
+  ///
+  /// In en, this message translates to:
+  /// **'Applications'**
+  String get navApplications;
+
+  /// No description provided for @applicationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Applications'**
+  String get applicationsTitle;
+
+  /// No description provided for @applicationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No applications yet'**
+  String get applicationsEmpty;
+
+  /// No description provided for @applicationsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your job applications in one place'**
+  String get applicationsEmptySubtitle;
+
+  /// No description provided for @applicationAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Application'**
+  String get applicationAddNew;
+
+  /// No description provided for @applicationStatusWishlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Wishlist'**
+  String get applicationStatusWishlist;
+
+  /// No description provided for @applicationStatusApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied'**
+  String get applicationStatusApplied;
+
+  /// No description provided for @applicationStatusPhoneScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Screen'**
+  String get applicationStatusPhoneScreen;
+
+  /// No description provided for @applicationStatusInterview.
+  ///
+  /// In en, this message translates to:
+  /// **'Interview'**
+  String get applicationStatusInterview;
+
+  /// No description provided for @applicationStatusOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer'**
+  String get applicationStatusOffer;
+
+  /// No description provided for @applicationStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get applicationStatusRejected;
+
+  /// No description provided for @applicationStatusWithdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawn'**
+  String get applicationStatusWithdrawn;
+
+  /// No description provided for @applicationFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Application'**
+  String get applicationFormTitle;
+
+  /// No description provided for @applicationFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Application'**
+  String get applicationFormEditTitle;
+
+  /// No description provided for @applicationFormCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get applicationFormCompany;
+
+  /// No description provided for @applicationFormRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role / Position'**
+  String get applicationFormRole;
+
+  /// No description provided for @applicationFormJobDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Description (optional)'**
+  String get applicationFormJobDescription;
+
+  /// No description provided for @applicationFormNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get applicationFormNotes;
+
+  /// No description provided for @applicationFormSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source (LinkedIn, Referral…)'**
+  String get applicationFormSource;
+
+  /// No description provided for @applicationFormStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get applicationFormStatus;
+
+  /// No description provided for @applicationFormFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up Reminder'**
+  String get applicationFormFollowUp;
+
+  /// No description provided for @applicationFormFollowUpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a follow-up reminder date'**
+  String get applicationFormFollowUpHint;
+
+  /// No description provided for @applicationFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Application'**
+  String get applicationFormSave;
+
+  /// No description provided for @applicationDetailStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get applicationDetailStatus;
+
+  /// No description provided for @applicationDetailNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get applicationDetailNotes;
+
+  /// No description provided for @applicationDetailTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get applicationDetailTimeline;
+
+  /// No description provided for @applicationDetailMatchScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Match Score'**
+  String get applicationDetailMatchScore;
+
+  /// No description provided for @applicationDetailFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up'**
+  String get applicationDetailFollowUp;
+
+  /// No description provided for @applicationDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Application'**
+  String get applicationDeleteConfirm;
+
+  /// No description provided for @applicationDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this application? This cannot be undone.'**
+  String get applicationDeleteConfirmBody;
+
+  /// No description provided for @applicationDeleteConfirmOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get applicationDeleteConfirmOk;
+
+  /// No description provided for @applicationTrackFromPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Track this Application'**
+  String get applicationTrackFromPlan;
+
+  /// No description provided for @applicationTrackFromPlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to your application tracker'**
+  String get applicationTrackFromPlanSubtitle;
+
+  /// No description provided for @applicationImportedFromPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported from Job Plan'**
+  String get applicationImportedFromPlan;
 }
 
 class _AppLocalizationsDelegate

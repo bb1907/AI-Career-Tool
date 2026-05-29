@@ -35,6 +35,10 @@ import '../features/ai_photo/presentation/pages/ai_photo_page.dart';
 import '../features/ai_photo/presentation/pages/ai_photo_result_page.dart';
 import '../features/paywall/presentation/pages/soft_paywall_page.dart';
 import '../features/paywall/presentation/pages/congratulations_page.dart';
+import '../features/applications/domain/application.dart';
+import '../features/applications/presentation/pages/application_list_screen.dart';
+import '../features/applications/presentation/pages/application_detail_screen.dart';
+import '../features/applications/presentation/pages/application_form_screen.dart';
 import '../features/job_plan/presentation/pages/job_plan_page.dart';
 import '../services/subscription/subscription_provider.dart';
 import 'shell/main_shell.dart';
@@ -81,8 +85,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomePage()),
           GoRoute(path: '/history', builder: (c, s) => const HistoryPage()),
+          GoRoute(
+            path: '/applications',
+            builder: (c, s) => const ApplicationListScreen(),
+          ),
           GoRoute(path: '/profile', builder: (c, s) => const ProfilePage()),
         ],
+      ),
+
+      // ── Applications (detail + form — full-screen, no bottom nav)
+      GoRoute(
+        path: '/applications/new',
+        builder: (c, s) => const ApplicationFormScreen(),
+      ),
+      GoRoute(
+        path: '/applications/:id',
+        builder: (c, s) =>
+            ApplicationDetailScreen(applicationId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/applications/:id/edit',
+        builder: (c, s) =>
+            ApplicationFormScreen(existing: s.extra as Application?),
       ),
 
       // ── Resume (full-screen, no bottom nav)

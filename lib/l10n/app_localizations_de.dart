@@ -2014,4 +2014,109 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'Bewerbungen';
+
+  @override
+  String get applicationsTitle => 'Meine Bewerbungen';
+
+  @override
+  String get applicationsEmpty => 'Noch keine Bewerbungen';
+
+  @override
+  String get applicationsEmptySubtitle =>
+      'Verfolge deine Bewerbungen an einem Ort';
+
+  @override
+  String get applicationAddNew => 'Bewerbung hinzufügen';
+
+  @override
+  String get applicationStatusWishlist => 'Wunschliste';
+
+  @override
+  String get applicationStatusApplied => 'Beworben';
+
+  @override
+  String get applicationStatusPhoneScreen => 'Telefoninterview';
+
+  @override
+  String get applicationStatusInterview => 'Vorstellungsgespräch';
+
+  @override
+  String get applicationStatusOffer => 'Angebot';
+
+  @override
+  String get applicationStatusRejected => 'Abgelehnt';
+
+  @override
+  String get applicationStatusWithdrawn => 'Zurückgezogen';
+
+  @override
+  String get applicationFormTitle => 'Neue Bewerbung';
+
+  @override
+  String get applicationFormEditTitle => 'Bewerbung bearbeiten';
+
+  @override
+  String get applicationFormCompany => 'Unternehmen';
+
+  @override
+  String get applicationFormRole => 'Stelle / Rolle';
+
+  @override
+  String get applicationFormJobDescription => 'Stellenbeschreibung (optional)';
+
+  @override
+  String get applicationFormNotes => 'Notizen';
+
+  @override
+  String get applicationFormSource => 'Quelle (LinkedIn, Empfehlung…)';
+
+  @override
+  String get applicationFormStatus => 'Status';
+
+  @override
+  String get applicationFormFollowUp => 'Nachfasserinnerung';
+
+  @override
+  String get applicationFormFollowUpHint => 'Erinnerungsdatum festlegen';
+
+  @override
+  String get applicationFormSave => 'Bewerbung speichern';
+
+  @override
+  String get applicationDetailStatus => 'Status';
+
+  @override
+  String get applicationDetailNotes => 'Notizen';
+
+  @override
+  String get applicationDetailTimeline => 'Zeitverlauf';
+
+  @override
+  String get applicationDetailMatchScore => 'Übereinstimmung';
+
+  @override
+  String get applicationDetailFollowUp => 'Nachfassen';
+
+  @override
+  String get applicationDeleteConfirm => 'Bewerbung löschen';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'Möchtest du diese Bewerbung wirklich löschen? Dies kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'Löschen';
+
+  @override
+  String get applicationTrackFromPlan => 'Bewerbung verfolgen';
+
+  @override
+  String get applicationTrackFromPlanSubtitle =>
+      'In deinen Bewerbungs-Tracker speichern';
+
+  @override
+  String get applicationImportedFromPlan => 'Aus Job-Plan importiert';
 }

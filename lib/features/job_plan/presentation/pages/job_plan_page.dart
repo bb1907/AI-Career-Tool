@@ -2,8 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/core/l10n_extension.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../services/subscription/subscription_provider.dart';
+import '../../../applications/presentation/providers/application_controller.dart';
 import '../../domain/job_plan.dart';
 import '../providers/job_plan_provider.dart';
 
@@ -340,6 +342,10 @@ class _JobPlanPageState extends ConsumerState<JobPlanPage>
 
         // 8. Checklist
         _ChecklistCard(plan: plan),
+        const SizedBox(height: 12),
+
+        // 9. Track Application CTA
+        _TrackApplicationCard(plan: plan),
       ],
     );
   }
@@ -820,6 +826,111 @@ class _GatedCard extends StatelessWidget {
   }
 }
 
+// ── 9. Track Application CTA ──────────────────────────────────────────────────
+
+class _TrackApplicationCard extends ConsumerStatefulWidget {
+  final JobPlan plan;
+  const _TrackApplicationCard({required this.plan});
+
+  @override
+  ConsumerState<_TrackApplicationCard> createState() =>
+      _TrackApplicationCardState();
+}
+
+class _TrackApplicationCardState extends ConsumerState<_TrackApplicationCard> {
+  bool _loading = false;
+
+  Future<void> _track() async {
+    setState(() => _loading = true);
+    try {
+      final app = await ref
+          .read(applicationControllerProvider.notifier)
+          .importFromPlan(widget.plan);
+      if (mounted) {
+        context.push('/applications/${app.id}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: AppColors.heroGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.work_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.applicationTrackFromPlan,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  context.l10n.applicationTrackFromPlanSubtitle,
+                  style: TextStyle(fontSize: 12, color: context.appText2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 38,
+            child: FilledButton(
+              onPressed: _loading ? null : _track,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+              ),
+              child: _loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.add_rounded, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── 8. Checklist Card ─────────────────────────────────────────────────────────
 
 class _ChecklistCard extends ConsumerWidget {
@@ -1054,7 +1165,7 @@ class _CardHeader extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         const Spacer(),
-        if (badge != null) badge!,
+        ?badge,
       ],
     );
   }

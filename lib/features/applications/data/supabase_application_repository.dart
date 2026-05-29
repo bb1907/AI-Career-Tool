@@ -58,7 +58,7 @@ class SupabaseApplicationRepository implements ApplicationRepository {
         .select()
         .eq('user_id', _userId)
         .order('created_at', ascending: false);
-    return (rows as List<dynamic>)
+    return (rows as List)
         .map((r) => _fromRow(r as Map<String, dynamic>))
         .toList();
   }
@@ -71,7 +71,7 @@ class SupabaseApplicationRepository implements ApplicationRepository {
         .eq('id', id)
         .eq('user_id', _userId)
         .limit(1);
-    final list = rows as List<dynamic>;
+    final list = rows as List;
     if (list.isEmpty) return null;
     return _fromRow(list.first as Map<String, dynamic>);
   }
@@ -84,12 +84,14 @@ class SupabaseApplicationRepository implements ApplicationRepository {
         .insert(row)
         .select()
         .single();
-    return _fromRow(result as Map<String, dynamic>);
+    return _fromRow(result);
   }
 
   @override
   Future<Application> update(Application application) async {
-    final row = _toRow(application)..remove('id')..remove('user_id');
+    final row = _toRow(application)
+      ..remove('id')
+      ..remove('user_id');
     final result = await _client
         .from('applications')
         .update(row)
@@ -97,7 +99,7 @@ class SupabaseApplicationRepository implements ApplicationRepository {
         .eq('user_id', _userId)
         .select()
         .single();
-    return _fromRow(result as Map<String, dynamic>);
+    return _fromRow(result);
   }
 
   @override
@@ -130,7 +132,7 @@ class SupabaseApplicationRepository implements ApplicationRepository {
         .eq('application_id', applicationId)
         .eq('user_id', _userId)
         .order('created_at', ascending: false);
-    return (rows as List<dynamic>)
+    return (rows as List)
         .map((r) => _eventFromRow(r as Map<String, dynamic>))
         .toList();
   }
@@ -138,44 +140,44 @@ class SupabaseApplicationRepository implements ApplicationRepository {
   // ── Mappers ─────────────────────────────────────────────────────────────────
 
   Application _fromRow(Map<String, dynamic> r) => Application(
-        id: r['id'] as String,
-        company: r['company'] as String,
-        role: r['role'] as String,
-        jobDescription: r['job_description'] as String? ?? '',
-        status: ApplicationStatus.fromString(r['status'] as String? ?? 'wishlist'),
-        createdAt: DateTime.parse(r['created_at'] as String),
-        appliedAt: r['applied_at'] != null
-            ? DateTime.parse(r['applied_at'] as String)
-            : null,
-        followUpAt: r['follow_up_at'] != null
-            ? DateTime.parse(r['follow_up_at'] as String)
-            : null,
-        notes: r['notes'] as String? ?? '',
-        source: r['source'] as String? ?? '',
-        matchScore: r['match_score'] as int?,
-        jobPlanId: r['job_plan_id'] as String?,
-      );
+    id: r['id'] as String,
+    company: r['company'] as String,
+    role: r['role'] as String,
+    jobDescription: r['job_description'] as String? ?? '',
+    status: ApplicationStatus.fromString(r['status'] as String? ?? 'wishlist'),
+    createdAt: DateTime.parse(r['created_at'] as String),
+    appliedAt: r['applied_at'] != null
+        ? DateTime.parse(r['applied_at'] as String)
+        : null,
+    followUpAt: r['follow_up_at'] != null
+        ? DateTime.parse(r['follow_up_at'] as String)
+        : null,
+    notes: r['notes'] as String? ?? '',
+    source: r['source'] as String? ?? '',
+    matchScore: r['match_score'] as int?,
+    jobPlanId: r['job_plan_id'] as String?,
+  );
 
   Map<String, dynamic> _toRow(Application a) => {
-        'id': a.id,
-        'user_id': _userId,
-        'company': a.company,
-        'role': a.role,
-        'job_description': a.jobDescription,
-        'status': a.status.name,
-        'created_at': a.createdAt.toIso8601String(),
-        'applied_at': a.appliedAt?.toIso8601String(),
-        'follow_up_at': a.followUpAt?.toIso8601String(),
-        'notes': a.notes,
-        'source': a.source,
-        'match_score': a.matchScore,
-        'job_plan_id': a.jobPlanId,
-      };
+    'id': a.id,
+    'user_id': _userId,
+    'company': a.company,
+    'role': a.role,
+    'job_description': a.jobDescription,
+    'status': a.status.name,
+    'created_at': a.createdAt.toIso8601String(),
+    'applied_at': a.appliedAt?.toIso8601String(),
+    'follow_up_at': a.followUpAt?.toIso8601String(),
+    'notes': a.notes,
+    'source': a.source,
+    'match_score': a.matchScore,
+    'job_plan_id': a.jobPlanId,
+  };
 
   ApplicationEvent _eventFromRow(Map<String, dynamic> r) => ApplicationEvent(
-        id: r['id'] as String,
-        applicationId: r['application_id'] as String,
-        description: r['description'] as String,
-        createdAt: DateTime.parse(r['created_at'] as String),
-      );
+    id: r['id'] as String,
+    applicationId: r['application_id'] as String,
+    description: r['description'] as String,
+    createdAt: DateTime.parse(r['created_at'] as String),
+  );
 }

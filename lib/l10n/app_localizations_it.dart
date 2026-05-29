@@ -2007,4 +2007,110 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'Candidature';
+
+  @override
+  String get applicationsTitle => 'Le Mie Candidature';
+
+  @override
+  String get applicationsEmpty => 'Nessuna candidatura ancora';
+
+  @override
+  String get applicationsEmptySubtitle =>
+      'Tieni traccia delle tue candidature in un unico posto';
+
+  @override
+  String get applicationAddNew => 'Nuova Candidatura';
+
+  @override
+  String get applicationStatusWishlist => 'Lista dei desideri';
+
+  @override
+  String get applicationStatusApplied => 'Candidato';
+
+  @override
+  String get applicationStatusPhoneScreen => 'Colloquio telefonico';
+
+  @override
+  String get applicationStatusInterview => 'Colloquio';
+
+  @override
+  String get applicationStatusOffer => 'Offerta';
+
+  @override
+  String get applicationStatusRejected => 'Rifiutato';
+
+  @override
+  String get applicationStatusWithdrawn => 'Ritirato';
+
+  @override
+  String get applicationFormTitle => 'Nuova Candidatura';
+
+  @override
+  String get applicationFormEditTitle => 'Modifica Candidatura';
+
+  @override
+  String get applicationFormCompany => 'Azienda';
+
+  @override
+  String get applicationFormRole => 'Ruolo / Posizione';
+
+  @override
+  String get applicationFormJobDescription =>
+      'Descrizione del lavoro (opzionale)';
+
+  @override
+  String get applicationFormNotes => 'Note';
+
+  @override
+  String get applicationFormSource => 'Fonte (LinkedIn, Referenza…)';
+
+  @override
+  String get applicationFormStatus => 'Stato';
+
+  @override
+  String get applicationFormFollowUp => 'Promemoria di follow-up';
+
+  @override
+  String get applicationFormFollowUpHint => 'Imposta data promemoria';
+
+  @override
+  String get applicationFormSave => 'Salva Candidatura';
+
+  @override
+  String get applicationDetailStatus => 'Stato';
+
+  @override
+  String get applicationDetailNotes => 'Note';
+
+  @override
+  String get applicationDetailTimeline => 'Cronologia';
+
+  @override
+  String get applicationDetailMatchScore => 'Punteggio di corrispondenza';
+
+  @override
+  String get applicationDetailFollowUp => 'Follow-up';
+
+  @override
+  String get applicationDeleteConfirm => 'Elimina Candidatura';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'Sei sicuro di voler eliminare questa candidatura? Questa azione non può essere annullata.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'Elimina';
+
+  @override
+  String get applicationTrackFromPlan => 'Monitora questa Candidatura';
+
+  @override
+  String get applicationTrackFromPlanSubtitle =>
+      'Salva nel tracker candidature';
+
+  @override
+  String get applicationImportedFromPlan => 'Importato dal Piano di Lavoro';
 }

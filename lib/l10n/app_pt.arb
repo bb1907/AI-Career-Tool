@@ -1,6 +1,5 @@
 {
   "@@locale": "pt",
-
   "appTitle": "AI Career Copilot",
   "ok": "OK",
   "cancel": "Cancelar",
@@ -25,7 +24,6 @@
   "analyzing": "Analisando...",
   "generating": "Gerando...",
   "saving": "Salvando...",
-
   "homeTitle": "AI Career Copilot",
   "listening": "Ouvindo...",
   "required": "Obrigatorio",
@@ -53,9 +51,7 @@
   "navHome": "Inicio",
   "navHistory": "Historico",
   "navProfile": "Perfil",
-
   "splashTagline": "Seu Parceiro de Carreira IA",
-
   "onboardingTitle1": "Conquiste Seu Emprego dos Sonhos",
   "onboardingDesc1": "Ferramentas de IA para criar o curriculo perfeito, escrever cartas de apresentacao e arrasar nas entrevistas.",
   "onboardingTitle2": "Destaque-se da Multidao",
@@ -64,7 +60,6 @@
   "onboardingDesc3": "Simule entrevistas reais com feedback de IA e ganhe confianca antes do grande dia.",
   "getStarted": "Comecar",
   "alreadyHaveAccount": "Ja tem uma conta? Entrar",
-
   "loginTitle": "Bem-vindo de Volta",
   "loginSubtitle": "Entre para continuar sua jornada profissional",
   "loginEmail": "E-mail",
@@ -77,7 +72,6 @@
   "loginNoAccount": "Nao tem uma conta?",
   "loginHaveAccount": "Ja tem uma conta?",
   "loginDemoMode": "Continuar no Modo Demo",
-
   "homeGreetingMorning": "Bom dia",
   "homeGreetingAfternoon": "Boa tarde",
   "homeGreetingEvening": "Boa noite",
@@ -94,7 +88,6 @@
   "homeActionSkillGap": "Analisar lacunas de habilidades",
   "homeActionMockInterview": "Entrevista simulada",
   "homeActionNetworking": "Escrever mensagem de networking",
-
   "profileTitle": "Perfil",
   "profileName": "Nome completo",
   "profileEmail": "E-mail",
@@ -111,7 +104,6 @@
   "profileUpgrade": "Atualizar para Premium",
   "profileSignOut": "Sair",
   "profileSignOutConfirm": "Tem certeza de que deseja sair?",
-
   "historyTitle": "Historico",
   "historyResumes": "Curriculos",
   "historyCoverLetters": "Cartas de Apresentacao",
@@ -120,7 +112,6 @@
   "historyEmpty": "Nenhum item ainda",
   "historyEmptySubtitle": "Seu conteudo gerado aparecera aqui",
   "historyDeleteConfirm": "Excluir este item?",
-
   "settingsTitle": "Configuracoes",
   "settingsAppearance": "Aparencia",
   "settingsTheme": "Tema",
@@ -137,7 +128,6 @@
   "settingsTerms": "Termos de Servico",
   "settingsApiKeys": "Status do Provedor de IA",
   "settingsApiKeysSubtitle": "Configurar chaves de API do provedor de IA",
-
   "resumeTitle": "Meus Curriculos",
   "resumeNew": "Novo Curriculo",
   "resumeEmpty": "Nenhum curriculo ainda",
@@ -187,7 +177,6 @@
   "resumeSectionEducation": "Formacao",
   "resumeSectionSkills": "Habilidades",
   "resumeSectionProjects": "Projetos",
-
   "coverLetterTitle": "Carta de Apresentacao",
   "coverLetterNew": "Nova Carta de Apresentacao",
   "coverLetterTargetRole": "Cargo-alvo",
@@ -208,7 +197,6 @@
   "coverLetterSmartSubtitle": "IA analisa a vaga + seu perfil",
   "coverLetterContextLabel": "Seu Contexto",
   "coverLetterContextHint": "Pontos especificos que deseja destacar...",
-
   "interviewPrepTitle": "Preparacao para Entrevista",
   "interviewPrepSubtitle": "Receba perguntas tecnicas e comportamentais personalizadas com respostas de exemplo.",
   "interviewPrepRole": "Cargo / Posicao",
@@ -232,7 +220,6 @@
   "interviewPrepCategoryBehavioral": "Comportamental",
   "interviewPrepCategorySituational": "Situacional",
   "interviewPrepCategoryGeneral": "Geral",
-
   "cvUploadTitle": "Importar seu CV",
   "cvUploadSubtitle": "Escolha como importar seu perfil profissional",
   "cvUploadMethodPdf": "PDF / DOC",
@@ -264,7 +251,6 @@
   "cvUploadReplace": "Substituir",
   "cvUploadImported": "CV Importado",
   "cvUploadImportedSubtitle": "Seu perfil esta pronto. Voce pode reimportar para atualizar.",
-
   "jobMatchTitle": "Correspondencia de Vagas",
   "jobMatchPasteJd": "Colar descricao da vaga",
   "jobMatchJdHint": "Cole a descricao completa da vaga aqui...",
@@ -280,7 +266,6 @@
   "jobMatchApply": "Candidatar-se com Carta de Apresentacao",
   "jobMatchPrep": "Preparar",
   "jobMatchSkillAdded": "\"{skill}\" adicionada ao seu perfil",
-
   "skillGapTitle": "Analise de Lacunas de Habilidades",
   "skillGapLoading": "Analisando seu perfil\ncom a vaga...",
   "skillGapFailed": "Analise Falhou",
@@ -296,7 +281,6 @@
   "skillGapPracticeInterview": "Praticar Entrevista",
   "skillGapAddToResume": "Adicionar ao curriculo",
   "skillGapAddedToProfile": "Adicionado ao perfil!",
-
   "mockInterviewTitle": "Entrevista Simulada",
   "mockInterviewLoading": "Preparando sua entrevista...",
   "mockInterviewReadyTitle": "Entrevista Pronta",
@@ -318,7 +302,6 @@
   "mockInterviewGoHome": "Ir para Inicio",
   "mockInterviewFeedbackLabel": "Feedback IA",
   "mockInterviewQuestion": "Pergunta {number} de {total}",
-
   "networkingTitle": "Mensagem de Networking",
   "networkingGenerating": "Criando sua mensagem...",
   "networkingFailed": "Geracao Falhou",
@@ -329,7 +312,6 @@
   "networkingLonger": "Mais Longa",
   "networkingTone": "Tom:",
   "networkingCopied": "Copiado!",
-
   "videoScriptTitle": "Roteiro de Video",
   "videoScriptDuration": "Duracao",
   "videoScript30s": "30 segundos",
@@ -340,7 +322,6 @@
   "videoScriptResult": "Seu Roteiro",
   "videoScriptStartRecording": "Iniciar Gravacao",
   "videoScriptTeleprompter": "Abrir Teleprompter",
-
   "teleprompterTitle": "Teleprompter",
   "teleprompterPlay": "Reproduzir",
   "teleprompterPause": "Pausar",
@@ -348,7 +329,6 @@
   "teleprompterSpeed": "Velocidade",
   "teleprompterFontSize": "Tamanho da fonte",
   "teleprompterMirror": "Espelhar",
-
   "paywallTitle": "Desbloquear Premium",
   "paywallSubtitle": "Acesso ilimitado a todas as ferramentas de IA",
   "paywallWeekly": "Semanal",
@@ -362,7 +342,6 @@
   "paywallFeatureHistory": "Historico e documentos completos",
   "paywallFeaturePdf": "Exportacao em PDF",
   "paywallFeatureEarlyAccess": "Acesso antecipado a novas ferramentas",
-
   "chatTitle": "Assistente de Carreira IA",
   "chatInputHint": "Digite uma mensagem...",
   "chatVoiceInput": "Entrada de voz",
@@ -375,14 +354,12 @@
   "chatFlowSkillGap": "Analise de Lacunas de Habilidades",
   "chatFlowMockInterview": "Entrevista Simulada",
   "chatFlowNetworking": "Mensagem de Networking",
-
   "errorGeneric": "Algo deu errado. Por favor, tente novamente.",
   "errorNetwork": "Erro de rede. Verifique sua conexao.",
   "errorApiKey": "Chave de API nao configurada.",
   "errorNoCV": "Nenhum CV enviado. Por favor, importe seu perfil primeiro.",
   "errorEmptyField": "Este campo nao pode ficar vazio.",
   "errorInvalidEmail": "Por favor, insira um endereco de e-mail valido.",
-
   "aiLoadingAnalyzingJob": "Analisando requisitos da vaga...",
   "aiLoadingComparingProfile": "Comparando com seu perfil...",
   "aiLoadingCalculatingScore": "Calculando pontuacao de compatibilidade...",
@@ -400,5 +377,39 @@
   "aiLoadingBuildingProfile": "Construindo seu perfil...",
   "aiLoadingAnalyzingProfile": "Analisando seu perfil...",
   "aiLoadingCraftingIntro": "Criando sua apresentacao...",
-  "aiLoadingPolishingScript": "Refinando o roteiro..."
+  "aiLoadingPolishingScript": "Refinando o roteiro...",
+  "navApplications": "Candidaturas",
+  "applicationsTitle": "Minhas Candidaturas",
+  "applicationsEmpty": "Nenhuma candidatura ainda",
+  "applicationsEmptySubtitle": "Acompanhe suas candidaturas em um só lugar",
+  "applicationAddNew": "Nova Candidatura",
+  "applicationStatusWishlist": "Lista de desejos",
+  "applicationStatusApplied": "Aplicado",
+  "applicationStatusPhoneScreen": "Triagem por telefone",
+  "applicationStatusInterview": "Entrevista",
+  "applicationStatusOffer": "Oferta",
+  "applicationStatusRejected": "Rejeitado",
+  "applicationStatusWithdrawn": "Retirado",
+  "applicationFormTitle": "Nova Candidatura",
+  "applicationFormEditTitle": "Editar Candidatura",
+  "applicationFormCompany": "Empresa",
+  "applicationFormRole": "Cargo / Função",
+  "applicationFormJobDescription": "Descrição do cargo (opcional)",
+  "applicationFormNotes": "Notas",
+  "applicationFormSource": "Fonte (LinkedIn, Indicação…)",
+  "applicationFormStatus": "Status",
+  "applicationFormFollowUp": "Lembrete de acompanhamento",
+  "applicationFormFollowUpHint": "Definir data de acompanhamento",
+  "applicationFormSave": "Salvar Candidatura",
+  "applicationDetailStatus": "Status",
+  "applicationDetailNotes": "Notas",
+  "applicationDetailTimeline": "Linha do tempo",
+  "applicationDetailMatchScore": "Pontuação de correspondência",
+  "applicationDetailFollowUp": "Acompanhamento",
+  "applicationDeleteConfirm": "Excluir Candidatura",
+  "applicationDeleteConfirmBody": "Tem certeza de que deseja excluir esta candidatura? Esta ação não pode ser desfeita.",
+  "applicationDeleteConfirmOk": "Excluir",
+  "applicationTrackFromPlan": "Rastrear esta Candidatura",
+  "applicationTrackFromPlanSubtitle": "Salvar no rastreador de candidaturas",
+  "applicationImportedFromPlan": "Importado do Plano de Emprego"
 }

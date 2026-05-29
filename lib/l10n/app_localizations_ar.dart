@@ -1995,4 +1995,107 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'الطلبات';
+
+  @override
+  String get applicationsTitle => 'طلباتي';
+
+  @override
+  String get applicationsEmpty => 'لا توجد طلبات بعد';
+
+  @override
+  String get applicationsEmptySubtitle => 'تتبع طلبات التوظيف في مكان واحد';
+
+  @override
+  String get applicationAddNew => 'طلب جديد';
+
+  @override
+  String get applicationStatusWishlist => 'قائمة الرغبات';
+
+  @override
+  String get applicationStatusApplied => 'تم التقديم';
+
+  @override
+  String get applicationStatusPhoneScreen => 'مقابلة هاتفية';
+
+  @override
+  String get applicationStatusInterview => 'مقابلة';
+
+  @override
+  String get applicationStatusOffer => 'عرض';
+
+  @override
+  String get applicationStatusRejected => 'مرفوض';
+
+  @override
+  String get applicationStatusWithdrawn => 'منسحب';
+
+  @override
+  String get applicationFormTitle => 'طلب جديد';
+
+  @override
+  String get applicationFormEditTitle => 'تعديل الطلب';
+
+  @override
+  String get applicationFormCompany => 'الشركة';
+
+  @override
+  String get applicationFormRole => 'المنصب / الدور';
+
+  @override
+  String get applicationFormJobDescription => 'الوصف الوظيفي (اختياري)';
+
+  @override
+  String get applicationFormNotes => 'ملاحظات';
+
+  @override
+  String get applicationFormSource => 'المصدر (LinkedIn، توصية…)';
+
+  @override
+  String get applicationFormStatus => 'الحالة';
+
+  @override
+  String get applicationFormFollowUp => 'تذكير المتابعة';
+
+  @override
+  String get applicationFormFollowUpHint => 'تحديد تاريخ التذكير';
+
+  @override
+  String get applicationFormSave => 'حفظ الطلب';
+
+  @override
+  String get applicationDetailStatus => 'الحالة';
+
+  @override
+  String get applicationDetailNotes => 'ملاحظات';
+
+  @override
+  String get applicationDetailTimeline => 'الجدول الزمني';
+
+  @override
+  String get applicationDetailMatchScore => 'درجة التوافق';
+
+  @override
+  String get applicationDetailFollowUp => 'متابعة';
+
+  @override
+  String get applicationDeleteConfirm => 'حذف الطلب';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'هل أنت متأكد من حذف هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'حذف';
+
+  @override
+  String get applicationTrackFromPlan => 'تتبع هذا الطلب';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => 'حفظ في متتبع الطلبات';
+
+  @override
+  String get applicationImportedFromPlan => 'مستورد من خطة العمل';
 }

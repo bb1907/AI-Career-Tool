@@ -1974,4 +1974,106 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => '応募管理';
+
+  @override
+  String get applicationsTitle => '応募一覧';
+
+  @override
+  String get applicationsEmpty => '応募履歴がありません';
+
+  @override
+  String get applicationsEmptySubtitle => '求職活動を一か所で管理しましょう';
+
+  @override
+  String get applicationAddNew => '応募を追加';
+
+  @override
+  String get applicationStatusWishlist => '希望リスト';
+
+  @override
+  String get applicationStatusApplied => '応募済み';
+
+  @override
+  String get applicationStatusPhoneScreen => '電話面接';
+
+  @override
+  String get applicationStatusInterview => '面接';
+
+  @override
+  String get applicationStatusOffer => '内定';
+
+  @override
+  String get applicationStatusRejected => '不採用';
+
+  @override
+  String get applicationStatusWithdrawn => '辞退';
+
+  @override
+  String get applicationFormTitle => '新規応募';
+
+  @override
+  String get applicationFormEditTitle => '応募を編集';
+
+  @override
+  String get applicationFormCompany => '会社名';
+
+  @override
+  String get applicationFormRole => '職種 / ポジション';
+
+  @override
+  String get applicationFormJobDescription => '求人票（任意）';
+
+  @override
+  String get applicationFormNotes => 'メモ';
+
+  @override
+  String get applicationFormSource => '応募経路（LinkedIn、紹介など）';
+
+  @override
+  String get applicationFormStatus => 'ステータス';
+
+  @override
+  String get applicationFormFollowUp => 'フォローアップリマインダー';
+
+  @override
+  String get applicationFormFollowUpHint => 'フォローアップ日を設定';
+
+  @override
+  String get applicationFormSave => '応募を保存';
+
+  @override
+  String get applicationDetailStatus => 'ステータス';
+
+  @override
+  String get applicationDetailNotes => 'メモ';
+
+  @override
+  String get applicationDetailTimeline => '履歴';
+
+  @override
+  String get applicationDetailMatchScore => 'マッチスコア';
+
+  @override
+  String get applicationDetailFollowUp => 'フォローアップ';
+
+  @override
+  String get applicationDeleteConfirm => '応募を削除';
+
+  @override
+  String get applicationDeleteConfirmBody => 'この応募を削除してもよろしいですか？この操作は元に戻せません。';
+
+  @override
+  String get applicationDeleteConfirmOk => '削除';
+
+  @override
+  String get applicationTrackFromPlan => 'この応募を追跡';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => '応募トラッカーに保存';
+
+  @override
+  String get applicationImportedFromPlan => '求人プランからインポート';
 }

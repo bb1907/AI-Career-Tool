@@ -1995,4 +1995,106 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => '求职申请';
+
+  @override
+  String get applicationsTitle => '我的申请';
+
+  @override
+  String get applicationsEmpty => '暂无申请';
+
+  @override
+  String get applicationsEmptySubtitle => '在一处跟踪您的求职申请';
+
+  @override
+  String get applicationAddNew => '新建申请';
+
+  @override
+  String get applicationStatusWishlist => '收藏';
+
+  @override
+  String get applicationStatusApplied => '已申请';
+
+  @override
+  String get applicationStatusPhoneScreen => '电话筛选';
+
+  @override
+  String get applicationStatusInterview => '面试';
+
+  @override
+  String get applicationStatusOffer => '已录用';
+
+  @override
+  String get applicationStatusRejected => '被拒绝';
+
+  @override
+  String get applicationStatusWithdrawn => '已撤回';
+
+  @override
+  String get applicationFormTitle => '新建申请';
+
+  @override
+  String get applicationFormEditTitle => '编辑申请';
+
+  @override
+  String get applicationFormCompany => '公司';
+
+  @override
+  String get applicationFormRole => '职位 / 角色';
+
+  @override
+  String get applicationFormJobDescription => '职位描述（可选）';
+
+  @override
+  String get applicationFormNotes => '备注';
+
+  @override
+  String get applicationFormSource => '来源（LinkedIn、推荐…）';
+
+  @override
+  String get applicationFormStatus => '状态';
+
+  @override
+  String get applicationFormFollowUp => '跟进提醒';
+
+  @override
+  String get applicationFormFollowUpHint => '设置跟进提醒日期';
+
+  @override
+  String get applicationFormSave => '保存申请';
+
+  @override
+  String get applicationDetailStatus => '状态';
+
+  @override
+  String get applicationDetailNotes => '备注';
+
+  @override
+  String get applicationDetailTimeline => '时间线';
+
+  @override
+  String get applicationDetailMatchScore => '匹配分数';
+
+  @override
+  String get applicationDetailFollowUp => '跟进';
+
+  @override
+  String get applicationDeleteConfirm => '删除申请';
+
+  @override
+  String get applicationDeleteConfirmBody => '确定要删除此申请吗？此操作无法撤销。';
+
+  @override
+  String get applicationDeleteConfirmOk => '删除';
+
+  @override
+  String get applicationTrackFromPlan => '跟踪此申请';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => '保存到申请跟踪器';
+
+  @override
+  String get applicationImportedFromPlan => '从求职计划导入';
 }

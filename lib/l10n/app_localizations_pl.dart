@@ -1996,4 +1996,108 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'Aplikacje';
+
+  @override
+  String get applicationsTitle => 'Moje Aplikacje';
+
+  @override
+  String get applicationsEmpty => 'Brak aplikacji';
+
+  @override
+  String get applicationsEmptySubtitle =>
+      'Śledź swoje aplikacje w jednym miejscu';
+
+  @override
+  String get applicationAddNew => 'Nowa Aplikacja';
+
+  @override
+  String get applicationStatusWishlist => 'Lista życzeń';
+
+  @override
+  String get applicationStatusApplied => 'Wysłane';
+
+  @override
+  String get applicationStatusPhoneScreen => 'Rozmowa telefoniczna';
+
+  @override
+  String get applicationStatusInterview => 'Rozmowa kwalifikacyjna';
+
+  @override
+  String get applicationStatusOffer => 'Oferta';
+
+  @override
+  String get applicationStatusRejected => 'Odrzucone';
+
+  @override
+  String get applicationStatusWithdrawn => 'Wycofane';
+
+  @override
+  String get applicationFormTitle => 'Nowa Aplikacja';
+
+  @override
+  String get applicationFormEditTitle => 'Edytuj Aplikację';
+
+  @override
+  String get applicationFormCompany => 'Firma';
+
+  @override
+  String get applicationFormRole => 'Stanowisko / Rola';
+
+  @override
+  String get applicationFormJobDescription => 'Opis stanowiska (opcjonalnie)';
+
+  @override
+  String get applicationFormNotes => 'Notatki';
+
+  @override
+  String get applicationFormSource => 'Źródło (LinkedIn, Polecenie…)';
+
+  @override
+  String get applicationFormStatus => 'Status';
+
+  @override
+  String get applicationFormFollowUp => 'Przypomnienie';
+
+  @override
+  String get applicationFormFollowUpHint => 'Ustaw datę przypomnienia';
+
+  @override
+  String get applicationFormSave => 'Zapisz Aplikację';
+
+  @override
+  String get applicationDetailStatus => 'Status';
+
+  @override
+  String get applicationDetailNotes => 'Notatki';
+
+  @override
+  String get applicationDetailTimeline => 'Oś czasu';
+
+  @override
+  String get applicationDetailMatchScore => 'Dopasowanie';
+
+  @override
+  String get applicationDetailFollowUp => 'Śledzenie';
+
+  @override
+  String get applicationDeleteConfirm => 'Usuń Aplikację';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'Czy na pewno chcesz usunąć tę aplikację? Tej czynności nie można cofnąć.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'Usuń';
+
+  @override
+  String get applicationTrackFromPlan => 'Śledź tę Aplikację';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => 'Zapisz w trackerze aplikacji';
+
+  @override
+  String get applicationImportedFromPlan => 'Zaimportowano z Planu Pracy';
 }

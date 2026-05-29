@@ -57,6 +57,8 @@ dependencies:
   # sign_in_with_apple: ^6.1.4    # Re-enable when Apple Sign-In is configured
   purchases_flutter: ^8.10.0
   url_launcher: ^6.3.1
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:

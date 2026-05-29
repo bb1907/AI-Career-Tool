@@ -7,7 +7,7 @@ class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
-  static const _tabs = ['/home', '/history', '/profile'];
+  static const _tabs = ['/home', '/history', '/applications', '/profile'];
 
   int _indexForLocation(String location) {
     for (int i = 0; i < _tabs.length; i++) {
@@ -47,6 +47,11 @@ class MainShell extends StatelessWidget {
                 icon: const Icon(Icons.history_outlined),
                 selectedIcon: const Icon(Icons.history_rounded),
                 label: l10n.navHistory,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.work_outline_rounded),
+                selectedIcon: const Icon(Icons.work_rounded),
+                label: l10n.navApplications,
               ),
               NavigationDestination(
                 icon: const Icon(Icons.person_outline_rounded),

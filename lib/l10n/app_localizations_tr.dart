@@ -1999,4 +1999,108 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get consentBiometricBody =>
       'AI Photo Studio will process your photo to create a professional headshot.\n\n• Your photo is sent to an AI image provider.\n• The original photo is deleted from local storage after processing.\n• Generated headshots are NOT uploaded to our servers unless you explicitly save them to your profile.\n• We do not use your photo for training AI models.\n\nYou can withdraw consent at any time in Settings → Privacy.';
+
+  @override
+  String get navApplications => 'Başvurular';
+
+  @override
+  String get applicationsTitle => 'Başvurularım';
+
+  @override
+  String get applicationsEmpty => 'Henüz başvuru yok';
+
+  @override
+  String get applicationsEmptySubtitle =>
+      'İş başvurularını tek bir yerden takip et';
+
+  @override
+  String get applicationAddNew => 'Başvuru Ekle';
+
+  @override
+  String get applicationStatusWishlist => 'İstek Listesi';
+
+  @override
+  String get applicationStatusApplied => 'Başvuruldu';
+
+  @override
+  String get applicationStatusPhoneScreen => 'Telefon Görüşmesi';
+
+  @override
+  String get applicationStatusInterview => 'Mülakat';
+
+  @override
+  String get applicationStatusOffer => 'Teklif';
+
+  @override
+  String get applicationStatusRejected => 'Reddedildi';
+
+  @override
+  String get applicationStatusWithdrawn => 'Geri Çekildi';
+
+  @override
+  String get applicationFormTitle => 'Yeni Başvuru';
+
+  @override
+  String get applicationFormEditTitle => 'Başvuruyu Düzenle';
+
+  @override
+  String get applicationFormCompany => 'Şirket';
+
+  @override
+  String get applicationFormRole => 'Pozisyon / Rol';
+
+  @override
+  String get applicationFormJobDescription => 'İş Tanımı (isteğe bağlı)';
+
+  @override
+  String get applicationFormNotes => 'Notlar';
+
+  @override
+  String get applicationFormSource => 'Kaynak (LinkedIn, Referans…)';
+
+  @override
+  String get applicationFormStatus => 'Durum';
+
+  @override
+  String get applicationFormFollowUp => 'Takip Hatırlatıcısı';
+
+  @override
+  String get applicationFormFollowUpHint => 'Takip tarihi belirle';
+
+  @override
+  String get applicationFormSave => 'Başvuruyu Kaydet';
+
+  @override
+  String get applicationDetailStatus => 'Durum';
+
+  @override
+  String get applicationDetailNotes => 'Notlar';
+
+  @override
+  String get applicationDetailTimeline => 'Zaman Çizelgesi';
+
+  @override
+  String get applicationDetailMatchScore => 'Uyum Puanı';
+
+  @override
+  String get applicationDetailFollowUp => 'Takip';
+
+  @override
+  String get applicationDeleteConfirm => 'Başvuruyu Sil';
+
+  @override
+  String get applicationDeleteConfirmBody =>
+      'Bu başvuruyu silmek istediğinden emin misin? Bu işlem geri alınamaz.';
+
+  @override
+  String get applicationDeleteConfirmOk => 'Sil';
+
+  @override
+  String get applicationTrackFromPlan => 'Başvuruyu Takip Et';
+
+  @override
+  String get applicationTrackFromPlanSubtitle => 'Başvuru takipçine kaydet';
+
+  @override
+  String get applicationImportedFromPlan => 'İş Planından Aktarıldı';
 }

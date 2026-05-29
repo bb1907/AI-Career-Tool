@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'features/settings/providers/language_provider.dart';
 import 'features/settings/providers/ai_language_provider.dart';
+import 'features/applications/services/application_reminder_service.dart';
 import 'services/revenuecat/revenuecat_service.dart';
 import 'services/supabase/supabase_service.dart';
 import 'services/subscription/subscription_provider.dart';
@@ -57,6 +58,13 @@ Future<void> main() async {
     );
   } catch (e) {
     debugPrint('[main] RevenueCat init skipped: $e');
+  }
+
+  // ── Initialize Application Reminder Service ─────────────────────────────────
+  try {
+    await ApplicationReminderService.instance.initialize();
+  } catch (e) {
+    debugPrint('[main] ApplicationReminderService init skipped: $e');
   }
 
   // Determine initial locale: saved preference -> device locale -> English
