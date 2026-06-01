@@ -83,6 +83,7 @@
   "loginTermsOfService": "Terms of Service",
   "loginAgreeAnd": " and ",
   "loginPrivacyPolicy": "Privacy Policy",
+  "loginAgreeSuffix": "",
 
   "homeGreetingMorning": "Good morning",
   "homeGreetingAfternoon": "Good afternoon",

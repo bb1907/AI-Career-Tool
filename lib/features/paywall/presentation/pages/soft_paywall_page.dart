@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/core/app_links.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../services/subscription/subscription_provider.dart';
 
@@ -185,7 +186,7 @@ class _SoftPaywallPageState extends ConsumerState<SoftPaywallPage> {
                       chipLabel: null,
                       originalPrice: '\$9.99',
                       totalLabel: '\$79.99/Year Total',
-                      bigBadge: '90% OFF',
+                      bigBadge: 'Save 33%',
                       accentColor: const Color(0xFFF97316),
                       onTap: () => setState(() => _selectedPlan = 1),
                     ),
@@ -288,7 +289,13 @@ class _SoftPaywallPageState extends ConsumerState<SoftPaywallPage> {
                     ),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No purchases to restore yet'),
+                          ),
+                        );
+                      },
                       child: const Text(
                         'Restore Purchases',
                         style: TextStyle(color: Colors.grey, fontSize: 13),
@@ -306,7 +313,8 @@ class _SoftPaywallPageState extends ConsumerState<SoftPaywallPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () =>
+                          launchExternalUrl(AppLinks.terms, context: context),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         minimumSize: Size.zero,
@@ -336,7 +344,8 @@ class _SoftPaywallPageState extends ConsumerState<SoftPaywallPage> {
                       style: TextStyle(color: Colors.grey, fontSize: 11),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () =>
+                          launchExternalUrl(AppLinks.privacy, context: context),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         minimumSize: Size.zero,

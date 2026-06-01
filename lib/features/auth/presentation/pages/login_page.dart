@@ -5,9 +5,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../../../../app/theme/app_theme.dart';
+import '../../../../app/core/app_links.dart';
 import '../../../../app/core/l10n_extension.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -18,9 +18,6 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  static const String _termsUrl = 'https://aicareercopilot.com/terms';
-  static const String _privacyUrl = 'https://aicareercopilot.com/privacy';
-
   bool _loading = false;
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
@@ -29,9 +26,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void initState() {
     super.initState();
     _termsRecognizer = TapGestureRecognizer()
-      ..onTap = () => _openUrl(_termsUrl);
+      ..onTap = () => launchExternalUrl(AppLinks.terms, context: context);
     _privacyRecognizer = TapGestureRecognizer()
-      ..onTap = () => _openUrl(_privacyUrl);
+      ..onTap = () => launchExternalUrl(AppLinks.privacy, context: context);
   }
 
   @override
@@ -39,17 +36,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _termsRecognizer.dispose();
     _privacyRecognizer.dispose();
     super.dispose();
-  }
-
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    final opened = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!opened && mounted) {
-      _showError(context.l10n.errorGeneric);
-    }
   }
 
   Future<void> _signInWithGoogle() async {
@@ -272,6 +258,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   ),
                                   recognizer: _privacyRecognizer,
                                 ),
+                                TextSpan(text: l10n.loginAgreeSuffix),
                               ],
                             ),
                           ),

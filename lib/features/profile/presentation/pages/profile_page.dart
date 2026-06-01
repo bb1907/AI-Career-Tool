@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/app.dart';
+import '../../../../app/core/app_links.dart';
 import '../../../../app/core/l10n_extension.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -602,28 +603,32 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   iconData: Icons.description_outlined,
                   iconColor: const Color(0xFF6B7280),
                   label: l10n.profileEula,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.eula, context: context),
                 ),
                 _Divider(),
                 _Row(
                   iconData: Icons.list_alt_rounded,
                   iconColor: const Color(0xFF6B7280),
                   label: l10n.profileTermsOfUse,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.terms, context: context),
                 ),
                 _Divider(),
                 _Row(
                   iconData: Icons.shield_outlined,
                   iconColor: const Color(0xFF6B7280),
                   label: l10n.settingsPrivacy,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.privacy, context: context),
                 ),
                 _Divider(),
                 _Row(
                   iconData: Icons.help_outline_rounded,
                   iconColor: const Color(0xFF6B7280),
                   label: l10n.profileHowToUse,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.help, context: context),
                 ),
               ],
             ),
@@ -640,7 +645,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               iconData: Icons.star_rounded,
               iconColor: const Color(0xFFF59E0B),
               label: l10n.profileRateAppStore,
-              onTap: () {},
+              onTap: () =>
+                  launchExternalUrl(AppLinks.appStoreReview, context: context),
             ),
           ),
 
@@ -663,7 +669,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   label: l10n.profileFollowInstagram,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.instagram, context: context),
                 ),
                 _Divider(),
                 _Row(
@@ -676,7 +683,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   label: l10n.profileFollowTikTok,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.tiktok, context: context),
                 ),
                 _Divider(),
                 _Row(
@@ -689,7 +697,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   label: l10n.profileFollowLinkedIn,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.linkedin, context: context),
                 ),
                 _Divider(),
                 _Row(
@@ -705,7 +714,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   label: l10n.profileFollowX,
-                  onTap: () {},
+                  onTap: () => launchExternalUrl(AppLinks.x, context: context),
                 ),
                 _Divider(),
                 _Row(
@@ -718,7 +727,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   label: l10n.profileJoinDiscord,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.discord, context: context),
                 ),
               ],
             ),
@@ -738,7 +748,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   iconColor: AppColors.primary,
                   label: l10n.settingsAbout,
                   subtitle: l10n.settingsAboutSubtitle,
-                  onTap: () {},
+                  onTap: () =>
+                      launchExternalUrl(AppLinks.domain, context: context),
                 ),
                 _Divider(),
                 _Row(

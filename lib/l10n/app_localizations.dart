@@ -650,6 +650,12 @@ abstract class AppLocalizations {
   /// **'Privacy Policy'**
   String get loginPrivacyPolicy;
 
+  /// No description provided for @loginAgreeSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **''**
+  String get loginAgreeSuffix;
+
   /// No description provided for @homeGreetingMorning.
   ///
   /// In en, this message translates to:

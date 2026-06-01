@@ -246,6 +246,9 @@ class AppLocalizationsFi extends AppLocalizations {
   String get loginPrivacyPolicy => 'Privacy Policy';
 
   @override
+  String get loginAgreeSuffix => '';
+
+  @override
   String get homeGreetingMorning => 'Hyva huomenta';
 
   @override

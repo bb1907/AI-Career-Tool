@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/core/app_links.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../services/subscription/subscription_provider.dart';
 
@@ -301,7 +302,13 @@ class _HardPaywallSheetState extends ConsumerState<_HardPaywallSheet> {
 
                 Center(
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No purchases to restore yet'),
+                        ),
+                      );
+                    },
                     child: const Text(
                       'Restore Purchases',
                       style: TextStyle(color: Colors.grey),
@@ -315,7 +322,8 @@ class _HardPaywallSheetState extends ConsumerState<_HardPaywallSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () =>
+                            launchExternalUrl(AppLinks.terms, context: context),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           minimumSize: Size.zero,
@@ -345,7 +353,10 @@ class _HardPaywallSheetState extends ConsumerState<_HardPaywallSheet> {
                         style: TextStyle(color: Colors.grey, fontSize: 11),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => launchExternalUrl(
+                          AppLinks.privacy,
+                          context: context,
+                        ),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           minimumSize: Size.zero,

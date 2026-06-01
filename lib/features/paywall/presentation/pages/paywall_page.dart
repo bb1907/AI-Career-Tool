@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/core/app_links.dart';
 import '../../../../app/core/l10n_extension.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../services/ai/pricing.dart';
+import '../../../../services/subscription/subscription_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data — sourced from pricing.dart so savings labels stay in sync
@@ -61,22 +64,35 @@ const _features = [
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
-class PaywallPage extends StatefulWidget {
+class PaywallPage extends ConsumerStatefulWidget {
   const PaywallPage({super.key});
 
   @override
-  State<PaywallPage> createState() => _PaywallPageState();
+  ConsumerState<PaywallPage> createState() => _PaywallPageState();
 }
 
-class _PaywallPageState extends State<PaywallPage> {
+class _PaywallPageState extends ConsumerState<PaywallPage> {
   _Billing _billing = _Billing.yearly;
   int _selectedPlan = 1; // Pro Max default (best value)
 
-  void _onSubscribe() {
-    // TODO: RevenueCat purchase
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('RevenueCat integration coming soon!')),
+  Future<void> _onSubscribe() async {
+    final notifier = ref.read(subscriptionProvider.notifier);
+    final plan = _selectedPlan == 0 ? PlanType.pro : PlanType.proMax;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
     );
+    // Simulate purchase flow until RevenueCat is wired in.
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    Navigator.of(context).pop(); // dismiss loader
+    await notifier.upgradeWithPlan(plan);
+    if (!mounted) return;
+    context.go('/congratulations');
   }
 
   void _onRestore() {
@@ -233,7 +249,13 @@ class _PaywallPageState extends State<PaywallPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _LegalLink(label: 'Terms', onTap: () {}),
+                      _LegalLink(
+                        label: 'Terms',
+                        onTap: () => launchExternalUrl(
+                          AppLinks.terms,
+                          context: context,
+                        ),
+                      ),
                       const SizedBox(width: AppSpacing.md),
                       Icon(
                         Icons.shield_rounded,
@@ -246,7 +268,13 @@ class _PaywallPageState extends State<PaywallPage> {
                         style: TextStyle(fontSize: 12, color: context.appText2),
                       ),
                       const SizedBox(width: AppSpacing.md),
-                      _LegalLink(label: 'Privacy', onTap: () {}),
+                      _LegalLink(
+                        label: 'Privacy',
+                        onTap: () => launchExternalUrl(
+                          AppLinks.privacy,
+                          context: context,
+                        ),
+                      ),
                     ],
                   ),
                 ],

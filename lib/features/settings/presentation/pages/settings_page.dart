@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/app.dart';
+import '../../../../app/core/app_links.dart';
 import '../../../../app/core/l10n_extension.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../ui/components/language_badge.dart';
@@ -466,13 +467,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 icon: Icons.privacy_tip_outlined,
                 iconColor: const Color(0xFF6B7280),
                 label: l10n.settingsPrivacy,
-                onTap: () {},
+                onTap: () =>
+                    launchExternalUrl(AppLinks.privacy, context: context),
               ),
               _Row(
                 icon: Icons.description_outlined,
                 iconColor: const Color(0xFF6B7280),
                 label: l10n.settingsTerms,
-                onTap: () {},
+                onTap: () =>
+                    launchExternalUrl(AppLinks.terms, context: context),
               ),
               _Row(
                 icon: Icons.smartphone_rounded,

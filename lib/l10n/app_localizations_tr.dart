@@ -236,16 +236,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loginDemoMode => 'Demo Modunda Devam Et';
 
   @override
-  String get loginAgreePrefix => 'By signing up, you agree to our ';
+  String get loginAgreePrefix => 'Kaydolarak ';
 
   @override
-  String get loginTermsOfService => 'Terms of Service';
+  String get loginTermsOfService => 'Hizmet Sartlari';
 
   @override
-  String get loginAgreeAnd => ' and ';
+  String get loginAgreeAnd => ' ve ';
 
   @override
-  String get loginPrivacyPolicy => 'Privacy Policy';
+  String get loginPrivacyPolicy => 'Gizlilik Politikasi';
+
+  @override
+  String get loginAgreeSuffix => '\'ni kabul etmis olursunuz.';
 
   @override
   String get homeGreetingMorning => 'Gunaydin';
