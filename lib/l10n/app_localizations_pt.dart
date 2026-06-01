@@ -236,6 +236,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get loginDemoMode => 'Continuar no Modo Demo';
 
   @override
+  String get loginAgreePrefix => 'By signing up, you agree to our ';
+
+  @override
+  String get loginTermsOfService => 'Terms of Service';
+
+  @override
+  String get loginAgreeAnd => ' and ';
+
+  @override
+  String get loginPrivacyPolicy => 'Privacy Policy';
+
+  @override
   String get homeGreetingMorning => 'Bom dia';
 
   @override

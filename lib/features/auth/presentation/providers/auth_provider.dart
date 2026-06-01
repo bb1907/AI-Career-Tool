@@ -68,18 +68,6 @@ class AuthNotifier extends Notifier<AuthUser?> {
     }
   }
 
-  // Gerçek OAuth hazır olana kadar kullanılan mock login.
-  // Her iki sosyal buton da bunu çağırır.
-  Future<void> mockLogin() async {
-    await Future.delayed(const Duration(seconds: 1));
-    const demoUser = AuthUser(
-      id: 'demo-user-1',
-      name: 'Demo User',
-      email: 'demo@aicareercopilot.app',
-    );
-    state = demoUser;
-  }
-
   Future<void> logout() async {
     final repo = ref.read(authRepositoryProvider);
     await repo.logout();

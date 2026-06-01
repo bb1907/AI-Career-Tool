@@ -79,6 +79,10 @@
   "loginNoAccount": "Don't have an account?",
   "loginHaveAccount": "Already have an account?",
   "loginDemoMode": "Continue in Demo Mode",
+  "loginAgreePrefix": "By signing up, you agree to our ",
+  "loginTermsOfService": "Terms of Service",
+  "loginAgreeAnd": " and ",
+  "loginPrivacyPolicy": "Privacy Policy",
 
   "homeGreetingMorning": "Good morning",
   "homeGreetingAfternoon": "Good afternoon",

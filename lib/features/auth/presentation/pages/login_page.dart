@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../app/core/l10n_extension.dart';
@@ -17,6 +18,9 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  static const String _termsUrl = 'https://aicareercopilot.com/terms';
+  static const String _privacyUrl = 'https://aicareercopilot.com/privacy';
+
   bool _loading = false;
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
@@ -25,9 +29,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void initState() {
     super.initState();
     _termsRecognizer = TapGestureRecognizer()
-      ..onTap = () => _openUrl('https://aicareercopilot.com/terms');
+      ..onTap = () => _openUrl(_termsUrl);
     _privacyRecognizer = TapGestureRecognizer()
-      ..onTap = () => _openUrl('https://aicareercopilot.com/privacy');
+      ..onTap = () => _openUrl(_privacyUrl);
   }
 
   @override
@@ -37,20 +41,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _openUrl(String url) {
-    // TODO: Add url_launcher dependency and use launchUrl()
-    debugPrint('Open URL: $url');
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      _showError(context.l10n.errorGeneric);
+    }
   }
 
   Future<void> _signInWithGoogle() async {
     await _performSignIn(
-      () => ref.read(authNotifierProvider.notifier).mockLogin(),
+      () => ref.read(authNotifierProvider.notifier).signInWithGoogle(),
     );
   }
 
   Future<void> _signInWithApple() async {
     await _performSignIn(
-      () => ref.read(authNotifierProvider.notifier).mockLogin(),
+      () => ref.read(authNotifierProvider.notifier).signInWithApple(),
     );
   }
 
@@ -66,17 +76,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.badge),
-          ),
-        ),
-      );
+      _showError(e.toString().replaceAll('Exception: ', ''));
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.badge),
+        ),
+      ),
+    );
   }
 
   @override
@@ -240,20 +254,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 height: 1.5,
                               ),
                               children: [
+                                TextSpan(text: l10n.loginAgreePrefix),
                                 TextSpan(
-                                  text: 'By signing up, you agree to our ',
-                                ),
-                                TextSpan(
-                                  text: 'Terms of Service',
+                                  text: l10n.loginTermsOfService,
                                   style: const TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                   recognizer: _termsRecognizer,
                                 ),
-                                const TextSpan(text: ' and '),
+                                TextSpan(text: l10n.loginAgreeAnd),
                                 TextSpan(
-                                  text: 'Privacy Policy',
+                                  text: l10n.loginPrivacyPolicy,
                                   style: const TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w500,

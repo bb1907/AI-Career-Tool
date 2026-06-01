@@ -626,6 +626,30 @@ abstract class AppLocalizations {
   /// **'Continue in Demo Mode'**
   String get loginDemoMode;
 
+  /// No description provided for @loginAgreePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'By signing up, you agree to our '**
+  String get loginAgreePrefix;
+
+  /// No description provided for @loginTermsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get loginTermsOfService;
+
+  /// No description provided for @loginAgreeAnd.
+  ///
+  /// In en, this message translates to:
+  /// **' and '**
+  String get loginAgreeAnd;
+
+  /// No description provided for @loginPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get loginPrivacyPolicy;
+
   /// No description provided for @homeGreetingMorning.
   ///
   /// In en, this message translates to:
