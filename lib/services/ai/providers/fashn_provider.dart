@@ -192,8 +192,9 @@ class AiPhotoService {
 
   Future<Uint8List> _downloadBytes(String url) async {
     final res = await http.get(Uri.parse(url));
-    if (res.statusCode != 200)
+    if (res.statusCode != 200) {
       throw Exception('Download failed: ${res.statusCode}');
+    }
     return res.bodyBytes;
   }
 

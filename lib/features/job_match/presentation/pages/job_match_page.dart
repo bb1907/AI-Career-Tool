@@ -41,6 +41,7 @@ class _JobMatchPageState extends ConsumerState<JobMatchPage> {
       return;
     }
     if (!await ensureAiDataConsent(context, ref)) return;
+    if (!mounted) return;
 
     setState(() => _isAnalyzing = true);
     showAiLoading(

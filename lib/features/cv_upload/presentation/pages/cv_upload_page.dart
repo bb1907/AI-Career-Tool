@@ -61,6 +61,7 @@ class _CvUploadPageState extends ConsumerState<CvUploadPage> {
   Future<void> _processTextImport(String text, String fileName) async {
     if (!mounted) return;
     if (!await ensureAiDataConsent(context, ref)) return;
+    if (!mounted) return;
     setState(() => _isProcessing = true);
 
     showAiLoading(
@@ -101,6 +102,7 @@ class _CvUploadPageState extends ConsumerState<CvUploadPage> {
   }) async {
     if (!mounted) return;
     if (!await ensureAiDataConsent(context, ref)) return;
+    if (!mounted) return;
     setState(() => _isProcessing = true);
 
     showAiLoading(

@@ -61,6 +61,7 @@ class _NetworkingResultPageState extends ConsumerState<NetworkingResultPage> {
   Future<void> _generate({String? extraInstruction}) async {
     if (!mounted) return;
     if (!await ensureAiDataConsent(context, ref)) return;
+    if (!mounted) return;
 
     final sub = ref.read(subscriptionProvider);
     if (!sub.canUse(FeatureType.networking)) {

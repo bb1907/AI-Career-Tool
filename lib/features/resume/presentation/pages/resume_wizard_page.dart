@@ -42,6 +42,7 @@ class _ResumeWizardPageState extends ConsumerState<ResumeWizardPage> {
   Future<void> _runAiPrefill(Map<String, dynamic> prefill) async {
     if (!mounted) return;
     if (!await ensureAiDataConsent(context, ref)) return;
+    if (!mounted) return;
     final notifier = ref.read(resumeEditorProvider(widget.resumeId).notifier);
     showAiLoading(
       context,

@@ -47,7 +47,7 @@ $acilis $keywordLine Kariyerim boyunca çapraz fonksiyonlu ekiplerle etkin bir �
 
 Önceki rollerimde karmaşık sorunları çözme ve anlamlı sonuçlar elde etme konusunda kanıtlanmış bir sicil oluşturdum. Özellikle $company şirketine, sektördeki inovasyon anlayışı ve mükemmeliyete olan bağlılığı nedeniyle ilgi duyuyorum.
 
-Uzmanlığımı ekibinize katma değer olarak sunmak ve ${company}ın süregelen başarısına katkıda bulunmak için sabırsızlanıyorum. Geçmişim ve bu role olan tutkumun şirketinizin hedefleriyle nasıl örtüştüğünü tartışmaktan memnuniyet duyarım.
+Uzmanlığımı ekibinize katma değer olarak sunmak ve $companyın süregelen başarısına katkıda bulunmak için sabırsızlanıyorum. Geçmişim ve bu role olan tutkumun şirketinizin hedefleriyle nasıl örtüştüğünü tartışmaktan memnuniyet duyarım.
 
 Başvurumu değerlendirdiğiniz için teşekkür ederim. Sizinle görüşme fırsatı bulmayı umuyorum.
 
@@ -67,7 +67,7 @@ $apertura $keywordLine A lo largo de mi carrera, he demostrado una capacidad con
 
 En mis roles anteriores, he desarrollado un historial probado de resolución de problemas complejos y generación de resultados significativos. Me atrae especialmente $company por su reputación de innovación y compromiso con la excelencia en el sector.
 
-Estoy entusiasmado/a por la oportunidad de aportar mi experiencia a su equipo y contribuir al éxito continuo de ${company}. Me encantaría tener la oportunidad de hablar sobre cómo mi perfil se alinea con los objetivos de este puesto.
+Estoy entusiasmado/a por la oportunidad de aportar mi experiencia a su equipo y contribuir al éxito continuo de $company. Me encantaría tener la oportunidad de hablar sobre cómo mi perfil se alinea con los objetivos de este puesto.
 
 Gracias por considerar mi candidatura. Espero poder hablar con usted pronto.
 
@@ -87,7 +87,7 @@ $einleitung $keywordLine In meiner bisherigen Karriere habe ich stets qualitativ
 
 In meinen vorherigen Positionen habe ich nachweislich komplexe Probleme gelöst und bedeutende Erfolge erzielt. Ich bin besonders von $company begeistert, da das Unternehmen für Innovation und Exzellenz in der Branche bekannt ist.
 
-Ich freue mich auf die Möglichkeit, mein Fachwissen in Ihr Team einzubringen und zum weiteren Erfolg von ${company} beizutragen.
+Ich freue mich auf die Möglichkeit, mein Fachwissen in Ihr Team einzubringen und zum weiteren Erfolg von $company beizutragen.
 
 Mit freundlichen Grüßen,
 [Ihr Name]''';
@@ -101,11 +101,11 @@ Mit freundlichen Grüßen,
             : 'Je vous écris pour manifester mon vif intérêt pour le poste de $role chez $company.';
         return '''$salutation
 
-$ouverture $keywordLine Tout au long de ma carrière, j\'ai démontré une capacité constante à fournir des résultats de haute qualité tout en collaborant efficacement avec des équipes pluridisciplinaires.
+$ouverture $keywordLine Tout au long de ma carrière, j'ai démontré une capacité constante à fournir des résultats de haute qualité tout en collaborant efficacement avec des équipes pluridisciplinaires.
 
-Dans mes fonctions précédentes, j\'ai développé une expérience prouvée dans la résolution de problèmes complexes. Je suis particulièrement attiré(e) par $company en raison de sa réputation d\'innovation et d\'excellence.
+Dans mes fonctions précédentes, j'ai développé une expérience prouvée dans la résolution de problèmes complexes. Je suis particulièrement attiré(e) par $company en raison de sa réputation d'innovation et d'excellence.
 
-Je serais ravi(e) de rejoindre votre équipe et de contribuer au succès de ${company}. N\'hésitez pas à me contacter pour un entretien.
+Je serais ravi(e) de rejoindre votre équipe et de contribuer au succès de $company. N'hésitez pas à me contacter pour un entretien.
 
 Cordialement,
 [Votre Nom]''';

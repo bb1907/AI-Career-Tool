@@ -68,6 +68,7 @@ class _InterviewPrepFormPageState extends ConsumerState<InterviewPrepFormPage> {
   Future<void> _onGenerate() async {
     if (!_formKey.currentState!.validate()) return;
     if (!await ensureAiDataConsent(context, ref)) return;
+    if (!mounted) return;
 
     // Compute teaser flag BEFORE recordUsage (first gen free, 2nd+ teaser)
     final isTeaser = ref
